@@ -1,0 +1,465 @@
+===============================================================================
+
+              EDUQUALI — LES SERVICES EXTERNES DU PROJET
+
+        Ce que nous achetons dehors, ce que ça coûte, et quand payer
+
+                         Au 3 octobre 2026
+
+===============================================================================
+
+
+COMMENT LIRE CE DOCUMENT
+-------------------------------------------------------------------------------
+
+Chaque service a sa fiche : son rôle, son interface, ce que l'offre gratuite
+permet, le palier payant recommandé, et — la ligne qui compte — À QUEL MOMENT y
+passer.
+
+Les prix sont ceux affichés publiquement au 3 octobre 2026. Ils changent. Les
+vérifier avant d'engager un budget.
+
+Une règle traverse tout le document : **ne payer qu'au moment où l'offre gratuite
+devient une contrainte réelle, sauf là où la gratuité a un coût caché**. Il y a
+exactement deux exceptions, et elles sont signalées en majuscules.
+
+
+-------------------------------------------------------------------------------
+LE PRINCIPE : TOUT CHEZ CLOUDFLARE, SAUF CE QU'ILS NE FONT PAS
+-------------------------------------------------------------------------------
+
+Six services, dont quatre chez Cloudflare. Ce n'est pas de la fidélité, c'est de
+l'arithmétique :
+
+  * entre deux services Cloudflare, les données ne traversent pas Internet. Un
+    enregistrement de cours qui passe du stockage (R2) à l'hébergeur vidéo
+    (Stream) ne coûte donc RIEN en transfert. Chez deux fournisseurs différents,
+    la même opération se facture deux fois — à la sortie et parfois à l'entrée ;
+
+  * une facture, une console, un support, une panne à surveiller au lieu de
+    quatre. Pour une équipe qui n'a pas d'administrateur système, c'est ce qui
+    décide.
+
+Ce que Cloudflare ne fait pas, et qu'il faut donc acheter ailleurs :
+la visioconférence temps réel (LiveKit), l'encaissement mobile money guinéen
+(Djomy), la base de données avec authentification (Supabase), et l'assistant IA
+(Google Gemini).
+
+
+===============================================================================
+1. CLOUDFLARE WORKERS  —  le serveur
+===============================================================================
+
+RÔLE
+  Tout le code serveur d'Eduquali : l'API que lisent le site et l'application,
+  les webhooks de paiement et de visioconférence, la génération nocturne des
+  séances. C'est la pièce centrale.
+
+  Pourquoi Workers et pas un serveur classique : il ne s'endort jamais. L'offre
+  gratuite de services comme Render endort le serveur au bout de quinze minutes
+  et met trente à cinquante secondes à le réveiller. Sur une connexion
+  guinéenne, cela fait attendre une minute avant le premier octet — et la
+  personne est partie.
+
+INTERFACE
+  Ce n'est pas une API que nous consommons, c'est là que notre code tourne.
+  Déploiement : `wrangler deploy --env production`.
+  Secrets : `wrangler secret put <NOM>` — chiffrés, jamais relisibles ensuite.
+
+OFFRE GRATUITE
+  100 000 requêtes par jour. 10 ms de temps processeur par requête.
+  Tâches planifiées (cron) incluses.
+
+  Ce que 100 000 requêtes/jour représente : largement de quoi servir plusieurs
+  milliers de familles actives. Ce n'est pas la limite qui arrivera en premier.
+
+PALIER PAYANT RECOMMANDÉ
+  Workers Paid — 5 $/mois. 10 millions de requêtes incluses, puis 0,30 $ par
+  million. Et surtout : 30 secondes de temps processeur au lieu de 10 ms.
+
+QUAND Y PASSER
+  → PLUS TARD, et le déclencheur n'est pas le nombre de requêtes mais le TEMPS
+    PROCESSEUR. Les 10 ms gratuits suffisent à lire une liste ; ils ne suffisent
+    pas à signer beaucoup de jetons ni à traiter une grosse réponse d'IA.
+
+    Signe à surveiller : des erreurs « Exceeded CPU time limit » dans les
+    journaux. Le jour où elles apparaissent, les 5 $ sont déjà rentables.
+
+
+===============================================================================
+2. CLOUDFLARE R2  —  le dépôt des enregistrements
+===============================================================================
+
+RÔLE
+  Recevoir les enregistrements bruts des cours en direct. LiveKit y écrit le
+  fichier à la fin de la séance ; Cloudflare Stream vient le chercher ensuite.
+
+  R2 parle le protocole S3, ce qui est la raison de ce choix : LiveKit sait
+  écrire vers S3 et nulle part ailleurs.
+
+INTERFACE
+  API compatible S3, signature « AWS Signature Version 4 ».
+  Point d'entrée : https://<compte>.r2.cloudflarestorage.com
+  Région : toujours « auto ».
+
+  Notre code : `backend/api/_lib/r2.ts`. Il ne fait qu'une chose — signer une
+  URL temporaire — parce que c'est tout ce dont nous avons besoin.
+
+  ⚠ LE DÉPÔT RESTE PRIVÉ. Le serveur donne à Stream une URL signée valable deux
+  heures, le temps de l'ingestion. Un dépôt public rendrait chaque séance de
+  90 minutes téléchargeable par qui devine un nom de fichier.
+
+OFFRE GRATUITE
+  10 Go de stockage. 1 million d'écritures et 10 millions de lectures par mois.
+  **Zéro frais de sortie** — c'est l'argument de R2 contre Amazon S3, où sortir
+  les données est le poste qui surprend.
+
+  Ce que 10 Go représente : une séance de 90 minutes enregistrée en 720p pèse
+  environ 600 Mo à 1 Go. Donc **10 à 15 séances stockées simultanément**.
+
+PALIER PAYANT RECOMMANDÉ
+  0,015 $ par Go et par mois au-delà des 10 Go. Pas d'abonnement : on paie ce
+  qu'on stocke. 100 Go coûtent 1,35 $/mois.
+
+QUAND Y PASSER
+  → PROBABLEMENT JAMAIS, à condition de supprimer les fichiers bruts après
+    ingestion — ce que notre code fait (`R2.remove`). Le dépôt ne sert que de
+    boîte de transit : une fois la vidéo chez Stream, le `.mp4` d'origine ne se
+    relit plus jamais.
+
+    Sans ce nettoyage, 10 Go sont atteints en deux semaines de cours. Avec, le
+    dépôt reste quasi vide en permanence.
+
+
+===============================================================================
+3. CLOUDFLARE STREAM  —  l'hébergement et la lecture des vidéos
+===============================================================================
+
+RÔLE
+  Prendre le `.mp4` brut d'une séance, le découper en HLS multi-débits (360p à
+  1080p), et le servir.
+
+  Pourquoi ne pas simplement servir le `.mp4` depuis R2 : un fichier
+  monolithique se télécharge au débit du fichier, pas du réseau. Sur une ligne
+  guinéenne, le lecteur s'arrête à chaque creux. Stream démarre sur un fragment
+  de deux secondes très compressé et **dégrade la qualité au lieu de
+  s'interrompre**. C'est la différence entre « le cours se revoit » et « le cours
+  se revoit chez quelqu'un qui a la fibre ».
+
+  Sert aussi les cours vidéo vendus par les professeurs.
+
+INTERFACE
+  REST, api.cloudflare.com/client/v4/accounts/<compte>/stream
+  Authentification : `Authorization: Bearer <jeton>`.
+
+  Les trois appels que nous faisons :
+    POST /copy          → ingérer une vidéo depuis une URL (notre lien R2 signé)
+    GET  /<uid>         → où en est le traitement (en cours / prête / échouée)
+    POST /<uid>/token   → un jeton de lecture, valable le temps qu'on demande
+
+  Lecture : https://customer-<code>.cloudflarestream.com/<jeton>/manifest/video.m3u8
+  Le jeton remplace l'identifiant DANS LE CHEMIN — pas en paramètre d'URL.
+
+  Notre code : `backend/api/_lib/stream.ts`.
+
+  Chaque vidéo est ingérée avec `requireSignedURLs: true`, donc illisible sans
+  jeton. Ce n'est pas une option à activer quelque part : c'est posé à
+  l'ingestion, vidéo par vidéo. Il n'y a rien à oublier.
+
+OFFRE GRATUITE
+  **Aucune.** Stream est un service payant dès la première minute.
+
+PALIER PAYANT — OBLIGATOIRE DÈS LE DÉPART SI ON VEUT LA REDIFFUSION
+  5 $ par mois pour 1 000 minutes stockées.
+  1 $ pour 1 000 minutes regardées.
+
+  Traduit en cours réels :
+    • 1 000 minutes stockées = environ 11 séances de 90 minutes conservées.
+    • 1 $ = 1 000 minutes vues, soit 11 élèves qui revoient une séance entière.
+
+  Un mois à 20 séances enregistrées et 200 visionnages complets :
+    stockage 10 $ + visionnage 18 $ ≈ 28 $/mois.
+
+QUAND Y PASSER
+  → AU DÉPART, ET C'EST L'UNE DES DEUX EXCEPTIONS À LA RÈGLE DU « PLUS TARD ».
+
+    La rediffusion n'est pas un bonus : une coupure de courant pendant le cours
+    est la première raison de rater une séance en Guinée, et elle n'a rien à voir
+    avec l'élève. Sans rediffusion, un cours payé est un cours perdu — et c'est au
+    deuxième incident que la famille arrête de payer.
+
+    Les 5 $ du premier mois se remboursent avec une seule séance à 45 000 GNF.
+
+  → COMMENT LIMITER LA FACTURE : supprimer les rediffusions au bout d'un
+    trimestre. Un élève revoit un cours dans les jours qui suivent, pas six mois
+    après. Le stockage est le poste qui grossit tout seul ; le visionnage, lui,
+    suit l'usage, donc le revenu.
+
+
+===============================================================================
+4. LIVEKIT CLOUD  —  la visioconférence des cours en direct
+===============================================================================
+
+RÔLE
+  La salle elle-même : un professeur, quinze élèves au maximum, 90 minutes.
+  Et l'enregistrement (« egress »), qui écrit le `.mp4` dans R2.
+
+  Pourquoi LiveKit : c'est un serveur de diffusion sélective. Il n'envoie à
+  chaque élève que ce que sa connexion supporte, et dégrade le flux plutôt que de
+  le couper. Une architecture où chacun envoie à tous demanderait à un élève de
+  téléverser quatorze flux simultanés — impossible ici.
+
+INTERFACE
+  Accès à une salle : un jeton JWT que NOTRE serveur signe avec le secret du
+  projet. LiveKit n'a aucune notion de compte : il fait confiance à ce jeton.
+  Tout le contrôle d'accès à une classe payante est donc chez nous.
+
+  Administration : API Twirp sur https://<projet>.livekit.cloud/twirp/...
+    livekit.RoomService/ListParticipants, DeleteRoom
+    livekit.Egress/StartRoomCompositeEgress, StopEgress
+
+  Webhooks (à déclarer dans leur console, vers
+  /api/v1/live/webhooks/livekit) : participant_joined, participant_left,
+  room_finished, egress_ended. Signés par un JWT dans l'en-tête `Authorization`
+  dont une revendication porte l'empreinte du corps.
+
+  ⚠ CES WEBHOOKS NE SONT PAS OPTIONNELS. La présence des élèves et le
+  déclenchement des rediffusions en dépendent entièrement. Sans eux, les cours
+  ont lieu — et le compteur de temps de cours du parent reste à zéro sans que
+  rien ne l'explique.
+
+  Notre code : `backend/api/_lib/livekit.ts`.
+
+OFFRE GRATUITE
+  Jusqu'à 100 participants simultanés.
+  50 Go de bande passante par mois.
+  L'enregistrement (egress) est INCLUS dans l'offre gratuite.
+
+  Traduit en cours réels :
+    • 100 participants simultanés = environ 6 classes de 15 élèves en même temps.
+    • 50 Go/mois : une séance de 90 minutes à 15 participants consomme de l'ordre
+      de 8 à 15 Go selon la qualité vidéo. Donc **4 à 6 séances par mois**.
+
+    C'est la bande passante qui serre, pas le nombre de participants.
+
+PALIER PAYANT RECOMMANDÉ
+  Ship — 50 $/mois. 1 000 participants simultanés, 1 To de bande passante,
+  puis 0,12 $ par Go supplémentaire.
+
+QUAND Y PASSER
+  → PLUS TARD, mais TÔT : autour de la cinquième à la sixième séance du mois.
+
+    Avec deux professeurs qui donnent deux cours par semaine, l'offre gratuite
+    est dépassée dès le premier mois complet. C'est la limite qu'on atteindra en
+    premier de tout ce document.
+
+    Signe à surveiller : le tableau de bord LiveKit, onglet Usage. Y regarder
+    chaque semaine au début.
+
+  → COMMENT RETARDER L'ÉCHÉANCE : le mode « audio seulement », déjà proposé dans
+    nos deux clients, divise la consommation par cinq ou plus. Sur une mauvaise
+    ligne il sauve le cours ; sur la facture, il le rend viable plus longtemps.
+
+
+===============================================================================
+5. SUPABASE  —  la base de données et les comptes
+===============================================================================
+
+RÔLE
+  Postgres géré, plus l'authentification. Toutes les données du projet :
+  professeurs, familles, cours, paiements, programme scolaire.
+
+  L'authentification compte autant que la base : c'est elle qui fait qu'un
+  compte créé sur le site fonctionne dans l'application, avec le même numéro et
+  le même mot de passe.
+
+INTERFACE
+  PostgREST : lecture et écriture en HTTP sur les tables, avec les politiques de
+  sécurité (RLS) appliquées par Postgres lui-même.
+  GoTrue pour les comptes : POST /auth/v1/signup, /auth/v1/token.
+
+  ⚠ LA CLÉ ANONYME EST PUBLIQUE PAR CONSTRUCTION. Elle voyage dans le paquet du
+  site et dans l'APK. **RLS est la seule barrière.** Une table sans politique est
+  une table ouverte à Internet.
+
+  ⚠ LA CLÉ `service_role` CONTOURNE RLS. Elle ne doit jamais atteindre un
+  navigateur, un APK ni le dépôt — seulement `backend/.env`.
+
+OFFRE GRATUITE
+  500 Mo de base. 1 Go de stockage de fichiers. 5 Go de bande passante.
+  50 000 utilisateurs actifs par mois.
+
+  Deux limites qui ne se voient pas dans ce tableau :
+    • LE PROJET SE MET EN PAUSE APRÈS 7 JOURS SANS REQUÊTE. Toutes les requêtes
+      échouent alors jusqu'à réouverture manuelle depuis le tableau de bord.
+      Notre tâche planifiée nocturne sert aussi de battement de cœur pour cela.
+    • PAS DE SAUVEGARDE AUTOMATIQUE. Une base de production sans sauvegarde
+      planifiée est un accident qui attend.
+
+  Ce que 500 Mo représente : le programme scolaire complet (348 chapitres) et
+  quelques milliers de familles tiennent largement. Ce n'est pas la limite qui
+  arrivera en premier.
+
+PALIER PAYANT RECOMMANDÉ
+  Pro — 25 $/mois. 8 Go de base, sauvegardes quotidiennes conservées 7 jours,
+  pas de mise en pause, journaux conservés plus longtemps.
+
+QUAND Y PASSER
+  → AU MOMENT DU PREMIER VRAI CLIENT PAYANT, et pas avant.
+
+    Le déclencheur n'est pas la taille de la base : c'est LA SAUVEGARDE. Tant
+    qu'il n'y a que des données de démonstration, perdre la base coûte une
+    soirée. Dès qu'une famille a payé un cours, perdre la base coûte la
+    réputation — et en Guinée elle se transmet de bouche à oreille.
+
+    Les 25 $/mois achètent exactement une chose qui compte : pouvoir revenir à
+    hier.
+
+
+===============================================================================
+6. DJOMY  —  l'encaissement mobile money
+===============================================================================
+
+RÔLE
+  Encaisser en Orange Money et MTN MoMo, qui sont la façon dont on paie en
+  Guinée. Agrégateur : une intégration pour les deux opérateurs.
+
+INTERFACE
+  REST. Authentification en deux temps :
+    1. En-tête `X-API-KEY: clientId:HMAC-SHA256(clientId, clientSecret)`
+    2. POST /v1/auth → un jeton Bearer de courte durée
+
+  Les appels :
+    POST /v1/payments          → débit direct Orange Money / MoMo
+    POST /v1/payments/gateway  → page de paiement hébergée
+    POST /v1/links             → lien de paiement partageable
+    GET  /v1/payments/<id>     → l'état d'une transaction
+
+  Webhooks signés (`X-Webhook-Signature: v1:<hmac>` sur le corps brut).
+  États : CREATED → PENDING → SUCCESS | CANCELLED | FAILED.
+  Format de numéro : 00224XXXXXXXXX.
+
+  Notre code : `backend/api/_lib/djomy.ts`. Deux environnements séparés, bac à
+  sable et production — et `/health` dit lequel tourne, parce que lire
+  « sandbox » sur la production est le défaut le plus coûteux de cette
+  intégration : il ne se voit nulle part ailleurs, et on ne le découvre qu'en
+  cherchant l'argent.
+
+OFFRE GRATUITE
+  Aucune, et la question ne se pose pas : un agrégateur prélève une commission
+  par transaction. Le bac à sable, lui, est gratuit et illimité.
+
+PALIER PAYANT
+  Commission par transaction, négociée à l'ouverture du compte marchand.
+  Compter 1,5 % à 3 % selon le volume. À confirmer avec eux.
+
+QUAND Y PASSER
+  → DÈS LA PREMIÈRE VENTE, forcément : il n'y a pas d'alternative gratuite pour
+    encaisser de l'argent réel.
+
+    Le compte marchand demande un dossier d'entreprise (registre de commerce,
+    pièce d'identité du gérant, compte bancaire). PRÉVOIR PLUSIEURS JOURS DE
+    DÉLAI : c'est une démarche administrative, pas une inscription en ligne.
+    La commencer avant d'avoir besoin d'encaisser.
+
+
+===============================================================================
+7. GOOGLE GEMINI  —  l'assistant pédagogique
+===============================================================================
+
+RÔLE
+  Deux usages aujourd'hui :
+    • résumer en deux phrases ce qui n'est pas passé dans un module, pour le
+      professeur, pendant la pause de cinq minutes ;
+    • la construction de cours et la discussion avec l'assistant.
+
+INTERFACE
+  REST, generativelanguage.googleapis.com/v1beta
+  En-tête `x-goog-api-key`.
+  POST /models/<modèle>:generateContent
+
+  Modèles employés : `shared/ai/models.json` — une source unique, lue par le
+  serveur et par le script de vérification. Vérifiables avec
+  `npm run check:gemini`.
+
+  Notre code : `backend/api/_lib/gemini.ts`.
+
+  ⚠ LA CLÉ NE DOIT EXISTER QUE DANS `backend/.env`. Jamais préfixée `VITE_`
+  (Vite la recopierait dans le paquet du site), jamais dans l'APK — il circule
+  par Bluetooth et se décompile en quelques minutes. Le module REFUSE de démarrer
+  avec une clé préfixée `VITE_`.
+
+  ⚠ CE QUI PART CHEZ GOOGLE POUR UN RÉSUMÉ : une matière, une classe, un numéro
+  de module et trois nombres. **Aucune donnée personnelle** — ni prénom, ni
+  identifiant, ni phrase écrite par un élève. La garantie tient dans le type :
+  il n'y a pas de champ où mettre un nom.
+
+OFFRE GRATUITE
+  Un quota quotidien généreux, variable selon le modèle.
+
+  ⚠ MAIS : EN OFFRE GRATUITE, GOOGLE SE SERT DES DONNÉES ENVOYÉES POUR AMÉLIORER
+  SES PRODUITS. C'est écrit dans leurs conditions.
+
+PALIER PAYANT — OBLIGATOIRE DÈS LE DÉPART
+  Facturation à l'usage, par million de jetons. Le modèle léger que nous
+  utilisons pour les résumés coûte de l'ordre de quelques centimes pour des
+  centaines de résumés : ce poste est négligeable devant la vidéo.
+
+QUAND Y PASSER
+  → AU DÉPART. C'EST LA SECONDE EXCEPTION, ET ELLE N'EST PAS NÉGOCIABLE.
+
+    La raison n'est pas technique. Si l'assistant traite un jour des photos de
+    devoirs d'enfants, laisser Google s'en servir pour entraîner ses produits est
+    inacceptable — et ce serait découvert après coup, sans possibilité de
+    revenir en arrière.
+
+    Activer la facturation sur console.cloud.google.com AVANT le premier appel
+    réel. L'API ne dit pas de quelle offre relève une clé : ce point se vérifie à
+    la main, et aucun contrôle automatique ne peut le faire à notre place.
+
+
+===============================================================================
+RÉCAPITULATIF : QUOI PAYER, QUAND
+===============================================================================
+
+À PAYER DÈS LE DÉPART (deux postes, environ 10 $/mois au début)
+  • Cloudflare Stream       5 $/mois     sans rediffusion, un cours manqué est
+                                         un cours perdu, et la famille s'en va
+  • Google Gemini           à l'usage    l'offre gratuite donne les données
+                                         d'enfants à Google
+
+À PAYER AU PREMIER CLIENT PAYANT
+  • Supabase Pro           25 $/mois     pour la sauvegarde, pas pour la taille
+  • Djomy                  commission    pas d'alternative pour encaisser
+
+À PAYER QUAND LA LIMITE ARRIVE (et elle arrivera dans cet ordre)
+  1. LiveKit Ship          50 $/mois     vers la 5ᵉ ou 6ᵉ séance du mois. C'est
+                                         la première limite atteinte.
+  2. Cloudflare Workers     5 $/mois     quand « CPU time limit » apparaît
+  3. Cloudflare R2          à l'usage    probablement jamais, si on nettoie
+
+BUDGET PRÉVISIONNEL
+  Démarrage, avant les premiers cours    ~10 $/mois
+  Premiers cours payants                 ~35 $/mois
+  Rythme établi (20 séances/mois)        ~115 $/mois
+
+  À comparer au revenu : 20 séances × 15 élèves × 45 000 GNF × 40 % de
+  commission ≈ 5 400 000 GNF de commission mensuelle, soit de l'ordre de 620 $.
+  L'infrastructure représente alors environ 18 % de la commission.
+
+
+===============================================================================
+CE QU'IL RESTE À FAIRE AVANT LA MISE EN LIGNE
+===============================================================================
+
+  [ ] Déclarer le webhook LiveKit dans leur console. Sans lui, la présence et
+      les rediffusions n'existent pas, et rien ne le dit.
+  [ ] Activer la facturation Gemini sur console.cloud.google.com.
+  [ ] Ouvrir le compte marchand Djomy (dossier d'entreprise, plusieurs jours).
+  [ ] Créer le projet Supabase et y appliquer `eduquali_schema.sql`.
+  [ ] Créer le dépôt R2 et le jeton Stream, puis poser les secrets avec
+      `wrangler secret put`.
+  [ ] Vérifier `/health` : il dit en une lecture ce qui est configuré et quelle
+      caisse de paiement tourne.
+
+===============================================================================

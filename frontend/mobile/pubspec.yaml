@@ -1,0 +1,142 @@
+name: veriprof
+description: Plateforme de recrutement, verification et mise en relation des enseignants.
+publish_to: 'none'
+version: 1.14.0+17
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Gestion d'etat (§39)
+  flutter_riverpod: ^2.6.1
+
+  # Base locale SQLite (§40)
+  drift: ^2.35.0
+  drift_flutter: ^0.3.1
+  sqlite3_flutter_libs: ^0.6.0
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # Reseau et synchronisation (§42, §44)
+  dio: ^5.9.2
+  # Version 7 exigee par `livekit_client` 2.13.0. Sans risque sous AGP 9 :
+  # l'implementation Android est en **Java pur** (verifie dans le cache pub le
+  # 03/10), donc aucune garde Kotlin a mal tourner. Une seule ligne de l'app
+  # l'emploie (`core/network/network_status_service.dart`), avec l'API liste
+  # introduite en 6.0 et conservee en 7.
+  connectivity_plus: ^7.3.1
+
+  # Securite et stockage (§51)
+  flutter_secure_storage: ^9.2.4
+  crypto: ^3.0.7
+  path_provider: ^2.1.6
+  path: ^1.9.1
+  shared_preferences: ^2.5.5
+
+  # Documents et capture (§46)
+  image_picker: ^1.2.2
+  flutter_image_compress: ^2.4.0
+  permission_handler: ^11.4.0
+  open_filex: ^4.7.0
+
+  # Fichier Excel des cours construits par l'assistant. Déjà présent
+  # (dépendance de `pdf`) : on le déclare seulement. Le paquet `excel` exige
+  # archive 3.x et xml < 7, et forcerait un retour en arrière sous d'autres
+  # dépendances.
+  archive: ^4.0.9
+
+  # Contrat PDF (§27)
+  pdf: ^3.13.0
+
+  # Notifications (§53)
+  flutter_local_notifications: ^18.0.1
+
+  # Divers
+  intl: ^0.20.2
+  uuid: ^4.5.3
+  cupertino_icons: ^1.0.9
+  # Epingle en 8.3.7, pas en 11.x, et il faut le laisser la.
+  #
+  # L'implementation Android de file_picker 11 est en Kotlin, et son
+  # `build.gradle` n'applique le plugin Kotlin que si AGP est anterieur a 9 :
+  #
+  #     def isAgp9OrAbove = ... >= 9
+  #     if (!isAgp9OrAbove) { apply plugin: 'org.jetbrains.kotlin.android' }
+  #
+  # Ce projet est en AGP 9.0.1. Les sources Kotlin du plugin ne sont donc
+  # jamais compilees, et la compilation echoue sur
+  # `GeneratedPluginRegistrant.java` : « cannot find symbol
+  # FilePickerPlugin ». Huit minutes de build pour un message qui ne nomme pas
+  # la cause.
+  #
+  # La 8.3.7 est ecrite en Java : aucun plugin Kotlin a appliquer, rien a
+  # corriger. Son API differe — `FilePicker.platform.pickFiles(...)` au lieu
+  # de `FilePicker.pickFiles(...)` — et c'est celle qu'utilise
+  # `document_pipeline.dart`.
+  file_picker: 8.3.7
+  video_player: ^2.14.0
+
+  # La salle d'un cours en direct.
+  #
+  # ⚠ POIDS : `livekit_client` entraine `flutter_webrtc`, qui embarque la
+  # bibliotheque WebRTC native — de l'ordre de 8 a 12 Mo PAR ARCHITECTURE. L'APK
+  # passe d'environ 56 Mo a 75-80 Mo. Ce n'est pas un detail technique : cet APK
+  # circule par Bluetooth et par Xender, et son poids est une contrainte
+  # commerciale.
+  #
+  # Version 2.13.0 : verifiee le 02/10 contre le cache pub. Sa garde Kotlin tient
+  # compte de `android.builtInKotlin`, que le projet met a false — donc le plugin
+  # compile sous AGP 9, contrairement a `file_picker` 11 (voir le commentaire
+  # ci-dessus). Avant toute mise a jour, relire
+  # `android/build.gradle` dans le cache pub.
+  livekit_client: 2.13.0
+
+# path_provider_android 2.3.0 introduit une dependance sur `jni`, qui compile
+# du code natif via CMake et impose donc l'installation du NDK (~1 Go) alors
+# qu'aucune fonctionnalite de l'application n'en a besoin. La branche 2.2.x
+# offre la meme API, entierement en Java/Kotlin.
+dependency_overrides:
+  path_provider_android: ">=2.2.0 <2.3.0"
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  drift_dev: ^2.35.0
+
+flutter:
+  uses-material-design: true
+  # Poppins pour les titres seulement : la geometrie ronde des maquettes de
+  # reference. Le corps de texte reste sur la police du systeme, dessinee
+  # pour les petites tailles et deja presente sur l'appareil.
+  #
+  # Deux graisses, 312 Ko au total sur un APK de 53 Mo. Licence OFL, texte
+  # conserve a cote des fichiers.
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-ExtraBold.ttf
+          weight: 800
+
+  assets:
+    - assets/seed/
+    - assets/onboarding/
+    - assets/geography/
+    - assets/curriculum/
+    - assets/img/
+    # Les creneaux horaires, copies depuis `shared/scheduling/slots.json` par
+    # `shared/onboarding/sync.mjs`. Le dossier existait depuis le 02/10 et
+    # n'etait PAS declare ici : le fichier etait donc ecrit a chaque
+    # synchronisation et jamais embarque dans l'APK. Toute lecture aurait leve
+    # a l'execution, sur un ecran de cours en direct, chez l'usager.
+    # `sync.mjs` verifie desormais cette declaration.
+    - assets/scheduling/

@@ -1,0 +1,5075 @@
+import { Hono, type Context } from 'hono'
+import { cors } from 'hono/cors'
+import { handle } from 'hono/vercel'
+import { z } from 'zod'
+import { parseOrigins, resolveOrigin } from './_lib/cors'
+import { asService, asUser, bearer, isConfigured } from './_lib/db'
+import { isAuditable, writeEvent, type AuditRow } from './_lib/audit'
+import {
+  Djomy,
+  DjomyError,
+  canTransition,
+  purchaseStatusFor,
+  toDjomyPhone,
+} from './_lib/djomy'
+import { Gemini } from './_lib/gemini'
+import { LiveKit, sessionFromRoom, type LiveKitEvent } from './_lib/livekit'
+import { R2 } from './_lib/r2'
+import { CloudflareStream } from './_lib/stream'
+import {
+  closingEntries,
+  leaderboardFor,
+  shopProgress,
+  testForWeek,
+  weekWindow,
+} from './_lib/points'
+import { occurrencesFor } from './_lib/scheduling'
+import {
+  planWrite,
+  type SyncPushItem,
+  type SyncPushResult,
+} from './_lib/sync'
+import { hit, identify, ruleFor } from './_lib/ratelimit'
+import {
+  canSetEnrolmentStatus,
+  completionRate,
+  currentSchoolYear,
+  pairKey,
+  scoreMatch,
+  scoreTest,
+  trustScore,
+  type Candidate,
+  type EnrolmentActor,
+  type EnrolmentStatus,
+  type Requirement,
+} from './_lib/domain'
+
+export const config = { runtime: 'nodejs' }
+
+/**
+ * API REST versionnee (§47).
+ *
+ * Un seul service pour les deux clients : l'application Flutter et le site
+ * web consomment exactement les memes routes. Les regles metier
+ * (compatibilite, correction, confiance) sont evaluees ici et nulle part
+ * ailleurs.
+ */
+const app = new Hono<{ Variables: { userId?: string } }>().basePath('/api/v1')
+
+/** Jeton de l'appelant, transmis a Supabase pour que RLS s'applique. */
+const tokenOf = (c: { req: { header: (k: string) => string | undefined } }) =>
+  bearer(c.req.header('Authorization'))
+
+/*
+ * CORS — liste explicite, jamais `*`.
+ *
+ * Le site web est servi par la meme origine et n'a besoin de rien. CORS
+ * n'existe ici que pour l'application mobile (pas d'en-tete Origin sur un
+ * client natif) et les outils de test. `ALLOWED_ORIGINS` accepte une liste
+ * separee par des virgules ; hors production, localhost est ajoute d'office.
+ */
+const corsPolicy = {
+  allowed: parseOrigins(process.env.ALLOWED_ORIGINS),
+  isProduction: process.env.NODE_ENV === 'production',
+}
+
+app.use(
+  '*',
+  cors({
+    // La regle vit dans `_lib/cors.ts`, pure et eprouvee cas par cas : une
+    // politique d'acces qu'on ne peut pas tester est une politique qu'on relit
+    // en esperant.
+    origin: (origin) => resolveOrigin(origin, corsPolicy),
+    allowHeaders: ['Authorization', 'Content-Type'],
+    credentials: true,
+    maxAge: 600,
+  }),
+)
+
+/*
+ * Limitation de debit (§5). Placee avant tout le reste : une requete refusee
+ * ne doit pas atteindre la base.
+ *
+ * Le compteur vit dans la memoire de l'instance — voir _lib/ratelimit.ts.
+ */
+app.use('*', async (c, next) => {
+  const path = c.req.path.replace('/api/v1', '') || '/'
+  if (path === '/health') return next()
+
+  const verdict = hit(
+    identify(tokenOf(c), c.req.raw.headers),
+    ruleFor(c.req.method, path),
+  )
+
+  c.header('X-RateLimit-Limit', String(verdict.limit))
+  c.header('X-RateLimit-Remaining', String(verdict.remaining))
+  c.header('X-RateLimit-Reset', String(verdict.resetAt))
+
+  if (!verdict.allowed) {
+    c.header('Retry-After', String(verdict.retryAfter))
+    return c.json(
+      { error: `Trop de requetes. Reessayez dans ${verdict.retryAfter} seconde(s).` },
+      429,
+    )
+  }
+  return next()
+})
+
+/*
+ * Qui appelle.
+ *
+ * --- Pourquoi ce bloc a manque ------------------------------------------
+ *
+ * `c.get('userId')` etait lu par sept routes — le jeton d'entree dans une
+ * salle, l'achat d'un cours, l'inscription a une seance — et **n'etait pose
+ * nulle part**. Toutes repondaient donc « Connectez-vous. » a un appelant
+ * parfaitement authentifie. Le defaut ne se voyait pas : les tests du depot
+ * lisent le source, et un deploiement sans Supabase configure echoue de la meme
+ * facon pour une autre raison.
+ *
+ * --- Pourquoi une verification reelle et non la lecture du jeton ---------
+ *
+ * Le `sub` d'un JWT se lit sans cle, en trois lignes. Ce serait suffisant si
+ * `userId` ne servait qu'a choisir un affichage — mais il sert a decider, et les
+ * routes qui s'en servent passent ensuite par `asService()`, qui contourne RLS.
+ * Un identifiant recopie d'un jeton non verifie donnerait a quiconque la salle,
+ * les achats et les inscriptions de n'importe qui.
+ *
+ * On paie donc un aller-retour vers Supabase par requete authentifiee. Il est
+ * entre deux serveurs, pas entre le telephone et nous : ce n'est pas la latence
+ * que l'usager ressent.
+ *
+ * Un jeton absent ou invalide ne fait pas echouer la requete : les listes
+ * publiques doivent rester lisibles sans compte, et c'est chaque route qui
+ * exige un compte quand elle en a besoin.
+ */
+app.use('*', async (c, next) => {
+  const path = c.req.path.replace('/api/v1', '') || '/'
+
+  // Un webhook porte un `Authorization` qui n'est pas un jeton Supabase : celui
+  // de LiveKit est signe avec le secret du projet video. Le soumettre a Supabase
+  // ferait un appel perdu par evenement — seize par classe qui commence — pour
+  // un refus garanti.
+  if (path.includes('/webhook')) return next()
+
+  const jeton = tokenOf(c)
+  if (!jeton) return next()
+
+  try {
+    const { data } = await asUser(jeton).auth.getUser(jeton)
+    if (data.user?.id) c.set('userId', data.user.id)
+  } catch (cause) {
+    // Un jeton expire est le cas courant, pas une anomalie : le client se
+    // reconnectera. L'echec reste dans les journaux, l'appelant recoit le refus
+    // de la route qu'il visait.
+    console.warn('[auth] jeton non verifiable', cause)
+  }
+  return next()
+})
+
+/*
+ * Audit (§5). Le journal observe ce qui s'est passe et ne peut pas empecher
+ * une requete d'aboutir : l'ecriture part sans etre attendue.
+ */
+app.use('*', async (c, next) => {
+  const startedAt = Date.now()
+  // Le corps est lu ici parce qu'il n'est plus lisible apres le handler.
+  const payload =
+    c.req.method === 'POST' || c.req.method === 'PATCH'
+      ? await c.req.raw.clone().json().catch(() => undefined)
+      : undefined
+
+  await next()
+
+  const path = c.req.path.replace('/api/v1', '') || '/'
+  if (!isAuditable(c.req.method, path)) return
+
+  void writeEvent(
+    async (row: AuditRow) => {
+      const { error } = await asService().from('audit_events').insert(row)
+      if (error) throw error
+    },
+    {
+      method: c.req.method,
+      path,
+      status: c.res.status,
+      userId: c.get('userId'),
+      ip: c.req.header('x-forwarded-for')?.split(',')[0]?.trim(),
+      userAgent: c.req.header('user-agent'),
+      durationMs: Date.now() - startedAt,
+      payload,
+    },
+  )
+})
+
+app.onError((error, c) => {
+  // Le detail technique reste dans les journaux ; l'utilisateur recoit une
+  // phrase utile, jamais une trace.
+  // L'etat de configuration du serveur est une information interne : il
+  // reste dans les journaux, l'utilisateur recoit une phrase utile.
+  console.error('[api]', c.req.method, c.req.path, error)
+  return c.json(
+    {
+      error:
+        'Le serveur n’a pas pu traiter la demande. Reessayez dans un instant.',
+    },
+    500,
+  )
+})
+
+app.get('/health', (c) =>
+  c.json({
+    status: 'ok',
+    database: isConfigured ? 'configured' : 'missing',
+    // Quelle caisse ce deploiement utilise. Lire « sandbox » sur la production,
+    // ou l'inverse, est le defaut le plus couteux de cette integration : il ne
+    // se voit nulle part ailleurs, et on ne le decouvre qu'en cherchant
+    // l'argent.
+    payments: djomy
+      ? { configured: true, environment: djomy.environment }
+      : { configured: false },
+    // Ce qu'un deploiement sait faire, en une lecture. Decouvrir qu'une salle
+    // ne s'ouvre pas au moment du premier cours coute une classe entiere.
+    live: livekit ? { configured: true } : { configured: false },
+    video: video
+      ? { configured: true, provider: 'cloudflare-stream', signedUrls: true }
+      : { configured: false },
+    // L'enregistrement demande les trois a la fois : la salle, le depot, l'hote
+    // video. Un seul manquant et la rediffusion n'existe pas — autant le lire
+    // ici que le decouvrir une semaine plus tard, quand un eleve la reclame.
+    recording: {
+      // Les trois a la fois : la salle, le depot R2, l'hote video. Un seul
+      // manquant et la rediffusion n'existe pas.
+      configured: Boolean(livekit && recordings && video),
+      storage: recordings ? 'configured' : 'missing',
+    },
+    // Les points de controle marchent sans Gemini ; seul le resume manque. Le
+    // lire ici evite de chercher pourquoi la phrase n'arrive pas pendant un
+    // cours.
+    aiSummary: gemini ? 'configured' : 'missing',
+  }),
+)
+
+// --- Referentiel (§8, §9) --------------------------------------------------
+
+app.get('/subjects', async (c) => {
+  const { data, error } = await asUser(tokenOf(c))
+    .from('subjects')
+    .select('id, name, code')
+    .eq('active', true)
+    .order('sort_order')
+  if (error) throw error
+  return c.json(data)
+})
+
+app.get('/levels', async (c) => {
+  // `cycle` et non seulement `category` : PRIMAIRE / COLLEGE / LYCEE /
+  // SUPERIEUR / DIPLOME sont les cinq paliers que les formulaires proposent, et
+  // `category` n'en distingue que trois — elle met college et lycee dans le meme
+  // « SECONDARY ». Sans le cycle, un enseignant de primaire se voit proposer
+  // « Master 2 ».
+  const { data, error } = await asUser(tokenOf(c))
+    .from('levels')
+    .select('id, name, code, category, cycle')
+    .eq('active', true)
+    .order('sort_order')
+  if (error) throw error
+  return c.json(data)
+})
+
+app.get('/levels/cities', async (c) => {
+  const { data, error } = await asUser(tokenOf(c))
+    .from('jobs')
+    .select('city')
+    .eq('status', 'PUBLISHED')
+  if (error) throw error
+  return c.json([...new Set((data ?? []).map((r) => r.city as string))].sort())
+})
+
+// --- Offres (§17) ----------------------------------------------------------
+
+const JOB_FIELDS = `
+  id, title, city, contract_type, description, salary_min, salary_max,
+  salary_published, min_experience, requires_certification, level_ids,
+  published_at, visibility, status,
+  subject:subjects (id, name),
+  institution:institutions (id, name, type, city, verification_status)
+`
+
+app.get('/jobs', async (c) => {
+  const db = asUser(tokenOf(c))
+  const { subjectId, city, contractType, query } = c.req.query()
+
+  let request = db
+    .from('jobs')
+    .select(JOB_FIELDS)
+    .eq('status', 'PUBLISHED')
+    .eq('visibility', 'PUBLIC')
+    .order('published_at', { ascending: false })
+
+  if (subjectId) request = request.eq('subject_id', subjectId)
+  if (city) request = request.eq('city', city)
+  if (contractType) request = request.eq('contract_type', contractType)
+  if (query) request = request.ilike('title', `%${query}%`)
+
+  const { data, error } = await request
+  if (error) throw error
+
+  const levels = await levelLookup(db)
+  return c.json((data ?? []).map((row) => shapeJob(row, levels)))
+})
+
+app.get('/jobs/:id', async (c) => {
+  const db = asUser(tokenOf(c))
+  const { data, error } = await db
+    .from('jobs')
+    .select(JOB_FIELDS)
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return c.json({ error: 'Offre introuvable.' }, 404)
+
+  const levels = await levelLookup(db)
+  return c.json(shapeJob(data, levels))
+})
+
+// --- Enseignants (§21, §22) ------------------------------------------------
+
+app.get('/teachers/:id', async (c) => {
+  const profile = await loadTeacher(c.req.param('id'))
+  if (!profile) return c.json({ error: 'Profil introuvable.' }, 404)
+  return c.json(profile)
+})
+
+/**
+ * Recherche classee (§21, §22).
+ *
+ * Le classement est calcule ici, avec le detail de chaque critere : un
+ * etablissement doit pouvoir comprendre pourquoi un candidat passe devant un
+ * autre.
+ */
+/*
+ * --- Pourquoi un filtre par palier, et pas seulement par classe ----------
+ *
+ * Le filtre existait deja sur `levelId`, et il comparait des identifiants
+ * exacts. Deux consequences, toutes deux visibles pour une famille :
+ *
+ *   * un professeur qui a declare « College » (le niveau de regroupement) sans
+ *     cocher la 9eme etait **ecarte** pour un eleve de 9eme, alors qu'il
+ *     enseigne exactement cela ;
+ *   * a l'inverse, quand la famille ne donnait pas de classe precise — le
+ *     primaire et « diplome » n'en ont pas —, aucun filtre ne s'appliquait et la
+ *     liste proposait des professeurs d'universite a un eleve du primaire.
+ *
+ * `stage` compare le cycle (PRIMAIRE, COLLEGE, LYCEE, SUPERIEUR, DIPLOME), qui
+ * est la granularite de la question posee a l'inscription. `levelId` reste
+ * accepte pour affiner, mais ne rejette plus un enseignant dont la declaration
+ * est plus large que la demande.
+ */
+app.get('/teachers', async (c) => {
+  const {
+    subjectId,
+    levelId,
+    stage,
+    mode,
+    city,
+    certifiedOnly,
+    minExperience,
+    minScore,
+  } = c.req.query()
+
+  const db = asService()
+  let request = db.from('teachers').select('id')
+  if (city) request = request.eq('city', city)
+  if (minExperience) {
+    request = request.gte('years_experience', Number(minExperience))
+  }
+
+  const { data: rows, error } = await request
+  if (error) throw error
+
+  /*
+   * Le mode d'enseignement demande : « a domicile » par defaut cote famille.
+   *
+   * Une famille d'eleve cherche quelqu'un qui vient a la maison. Lui proposer
+   * d'abord des cours a distance ou « chez l'enseignant » lui fait parcourir une
+   * liste dont la moitie ne lui convient pas, et c'est la premiere liste qu'elle
+   * voit du produit.
+   *
+   * Le filtre passe par `tutoring_services` plutot que par la fiche : c'est la
+   * que l'enseignant declare ou il se deplace, et une fiche ne le dit pas.
+   */
+  let enseignantsDuMode: Set<string> | null = null
+  if (mode) {
+    const { data: offres } = await db
+      .from('tutoring_services')
+      .select('teacher_id')
+      .eq('mode', mode)
+      .eq('active', true)
+    enseignantsDuMode = new Set(
+      (offres ?? []).map((o) => String(o.teacher_id)),
+    )
+  }
+
+  const need: Requirement = {
+    subjectId: subjectId || null,
+    levelIds: levelId ? [levelId] : [],
+    city: city || null,
+    minExperience: Number(minExperience ?? 0),
+    requiresCertification: certifiedOnly === 'true',
+  }
+
+  const results = []
+  for (const row of rows ?? []) {
+    const profile = await loadTeacher(row.id as string)
+    if (!profile) continue
+
+    if (subjectId && !profile.subjects.some((s) => s.id === subjectId)) continue
+    if (enseignantsDuMode && !enseignantsDuMode.has(String(row.id))) continue
+
+    // Le palier : un professeur qui n'enseigne a aucune classe de ce palier
+    // n'est pas une reponse, c'est du bruit.
+    if (stage && !profile.levels.some((l) => l.cycle === stage)) continue
+
+    /*
+     * La classe, en tolerant une declaration plus large.
+     *
+     * Un enseignant qui a coche « College » couvre la 9eme : exiger
+     * l'identifiant exact l'ecartait. On accepte donc l'egalite OU le meme
+     * cycle, ce qui est la relation que l'enseignant a voulu exprimer.
+     */
+    if (levelId) {
+      const demande = profile.levels.find((l) => l.id === levelId)
+      const cycleDemande = demande?.cycle
+      const couvre = profile.levels.some(
+        (l) => l.id === levelId || (cycleDemande && l.cycle === cycleDemande),
+      )
+      if (!couvre) continue
+    }
+    if (certifiedOnly === 'true' && profile.certifications.length === 0) continue
+    if (
+      minScore &&
+      !profile.certifications.some((cert) => cert.score >= Number(minScore))
+    ) {
+      continue
+    }
+
+    results.push({ profile, match: scoreMatch(need, toCandidate(profile)) })
+  }
+
+  // Visibilite+ (§35) departage deux candidats de meme score, sans jamais
+  // faire passer un profil moins pertinent devant un plus pertinent.
+  results.sort((a, b) => {
+    if (b.match.value !== a.match.value) return b.match.value - a.match.value
+    return Number(b.profile.boosted) - Number(a.profile.boosted)
+  })
+
+  return c.json(results)
+})
+
+// --- Candidatures (§18) ----------------------------------------------------
+
+app.get('/applications', async (c) => {
+  const db = asUser(tokenOf(c))
+  const { data, error } = await db
+    .from('applications')
+    .select(
+      `id, status, applied_at, match_score, job:jobs (${JOB_FIELDS})`,
+    )
+    .order('applied_at', { ascending: false })
+  if (error) throw error
+
+  const levels = await levelLookup(db)
+  return c.json(
+    (data ?? []).map((row) => ({
+      id: row.id,
+      status: row.status,
+      appliedAt: row.applied_at,
+      matchScore: row.match_score,
+      job: shapeJob(row.job, levels),
+    })),
+  )
+})
+
+const applySchema = z.object({
+  jobId: z.string().min(1),
+  note: z.string().max(2000).optional(),
+})
+
+// --- Visioconference et hebergement video -----------------------------------
+//
+// Deux fournisseurs, deux modules, et la meme regle que pour Djomy : rien
+// d'autre dans le depot ne connait leur existence.
+//
+// `null` sans configuration, et c'est un mode de fonctionnement a part entiere :
+// la grille s'affiche, on reserve une place, mais aucune salle ne s'ouvre. Les
+// ecrans le disent au lieu de montrer un lecteur vide.
+
+const livekitConfig = {
+  url: (process.env.LIVEKIT_URL ?? '').trim(),
+  apiKey: (process.env.LIVEKIT_API_KEY ?? '').trim(),
+  apiSecret: (process.env.LIVEKIT_API_SECRET ?? '').trim(),
+}
+const livekit = LiveKit.isConfigured(livekitConfig)
+  ? new LiveKit(livekitConfig)
+  : null
+
+/*
+ * Cloudflare Stream : l'hebergement video.
+ *
+ * Remplace Bunny depuis le 03/10. La raison n'est pas le prix mais le reseau :
+ * R2 et Stream sont chez le meme fournisseur, donc faire passer un
+ * enregistrement de l'un a l'autre ne traverse pas Internet et ne coute pas
+ * d'egress. Un fournisseur de moins, aussi : une facture, un jeton et une console
+ * en moins.
+ */
+const streamConfig = {
+  accountId: (process.env.CF_ACCOUNT_ID ?? '').trim(),
+  apiToken: (process.env.CF_STREAM_API_TOKEN ?? '').trim(),
+  customerCode: (process.env.CF_STREAM_CUSTOMER_CODE ?? '').trim(),
+}
+const video = CloudflareStream.isConfigured(streamConfig)
+  ? new CloudflareStream(streamConfig)
+  : null
+
+/*
+ * Le depot des enregistrements.
+ *
+ * Maillon intermediaire oblige : l'egress LiveKit ecrit vers du stockage
+ * compatible S3, Cloudflare Stream
+ * va chercher une video a une URL. Sans depot configure, **une seance a lieu
+ * mais ne laisse pas de rediffusion** — ce qui est un mode acceptable, pas une
+ * panne, et c'est pour cela que l'absence ne bloque pas l'ouverture d'une salle.
+ */
+/*
+ * L'assistant Gemini.
+ *
+ * ⚠ OFFRE PAYANTE OBLIGATOIRE : en offre gratuite, Google se sert des donnees
+ * envoyees pour ameliorer ses produits. Voir `shared/ai/models.json` et
+ * `scripts/check-gemini.mjs`.
+ *
+ * `null` sans cle, et c'est un mode a part entiere : les points de controle
+ * fonctionnent, le professeur voit ses decomptes, il n'a simplement pas la
+ * phrase de synthese.
+ */
+const geminiConfig = { apiKey: (process.env.GEMINI_API_KEY ?? '').trim() }
+const gemini = Gemini.isConfigured(geminiConfig) ? new Gemini(geminiConfig) : null
+
+const recordingsConfig = {
+  endpoint: (process.env.R2_ENDPOINT ?? '').trim(),
+  bucket: (process.env.R2_RECORDINGS_BUCKET ?? '').trim(),
+  accessKey: (process.env.R2_ACCESS_KEY_ID ?? '').trim(),
+  secret: (process.env.R2_SECRET_ACCESS_KEY ?? '').trim(),
+  // `auto` chez R2, toujours. La variable existe pour un service compatible S3
+  // qui exigerait une vraie region.
+  region: (process.env.R2_REGION ?? 'auto').trim(),
+}
+const recordings = R2.isConfigured(recordingsConfig)
+  ? new R2(recordingsConfig)
+  : null
+
+/*
+ * Plus d'avertissement « les URL ne sont pas signees ».
+ *
+ * Chez Bunny, la signature dependait d'une option de zone qu'on pouvait oublier
+ * d'activer, et le serveur journalisait une mise en garde a chaque demarrage.
+ * Stream pose `requireSignedURLs` **a l'ingestion de chaque video** : il n'y a
+ * plus de reglage a oublier, donc plus rien a avertir.
+ */
+
+/**
+ * Le jeton d'entree dans une salle.
+ *
+ * Tout le controle d'acces est ici, parce que LiveKit n'a pas de notion de
+ * compte : il fait confiance au jeton que nous signons. Quatre verifications, et
+ * aucune n'est superflue :
+ *
+ *  1. le compte existe et porte une fiche (famille ou professeur) ;
+ *  2. l'eleve est **inscrit et paye** — une place retenue sans paiement
+ *     n'ouvre pas la salle ;
+ *  3. on est dans la fenetre de la seance : un jeton emis trois jours avant
+ *     serait une porte ouverte trois jours ;
+ *  4. le role decide des droits : le professeur publie, l'eleve ecoute jusqu'a
+ *     ce qu'on lui donne la parole.
+ */
+app.post('/live/sessions/:id/token', async (c) => {
+  if (!livekit) {
+    return c.json({ error: 'La visioconference n’est pas configuree.' }, 503)
+  }
+
+  const sessionId = c.req.param('id')
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const service = asService()
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select(
+      'id, starts_at, duration_minutes, status, recording_status, live_courses ( teacher_id )',
+    )
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  if (!seance) return c.json({ error: 'Seance introuvable.' }, 404)
+  if (seance.status === 'CANCELLED') {
+    return c.json({ error: 'Cette seance est annulee.' }, 409)
+  }
+
+  // La fenetre : quinze minutes avant le debut, et jusqu'a trente minutes apres
+  // la fin. Avant, il n'y a rien a rejoindre ; apres, la salle est fermee et un
+  // jeton valable n'aurait plus d'objet.
+  const debut = new Date(String(seance.starts_at)).getTime()
+  const duree = Number(seance.duration_minutes ?? 90) * 60_000
+  const ouverture = debut - 15 * 60_000
+  const fermeture = debut + duree + 30 * 60_000
+  const maintenant = Date.now()
+
+  if (maintenant < ouverture) {
+    return c.json(
+      {
+        error: 'La salle ouvre quinze minutes avant le debut.',
+        opensAt: new Date(ouverture).toISOString(),
+      },
+      409,
+    )
+  }
+  if (maintenant > fermeture) {
+    return c.json({ error: 'Cette seance est terminee.' }, 409)
+  }
+
+  const lie = seance.live_courses as unknown
+  const cours = (Array.isArray(lie) ? lie[0] : lie) as Record<string, unknown> | null
+
+  // Le professeur du cours ?
+  const { data: prof } = await service
+    .from('teachers')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const estLeProfesseur =
+    prof != null && cours != null && prof.id === cours.teacher_id
+
+  /*
+   * La place utilisee pour entrer.
+   *
+   * Un compte famille peut avoir **deux places sur la meme seance** — deux
+   * enfants, deux tablettes, deux paiements. L'identite LiveKit etant la place
+   * et non le compte, il faut savoir laquelle : entrer avec la place du grand
+   * frere deconnecterait le grand frere.
+   *
+   * Une seule place : on la prend, le client n'a rien a demander. Plusieurs : on
+   * rend la liste et l'ecran demande « qui suit le cours ? ». Choisir a sa place
+   * serait choisir mal une fois sur deux.
+   */
+  let place: { id: string; childName: string | null } | null = null
+
+  if (!estLeProfesseur) {
+    const { data: parent } = await service
+      .from('parents')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (!parent) {
+      return c.json({ error: 'Ce compte ne suit pas cette seance.' }, 403)
+    }
+
+    const { data: inscriptions } = await service
+      .from('session_enrolments')
+      .select('id, child_id, children ( first_name )')
+      .eq('session_id', sessionId)
+      .eq('parent_id', parent.id as string)
+      .eq('status', 'CONFIRMED')
+
+    const places = (inscriptions ?? []).map((ligne) => {
+      const enfant = ligne.children as unknown
+      const fiche = (Array.isArray(enfant) ? enfant[0] : enfant) as Record<
+        string,
+        unknown
+      > | null
+      return {
+        id: String(ligne.id),
+        childName: (fiche?.first_name as string) ?? null,
+      }
+    })
+
+    if (places.length === 0) {
+      // Une place retenue sans paiement expire au bout de vingt minutes. Ouvrir
+      // la salle sur une reservation non payee reviendrait a donner le cours.
+      return c.json({ error: 'Votre place n’est pas encore payee.' }, 403)
+    }
+
+    const demande = await c.req.json().catch(() => ({}))
+    const voulue =
+      typeof (demande as Record<string, unknown>).enrolmentId === 'string'
+        ? String((demande as Record<string, unknown>).enrolmentId)
+        : null
+
+    if (voulue) {
+      place = places.find((p) => p.id === voulue) ?? null
+      if (!place) {
+        return c.json({ error: 'Cette place n’est pas la votre.' }, 403)
+      }
+    } else if (places.length === 1) {
+      place = places[0]
+    } else {
+      return c.json(
+        {
+          error: 'Plusieurs places sur cette seance : indiquez qui entre.',
+          choices: places.map((p) => ({ enrolmentId: p.id, childName: p.childName })),
+        },
+        409,
+      )
+    }
+  }
+
+  const { data: profil } = await service
+    .from('profiles')
+    .select('first_name, last_name')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const nom = [profil?.first_name, profil?.last_name]
+    .filter((p) => typeof p === 'string' && p !== '')
+    .join(' ')
+
+  const jeton = await livekit.joinToken({
+    sessionId,
+    // La place, ou l'enseignant. Jamais le compte : voir `LiveKit.identityFor`.
+    identity: estLeProfesseur
+      ? LiveKit.identityFor({ role: 'teacher', teacherId: String(prof!.id) })
+      : LiveKit.identityFor({ role: 'student', enrolmentId: place!.id }),
+    // Le prenom de l'enfant quand il est connu : dans une classe de quinze, lire
+    // « Fatoumata » plutot que le nom du compte du parent est ce qui permet au
+    // professeur d'appeler quelqu'un.
+    name: (!estLeProfesseur ? place!.childName : null) || nom || 'Participant',
+    role: estLeProfesseur ? 'teacher' : 'student',
+    // Jusqu'a la fermeture de la fenetre, pas plus : un jeton qui traine est une
+    // porte ouverte.
+    ttlSeconds: Math.max(Math.ceil((fermeture - maintenant) / 1000), 300),
+  })
+
+  return c.json({
+    token: jeton.token,
+    url: jeton.url,
+    room: jeton.room,
+    role: estLeProfesseur ? 'teacher' : 'student',
+    enrolmentId: place?.id ?? null,
+    // **Dire qu'on enregistre.** Quinze eleves mineurs filmes pendant 90
+    // minutes : qu'ils le sachent n'est pas une option d'affichage. L'ecran le
+    // montre a tout le monde, professeur compris.
+    recording: seance.recording_status ?? null,
+  })
+})
+
+/*
+ * --- La vie d'une seance, du cote serveur --------------------------------
+ *
+ *   ouverture ──▶ LIVE, opened_at, egress demarre
+ *       │
+ *       │  pendant : les webhooks LiveKit ecrivent la presence
+ *       ▼
+ *   fermeture ──▶ DONE, closed_at, egress arrete, salle videe
+ *       │
+ *       ▼
+ *   egress_ended ──▶ URL signee de R2 ──▶ Stream ingere le fichier
+ *       │
+ *       ▼
+ *   rediffusion lisible par les inscrits
+ *
+ * Deux principes tiennent cette chaine :
+ *
+ *   * **le professeur declare, le serveur constate.** L'ouverture est un geste
+ *     du professeur ; la presence, la fin de l'egress et le depart d'un eleve
+ *     sont constates par LiveKit. Rien de ce qui compte n'est declare par un
+ *     client.
+ *   * **chaque etape est rejouable.** Un webhook arrive deux fois, un
+ *     professeur clique deux fois sur « ouvrir », une connexion tombe au milieu
+ *     d'un transfert : aucune de ces situations ne doit produire deux
+ *     enregistrements ni deux lignes de presence.
+ */
+
+/** La cle de l'objet d'une seance dans le depot. */
+const recordingKey = (sessionId: string) => `seances/${sessionId}.mp4`
+
+/**
+ * La seance et son professeur, pour les routes qui exigent d'etre le professeur.
+ *
+ * Rend `null` plutot que de lever : les appelants repondent tous par un code
+ * HTTP different selon ce qui manque, et une exception les en empecherait.
+ */
+async function sessionForTeacher(
+  sessionId: string,
+  userId: string,
+): Promise<
+  | { ok: true; session: Record<string, unknown>; teacherId: string }
+  | { ok: false; status: 403 | 404; error: string }
+> {
+  const service = asService()
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select(
+      'id, starts_at, duration_minutes, status, opened_at, closed_at, egress_id, recording_video_id, recording_status, live_courses ( id, teacher_id, title, subject_id )',
+    )
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  if (!seance) return { ok: false, status: 404, error: 'Seance introuvable.' }
+
+  const cours = one(seance.live_courses as never) as
+    | Record<string, unknown>
+    | undefined
+
+  const { data: prof } = await service
+    .from('teachers')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!prof || !cours || prof.id !== cours.teacher_id) {
+    return { ok: false, status: 403, error: 'Cette seance n’est pas la votre.' }
+  }
+  return { ok: true, session: seance, teacherId: String(prof.id) }
+}
+
+/**
+ * Le professeur ouvre la salle.
+ *
+ * **Idempotent, et c'est le point.** Un professeur dont le navigateur plante
+ * rouvre la page et reclique : la seance est deja `LIVE` et l'egress tourne
+ * toujours — il tourne sur le serveur LiveKit, pas dans son navigateur. Demarrer
+ * un second egress ecrirait sur la meme cle et perdrait la premiere moitie du
+ * cours. La reponse est donc la meme qu'au premier appel, sans rien recommencer.
+ */
+app.post('/live/sessions/:id/open', async (c) => {
+  if (!livekit) {
+    return c.json({ error: 'La visioconference n’est pas configuree.' }, 503)
+  }
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const acces = await sessionForTeacher(c.req.param('id'), userId)
+  if (!acces.ok) return c.json({ error: acces.error }, acces.status)
+
+  const seance = acces.session
+  const sessionId = String(seance.id)
+  if (seance.status === 'CANCELLED') {
+    return c.json({ error: 'Cette seance est annulee.' }, 409)
+  }
+
+  // Meme fenetre que pour le jeton d'entree : ouvrir trois jours avant n'aurait
+  // pas de sens, et la valeur unique evite qu'un professeur puisse ouvrir une
+  // salle que ses eleves ne peuvent pas rejoindre.
+  const debut = new Date(String(seance.starts_at)).getTime()
+  const duree = Number(seance.duration_minutes ?? 90) * 60_000
+  const maintenant = Date.now()
+  if (maintenant < debut - 15 * 60_000) {
+    return c.json(
+      {
+        error: 'La salle ouvre quinze minutes avant le debut.',
+        opensAt: new Date(debut - 15 * 60_000).toISOString(),
+      },
+      409,
+    )
+  }
+  if (maintenant > debut + duree + 30 * 60_000) {
+    return c.json({ error: 'Cette seance est terminee.' }, 409)
+  }
+
+  const service = asService()
+  const dejaOuverte = seance.opened_at != null
+  let egressId = (seance.egress_id as string | null) ?? null
+  let etatEnregistrement =
+    (seance.recording_status as string | null) ?? null
+
+  if (!egressId && recordings && video) {
+    // L'enregistrement est un confort, pas la seance. Si l'egress refuse de
+    // demarrer, le cours a lieu quand meme : l'erreur est journalisee et la
+    // salle s'ouvre. L'inverse — refuser d'ouvrir parce qu'on ne peut pas
+    // enregistrer — annulerait un cours paye pour une rediffusion.
+    try {
+      egressId = await livekit.startRecording({
+        sessionId,
+        s3: recordings.egressTarget,
+        filename: recordingKey(sessionId),
+      })
+      etatEnregistrement = 'RECORDING'
+    } catch (cause) {
+      console.error('[live] egress non demarre', sessionId, cause)
+      etatEnregistrement = 'FAILED'
+    }
+  }
+
+  await service
+    .from('live_sessions')
+    .update({
+      status: 'LIVE',
+      opened_at: dejaOuverte ? seance.opened_at : new Date().toISOString(),
+      room_name: LiveKit.roomFor(sessionId),
+      egress_id: egressId,
+      recording_status: etatEnregistrement,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', sessionId)
+
+  return c.json({
+    status: 'LIVE',
+    alreadyOpen: dejaOuverte,
+    recording: etatEnregistrement,
+  })
+})
+
+/**
+ * Le professeur ferme la salle.
+ *
+ * Trois gestes dans cet ordre, et l'ordre compte : **arreter l'egress avant de
+ * vider la salle**. Supprimer la salle d'abord ferait finir l'egress sur une
+ * salle vide, et selon le moment le fichier pourrait se terminer sur quelques
+ * secondes de noir.
+ */
+app.post('/live/sessions/:id/close', async (c) => {
+  if (!livekit) {
+    return c.json({ error: 'La visioconference n’est pas configuree.' }, 503)
+  }
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const acces = await sessionForTeacher(c.req.param('id'), userId)
+  if (!acces.ok) return c.json({ error: acces.error }, acces.status)
+
+  const seance = acces.session
+  const sessionId = String(seance.id)
+  const egressId = (seance.egress_id as string | null) ?? null
+  let etat = (seance.recording_status as string | null) ?? null
+
+  if (egressId && etat === 'RECORDING') {
+    try {
+      await livekit.stopRecording(egressId)
+      // `TRANSFERRING` et non `READY` : le fichier existe, mais il n'est pas
+      // encore chez Stream. C'est le webhook `egress_ended` qui declenchera
+      // copie, et ce peut etre une minute plus tard.
+      etat = 'TRANSFERRING'
+    } catch (cause) {
+      console.error('[live] egress non arrete', sessionId, cause)
+    }
+  }
+
+  try {
+    await livekit.closeRoom(sessionId)
+  } catch (cause) {
+    // Une salle deja vide n'existe plus chez LiveKit : l'erreur est normale et
+    // ne doit pas empecher la seance d'etre marquee terminee.
+    console.warn('[live] salle deja fermee', sessionId, cause)
+  }
+
+  await closeDanglingAttendance(sessionId)
+
+  await asService()
+    .from('live_sessions')
+    .update({
+      status: 'DONE',
+      closed_at: new Date().toISOString(),
+      recording_status: etat,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', sessionId)
+
+  return c.json({ status: 'DONE', recording: etat })
+})
+
+/**
+ * Ferme les lignes de presence restees ouvertes sur une seance.
+ *
+ * Appelee a la fermeture et sur `room_finished`. Une ligne ouverte pour toujours
+ * ne compte jamais ses minutes, et le temps de cours du parent resterait a zero
+ * pour un cours entierement suivi.
+ */
+async function closeDanglingAttendance(sessionId: string): Promise<number> {
+  const service = asService()
+  const { data: ouvertes } = await service
+    .from('session_attendance')
+    .select('id, joined_at')
+    .eq('session_id', sessionId)
+    .is('left_at', null)
+
+  const fin = new Date()
+  for (const ligne of ouvertes ?? []) {
+    await service
+      .from('session_attendance')
+      .update({
+        left_at: fin.toISOString(),
+        minutes: minutesBetween(String(ligne.joined_at), fin),
+      })
+      .eq('id', ligne.id as string)
+  }
+  return (ouvertes ?? []).length
+}
+
+/** Minutes entieres entre deux instants, jamais negatives. */
+function minutesBetween(depuis: string, jusqu: Date): number {
+  const debut = new Date(depuis).getTime()
+  if (!Number.isFinite(debut)) return 0
+  return Math.max(0, Math.floor((jusqu.getTime() - debut) / 60_000))
+}
+
+/**
+ * Les webhooks LiveKit — la source de verite de la presence.
+ *
+ * Signature verifiee avant toute lecture du corps, et **reponse 200 meme sur un
+ * evenement qu'on ignore** : un webhook non acquitte est reessaye, et une file
+ * de reessais sur des evenements qui ne nous interessent pas finirait par
+ * retarder ceux qui comptent.
+ */
+app.post('/live/webhooks/livekit', async (c) => {
+  if (!livekit) return c.json({ error: 'Non configure.' }, 503)
+
+  const rawBody = await c.req.text()
+  let evenement: LiveKitEvent
+  try {
+    evenement = await livekit.verifyWebhook(
+      c.req.header('Authorization'),
+      rawBody,
+    )
+  } catch {
+    // Aucun detail : un message precis aiderait a fabriquer une signature
+    // valable.
+    return c.json({ error: 'Signature invalide.' }, 401)
+  }
+
+  const sessionId = sessionFromRoom(evenement.room?.name)
+  const service = asService()
+
+  switch (evenement.event) {
+    case 'participant_joined': {
+      if (!sessionId) break
+      const identite = evenement.participant?.identity ?? ''
+      const qui = LiveKit.parseIdentity(identite)
+      if (!qui) break
+
+      const userId = await accountBehind(qui)
+      if (!userId) break
+
+      // Une reconnexion est un nouveau `participant_joined`. On ferme la ligne
+      // precedente avant d'ouvrir, sinon l'index unique refuse l'insertion et la
+      // presence du reste du cours est perdue.
+      const cle = qui.role === 'student' ? qui.enrolmentId : null
+      const fermeture = service
+        .from('session_attendance')
+        .update({ left_at: new Date().toISOString() })
+        .eq('session_id', sessionId)
+        .is('left_at', null)
+      await (cle
+        ? fermeture.eq('enrolment_id', cle)
+        : fermeture.eq('user_id', userId).is('enrolment_id', null))
+
+      await service.from('session_attendance').insert({
+        session_id: sessionId,
+        user_id: userId,
+        enrolment_id: cle,
+        joined_at: new Date().toISOString(),
+      })
+      break
+    }
+
+    case 'participant_left': {
+      if (!sessionId) break
+      const qui = LiveKit.parseIdentity(evenement.participant?.identity ?? '')
+      if (!qui) break
+
+      const requete = service
+        .from('session_attendance')
+        .select('id, joined_at')
+        .eq('session_id', sessionId)
+        .is('left_at', null)
+
+      const { data: lignes } = await (qui.role === 'student'
+        ? requete.eq('enrolment_id', qui.enrolmentId)
+        : requete.is('enrolment_id', null))
+
+      const fin = new Date()
+      for (const ligne of lignes ?? []) {
+        await service
+          .from('session_attendance')
+          .update({
+            left_at: fin.toISOString(),
+            minutes: minutesBetween(String(ligne.joined_at), fin),
+          })
+          .eq('id', ligne.id as string)
+      }
+      break
+    }
+
+    case 'room_finished': {
+      if (!sessionId) break
+      await closeDanglingAttendance(sessionId)
+      // Si le professeur a ferme son onglet sans cliquer sur « terminer », la
+      // salle finit quand meme : la seance doit basculer en `DONE`, sinon elle
+      // reste `LIVE` dans la grille de tout le monde.
+      const { data: seance } = await service
+        .from('live_sessions')
+        .select('status, closed_at')
+        .eq('id', sessionId)
+        .maybeSingle()
+      if (seance && seance.status !== 'CANCELLED' && seance.closed_at == null) {
+        await service
+          .from('live_sessions')
+          .update({
+            status: 'DONE',
+            closed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', sessionId)
+      }
+      break
+    }
+
+    case 'egress_ended': {
+      await handleEgressEnded(evenement)
+      break
+    }
+
+    default:
+      break
+  }
+
+  return c.json({ received: true })
+})
+
+/**
+ * Le compte derriere une identite LiveKit.
+ *
+ * Une place mene a son parent, un professeur a son compte. C'est la colonne
+ * `user_id` de la presence : savoir *qui s'est connecte*, en plus de *quelle
+ * place* a ete utilisee.
+ */
+async function accountBehind(
+  qui:
+    | { role: 'student'; enrolmentId: string }
+    | { role: 'teacher'; teacherId: string },
+): Promise<string | null> {
+  const service = asService()
+  if (qui.role === 'teacher') {
+    const { data } = await service
+      .from('teachers')
+      .select('user_id')
+      .eq('id', qui.teacherId)
+      .maybeSingle()
+    return (data?.user_id as string | null) ?? null
+  }
+  const { data } = await service
+    .from('session_enrolments')
+    .select('parents ( user_id )')
+    .eq('id', qui.enrolmentId)
+    .maybeSingle()
+  const parent = one(data?.parents as never) as Record<string, unknown> | undefined
+  return (parent?.user_id as string | null) ?? null
+}
+
+/**
+ * L'egress a fini : faire passer le fichier de R2 a Cloudflare Stream.
+ *
+ * **Pourquoi une URL signee de deux heures.** Stream telecharge le fichier depuis
+ * ses serveurs ; il lui faut donc une adresse accessible depuis l'extérieur. Un
+ * depot public rendrait chaque enregistrement telechargeable par qui devine un
+ * nom de fichier — et un nom de fichier derive d'un identifiant de seance se
+ * devine. Deux heures suffisent largement pour 90 minutes de video, et passe ce
+ * delai le lien ne vaut plus rien.
+ */
+async function handleEgressEnded(evenement: LiveKitEvent): Promise<void> {
+  const info = evenement.egressInfo ?? {}
+  const egressId = info.egress_id ?? info.egressId
+  if (!egressId) return
+
+  const service = asService()
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select('id, recording_status, recording_video_id, live_courses ( title )')
+    .eq('egress_id', egressId)
+    .maybeSingle()
+  if (!seance) return
+
+  const sessionId = String(seance.id)
+
+  // Rejouabilite : LiveKit reessaie un webhook non acquitte, et une deuxieme
+  // copie creerait une deuxieme video facturee chez Stream.
+  if (seance.recording_video_id) return
+
+  if (!recordings || !video) {
+    await service
+      .from('live_sessions')
+      .update({ recording_status: 'FAILED' })
+      .eq('id', sessionId)
+    return
+  }
+
+  if (info.status === 'EGRESS_FAILED' || info.status === 'EGRESS_ABORTED') {
+    console.error('[live] egress en echec', sessionId, info.status)
+    await service
+      .from('live_sessions')
+      .update({ recording_status: 'FAILED' })
+      .eq('id', sessionId)
+    return
+  }
+
+  try {
+    const cours = one(seance.live_courses as never) as
+      | Record<string, unknown>
+      | undefined
+    const titre = `${(cours?.title as string) ?? 'Cours en direct'} — ${new Date().toLocaleDateString('fr-FR')}`
+
+    /*
+     * Une seule demande au lieu de deux.
+     *
+     * Bunny demandait de creer la video puis de lui dire ou aller la chercher :
+     * entre les deux appels, une video vide existait, et un echec du second
+     * laissait une coquille a nettoyer. Stream prend l'URL d'emblee.
+     *
+     * L'URL pre-signee vaut deux heures — le temps de l'ingestion — puis ne vaut
+     * plus rien. Le depot R2 reste prive : un dossier public rendrait chaque
+     * seance de 90 minutes telechargeable par qui devine un nom de fichier.
+     */
+    const source = await recordings.presign({
+      method: 'GET',
+      key: recordingKey(sessionId),
+      expiresInSeconds: 2 * 3600,
+    })
+    const videoId = await video.ingestFromUrl({ url: source, name: titre })
+
+    await service
+      .from('live_sessions')
+      .update({
+        recording_video_id: videoId,
+        // Toujours `TRANSFERRING` : Stream a accepte la demande, il n'a pas fini
+        // de transcoder en HLS multi-debits. C'est
+        // `/live/sessions/:id/replay` qui constatera la disponibilite, au moment
+        // ou quelqu'un la demande.
+        recording_status: 'TRANSFERRING',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', sessionId)
+  } catch (cause) {
+    console.error('[live] transfert vers Stream echoue', sessionId, cause)
+    await service
+      .from('live_sessions')
+      .update({ recording_status: 'FAILED' })
+      .eq('id', sessionId)
+  }
+}
+
+/*
+ * --- Les points de controle d'une seance ----------------------------------
+ *
+ *   le professeur ouvre le module N ──▶ 3 boutons chez les eleves, 10 s
+ *                                              │
+ *                                              ▼
+ *                  le professeur ferme ──▶ decompte ──▶ resume par Gemini
+ *                                              │
+ *                                              ▼
+ *                        « 4 eleves sur 15 n'ont pas suivi : reprendre »
+ *
+ * C'est ce qui distingue ce format d'une video. Dans une classe de quinze
+ * adolescents, personne ne dit « je n'ai pas compris » — trois boutons et dix
+ * secondes, si.
+ *
+ * Deux regles tiennent la chose :
+ *
+ *   * **anonyme pour la classe, nominatif pour le seul professeur.** Un eleve
+ *     qui sait que sa reponse s'affiche devant quatorze camarades repond
+ *     « oui », et le point de controle ne sert plus a rien ;
+ *   * **le resume est une aide, pas une note.** Il n'entre dans aucun score, et
+ *     Gemini ne recoit **aucune donnee personnelle** : une matiere, un numero de
+ *     module, trois nombres.
+ */
+
+/** Le module en cours et son titre, tels que le professeur les declare. */
+const checkpointSchema = z.object({
+  moduleIndex: z.number().int().min(0).max(3),
+  // Jamais un nom de personne : ce champ part dans l'invite envoyee a Google.
+  topic: z.string().max(120).optional(),
+})
+
+const answerSchema = z.object({
+  answer: z.enum(['YES', 'NO', 'PARTLY']),
+})
+
+/**
+ * Le professeur ouvre le point de controle d'un module.
+ *
+ * **Rejouable.** Un professeur qui clique deux fois, ou dont le navigateur a
+ * plante, retrouve le meme point de controle : la contrainte
+ * `unique (session_id, module_index)` l'impose, et en ouvrir un second
+ * scinderait les reponses en deux decomptes dont aucun ne serait vrai.
+ */
+app.post('/live/sessions/:id/checkpoints', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const parsed = checkpointSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) {
+    return c.json({ error: 'Module non precise (0 a 3).' }, 400)
+  }
+
+  const acces = await sessionForTeacher(c.req.param('id'), userId)
+  if (!acces.ok) return c.json({ error: acces.error }, acces.status)
+
+  const sessionId = String(acces.session.id)
+  const service = asService()
+
+  // Deja ouvert ? On le rend tel quel. Le professeur voit le meme panneau, et
+  // les reponses deja donnees ne sont pas perdues.
+  const { data: existant } = await service
+    .from('session_checkpoints')
+    .select('id, module_index, opened_at, closed_at')
+    .eq('session_id', sessionId)
+    .eq('module_index', parsed.data.moduleIndex)
+    .maybeSingle()
+
+  if (existant) {
+    return c.json({
+      id: existant.id,
+      moduleIndex: existant.module_index,
+      openedAt: existant.opened_at,
+      closedAt: existant.closed_at,
+      reopened: true,
+    })
+  }
+
+  const { data: cree, error } = await service
+    .from('session_checkpoints')
+    .insert({
+      session_id: sessionId,
+      module_index: parsed.data.moduleIndex,
+    })
+    .select('id, module_index, opened_at')
+    .single()
+
+  if (error || !cree) {
+    return c.json({ error: 'Le point de controle n’a pas pu s’ouvrir.' }, 500)
+  }
+
+  return c.json({
+    id: cree.id,
+    moduleIndex: cree.module_index,
+    openedAt: cree.opened_at,
+    closedAt: null,
+    reopened: false,
+  })
+})
+
+/**
+ * Un eleve repond.
+ *
+ * Trois verifications, et la troisieme est celle qu'on oublie : la place est la
+ * sienne, elle est **payee**, et le vote est **encore ouvert**. Repondre a un
+ * module ferme depuis une heure rendrait faux le resume deja lu par le
+ * professeur.
+ */
+app.post('/live/checkpoints/:id/answer', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const parsed = answerSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) {
+    return c.json({ error: 'Reponse attendue : YES, NO ou PARTLY.' }, 400)
+  }
+
+  const checkpointId = c.req.param('id')
+  const service = asService()
+
+  const { data: point } = await service
+    .from('session_checkpoints')
+    .select('id, session_id, closed_at')
+    .eq('id', checkpointId)
+    .maybeSingle()
+
+  if (!point) return c.json({ error: 'Point de controle introuvable.' }, 404)
+  if (point.closed_at != null) {
+    return c.json({ error: 'Ce module est termine.' }, 409)
+  }
+
+  const { data: parent } = await service
+    .from('parents')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!parent) {
+    return c.json({ error: 'Ce compte ne suit pas cette seance.' }, 403)
+  }
+
+  const { data: places } = await service
+    .from('session_enrolments')
+    .select('id')
+    .eq('session_id', point.session_id as string)
+    .eq('parent_id', parent.id as string)
+    .eq('status', 'CONFIRMED')
+
+  const liste = places ?? []
+  if (liste.length === 0) {
+    return c.json({ error: 'Votre place n’est pas encore payee.' }, 403)
+  }
+
+  // Deux enfants sur la meme seance : chacun repond pour sa place. Le client
+  // indique laquelle, comme pour le jeton d'entree.
+  const demande = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
+  const voulue = typeof demande.enrolmentId === 'string' ? demande.enrolmentId : null
+  const place = voulue
+    ? liste.find((p) => p.id === voulue)
+    : liste.length === 1
+      ? liste[0]
+      : null
+
+  if (!place) {
+    return c.json(
+      {
+        error: 'Plusieurs places sur cette seance : indiquez qui repond.',
+        choices: liste.map((p) => ({ enrolmentId: p.id })),
+      },
+      409,
+    )
+  }
+
+  // `upsert` sur la cle primaire : une reponse se donne une fois, mais un
+  // double envoi (bouton tapote deux fois sur un reseau lent) ne doit pas
+  // echouer sous les yeux de l'eleve.
+  const { error } = await service.from('checkpoint_answers').upsert(
+    {
+      checkpoint_id: checkpointId,
+      enrolment_id: place.id as string,
+      answer: parsed.data.answer,
+    },
+    { onConflict: 'checkpoint_id,enrolment_id' },
+  )
+
+  if (error) {
+    return c.json({ error: 'La reponse n’a pas pu etre enregistree.' }, 500)
+  }
+  return c.json({ recorded: true, answer: parsed.data.answer })
+})
+
+/**
+ * Le professeur ferme le vote, et recoit le resume.
+ *
+ * La fermeture et le resume sont **un seul geste** : un resume demande
+ * separement serait demande trop tard — la pause dure cinq minutes.
+ *
+ * Si Gemini n'est pas configure ou refuse, le decompte est rendu quand meme. Le
+ * professeur a besoin des chiffres ; la phrase est un supplement, et perdre les
+ * deux pour un incident chez Google serait absurde.
+ */
+app.post('/live/checkpoints/:id/close', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const checkpointId = c.req.param('id')
+  const service = asService()
+
+  const { data: point } = await service
+    .from('session_checkpoints')
+    .select(
+      'id, session_id, module_index, closed_at, summary, live_sessions ( live_course_id, live_courses ( teacher_id, title, subjects ( name ), levels ( name ) ) )',
+    )
+    .eq('id', checkpointId)
+    .maybeSingle()
+
+  if (!point) return c.json({ error: 'Point de controle introuvable.' }, 404)
+
+  const acces = await sessionForTeacher(String(point.session_id), userId)
+  if (!acces.ok) return c.json({ error: acces.error }, acces.status)
+
+  const { data: reponses } = await service
+    .from('checkpoint_answers')
+    .select('answer')
+    .eq('checkpoint_id', checkpointId)
+
+  const decompte = { yes: 0, partly: 0, no: 0 }
+  for (const ligne of reponses ?? []) {
+    if (ligne.answer === 'YES') decompte.yes += 1
+    else if (ligne.answer === 'PARTLY') decompte.partly += 1
+    else if (ligne.answer === 'NO') decompte.no += 1
+  }
+
+  // Deja ferme : on rend l'etat enregistre sans rappeler Gemini. Un second appel
+  // paierait une deuxieme fois pour la meme phrase.
+  if (point.closed_at != null) {
+    return c.json({
+      closedAt: point.closed_at,
+      counts: decompte,
+      summary: point.summary,
+      alreadyClosed: true,
+    })
+  }
+
+  const ferme = new Date().toISOString()
+  let resume: string | null = null
+
+  if (gemini && decompte.yes + decompte.partly + decompte.no > 0) {
+    const seance = one(point.live_sessions as never) as
+      | Record<string, unknown>
+      | undefined
+    const cours = one(seance?.live_courses as never) as
+      | Record<string, unknown>
+      | undefined
+    const matiere = one(cours?.subjects as never) as
+      | Record<string, unknown>
+      | undefined
+    const niveau = one(cours?.levels as never) as
+      | Record<string, unknown>
+      | undefined
+
+    try {
+      resume = await gemini.summariseCheckpoint({
+        subject: (matiere?.name as string) ?? 'Cours',
+        level: (niveau?.name as string) ?? '',
+        moduleIndex: Number(point.module_index ?? 0),
+        yes: decompte.yes,
+        partly: decompte.partly,
+        no: decompte.no,
+      })
+    } catch (cause) {
+      // Journalise, jamais remonte tel quel : un message de Google au milieu
+      // d'un cours n'aide personne.
+      console.error('[checkpoint] resume indisponible', checkpointId, cause)
+    }
+  }
+
+  await service
+    .from('session_checkpoints')
+    .update({ closed_at: ferme, summary: resume })
+    .eq('id', checkpointId)
+
+  return c.json({
+    closedAt: ferme,
+    counts: decompte,
+    summary: resume,
+    alreadyClosed: false,
+  })
+})
+
+/**
+ * L'etat des points de controle d'une seance.
+ *
+ * **Deux reponses tres differentes selon qui demande**, et c'est le coeur de la
+ * regle d'anonymat :
+ *
+ *   * le **professeur** recoit les decomptes et les resumes — c'est son panneau
+ *     « ce qui bloque » ;
+ *   * un **eleve** recoit seulement : y a-t-il un vote ouvert, et ai-je deja
+ *     repondu. Jamais le decompte, jamais la reponse d'un autre. Lui montrer
+ *     « 11 sur 15 ont compris » lui dirait aussi qu'il est dans les quatre.
+ */
+app.get('/live/sessions/:id/checkpoints', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const sessionId = c.req.param('id')
+  const service = asService()
+
+  const { data: points } = await service
+    .from('session_checkpoints')
+    .select('id, module_index, opened_at, closed_at, summary')
+    .eq('session_id', sessionId)
+    .order('module_index', { ascending: true })
+
+  const liste = points ?? []
+
+  const { data: prof } = await service
+    .from('teachers')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select('live_courses ( teacher_id )')
+    .eq('id', sessionId)
+    .maybeSingle()
+  const cours = one(seance?.live_courses as never) as
+    | Record<string, unknown>
+    | undefined
+  const estLeProfesseur =
+    prof != null && cours != null && prof.id === cours.teacher_id
+
+  if (estLeProfesseur) {
+    const decomptes = new Map<string, { yes: number; partly: number; no: number }>()
+    if (liste.length > 0) {
+      const { data: reponses } = await service
+        .from('checkpoint_answers')
+        .select('checkpoint_id, answer')
+        .in(
+          'checkpoint_id',
+          liste.map((p) => p.id as string),
+        )
+      for (const ligne of reponses ?? []) {
+        const cle = String(ligne.checkpoint_id)
+        const total = decomptes.get(cle) ?? { yes: 0, partly: 0, no: 0 }
+        if (ligne.answer === 'YES') total.yes += 1
+        else if (ligne.answer === 'PARTLY') total.partly += 1
+        else if (ligne.answer === 'NO') total.no += 1
+        decomptes.set(cle, total)
+      }
+    }
+
+    return c.json({
+      role: 'teacher',
+      checkpoints: liste.map((point) => ({
+        id: point.id,
+        moduleIndex: point.module_index,
+        openedAt: point.opened_at,
+        closedAt: point.closed_at,
+        summary: point.summary,
+        counts: decomptes.get(String(point.id)) ?? { yes: 0, partly: 0, no: 0 },
+      })),
+    })
+  }
+
+  // Cote eleve : ses places, pour savoir ce qu'il a deja repondu.
+  const { data: parent } = await service
+    .from('parents')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!parent) return c.json({ role: 'student', checkpoints: [] })
+
+  const { data: places } = await service
+    .from('session_enrolments')
+    .select('id')
+    .eq('session_id', sessionId)
+    .eq('parent_id', parent.id as string)
+    .eq('status', 'CONFIRMED')
+
+  const ids = (places ?? []).map((p) => p.id as string)
+  const miennes = new Map<string, string>()
+  if (ids.length > 0 && liste.length > 0) {
+    const { data: reponses } = await service
+      .from('checkpoint_answers')
+      .select('checkpoint_id, answer, enrolment_id')
+      .in(
+        'checkpoint_id',
+        liste.map((p) => p.id as string),
+      )
+      .in('enrolment_id', ids)
+    for (const ligne of reponses ?? []) {
+      miennes.set(String(ligne.checkpoint_id), String(ligne.answer))
+    }
+  }
+
+  return c.json({
+    role: 'student',
+    enrolmentIds: ids,
+    checkpoints: liste.map((point) => ({
+      id: point.id,
+      moduleIndex: point.module_index,
+      openedAt: point.opened_at,
+      closedAt: point.closed_at,
+      // Ni decompte ni resume : voir l'en-tete de cette route.
+      myAnswer: miennes.get(String(point.id)) ?? null,
+    })),
+  })
+})
+
+/**
+ * Les seances d'une famille : celles a venir, et celles deja suivies.
+ *
+ * --- Pourquoi cette route existe ------------------------------------------
+ *
+ * Sans elle, la grille publique ne montre que les seances **a venir**. Une
+ * famille qui a paye le cours de mardi n'a aucun endroit ou le retrouver
+ * mercredi — ni pour voir la rediffusion, ni pour verifier ce qu'elle a paye. Un
+ * cours achete qu'on ne retrouve pas est un remboursement demande.
+ *
+ * Les inscriptions `PENDING` y figurent aussi, et c'est voulu : une place retenue
+ * dont le paiement n'est pas passe doit se voir, sinon la personne croit avoir
+ * paye et se presente a 18 h devant une porte fermee.
+ */
+app.get('/live/my-sessions', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const service = asService()
+  const { data: parent } = await service
+    .from('parents')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  // Un compte enseignant n'a pas de fiche famille : liste vide, pas une erreur.
+  // Ses cours a lui se lisent par `/live/courses`.
+  if (!parent) return c.json([])
+
+  const { data, error } = await service
+    .from('session_enrolments')
+    .select(
+      'id, status, holds_until, children ( first_name ), live_sessions ( id, slot_id, starts_at, duration_minutes, status, seats_taken, recording_status, recording_video_id, live_courses ( id, title, price, seats, teacher_id, subjects ( id, name, code ), levels ( id, name, code, category ) ) )',
+    )
+    .eq('parent_id', parent.id as string)
+    .order('created_at', { ascending: false })
+    .limit(60)
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  const lignes = (data ?? []).flatMap((inscription) => {
+    const seance = one(inscription.live_sessions as never) as
+      | Record<string, unknown>
+      | undefined
+    if (!seance) return []
+    const cours = one(seance.live_courses as never) as
+      | Record<string, unknown>
+      | undefined
+    const enfant = one(inscription.children as never) as
+      | Record<string, unknown>
+      | undefined
+    const matiere = one(cours?.subjects as never) as
+      | Record<string, unknown>
+      | undefined
+    const niveau = one(cours?.levels as never) as
+      | Record<string, unknown>
+      | undefined
+
+    return [
+      {
+        enrolmentId: String(inscription.id),
+        enrolmentStatus: String(inscription.status),
+        holdsUntil: (inscription.holds_until as string | null) ?? null,
+        childName: (enfant?.first_name as string | null) ?? null,
+        sessionId: String(seance.id),
+        slotId: String(seance.slot_id ?? ''),
+        startsAt: String(seance.starts_at),
+        durationMinutes: Number(seance.duration_minutes ?? 90),
+        status: String(seance.status),
+        // L'etat de l'enregistrement, pour que l'ecran sache s'il doit proposer
+        // une rediffusion ou expliquer qu'il n'y en aura pas. **Pas
+        // l'identifiant de la video** : il n'est pas lisible sans signature, et
+        // le donner inviterait a le faire fuir.
+        replay: seance.recording_video_id
+          ? ((seance.recording_status as string | null) ?? 'TRANSFERRING')
+          : null,
+        courseId: cours ? String(cours.id) : '',
+        title: (cours?.title as string | null) ?? null,
+        price: Number(cours?.price ?? 0),
+        subject: matiere
+          ? { id: String(matiere.id), name: String(matiere.name) }
+          : null,
+        level: niveau
+          ? { id: String(niveau.id), name: String(niveau.name) }
+          : null,
+      },
+    ]
+  })
+
+  // La plus proche d'abord parmi celles a venir, puis les passees de la plus
+  // recente a la plus ancienne : c'est l'ordre dans lequel on les cherche.
+  const maintenant = Date.now()
+  lignes.sort((a, b) => {
+    const da = new Date(a.startsAt).getTime()
+    const db = new Date(b.startsAt).getTime()
+    const aVenirA = da >= maintenant
+    const aVenirB = db >= maintenant
+    if (aVenirA !== aVenirB) return aVenirA ? -1 : 1
+    return aVenirA ? da - db : db - da
+  })
+
+  return c.json(lignes)
+})
+
+/**
+ * Qui suit un cours en ce moment.
+ *
+ * --- Pourquoi par le serveur et non en lecture directe -------------------
+ *
+ * La vue `attendance_detail` est en `security_invoker` : un client pourrait la
+ * lire directement sans rien voir de plus que ce que la politique lui ouvre. Le
+ * passage par ici n'est donc pas une question de securite mais de **nombre
+ * d'implementations** : le bandeau du site, celui de l'application Flutter et
+ * tout ecran a venir lisent la meme reponse, construite une fois. Un cumul de
+ * minutes recalcule dans chaque client finirait par donner deux chiffres
+ * differents pour la meme semaine, et c'est le chiffre qu'un parent regarde.
+ *
+ * **Ce que cette route ne rend jamais : rien qui touche a l'image.** Un parent
+ * voit que son enfant suit un cours et depuis combien de temps. C'est une
+ * presence, pas une surveillance video, et la distinction se tient ici autant
+ * que dans le dessin de l'ecran.
+ */
+app.get('/live/presence', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  // Sous le jeton de l'appelant : c'est la politique de `session_attendance`
+  // qui decide ce qu'il voit, et elle ne lui ouvre que les siens.
+  const { data, error } = await asUser(tokenOf(c))
+    .from('attendance_detail')
+    .select(
+      'id, session_id, child_name, subject_name, course_title, minutes_so_far, starts_at',
+    )
+    .is('left_at', null)
+    .order('joined_at', { ascending: true })
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  return c.json(
+    (data ?? []).map((ligne) => ({
+      id: String(ligne.id),
+      sessionId: String(ligne.session_id),
+      childName: (ligne.child_name as string | null) ?? undefined,
+      subjectName: (ligne.subject_name as string | null) ?? undefined,
+      courseTitle: (ligne.course_title as string | null) ?? undefined,
+      minutes: Number(ligne.minutes_so_far ?? 0),
+      startsAt: String(ligne.starts_at),
+    })),
+  )
+})
+
+/**
+ * Le temps de cours cumule.
+ *
+ * Par defaut depuis lundi : c'est la semaine telle qu'une famille la compte, et
+ * « cette semaine » doit dire la meme chose un vendredi qu'un dimanche. Le
+ * dimanche appartient a la semaine qui finit, pas a celle qui commence — d'ou le
+ * decalage sur `getUTCDay() === 0`.
+ */
+app.get('/live/study-minutes', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const demande = c.req.query('since')
+  const depuis = demande && !Number.isNaN(Date.parse(demande))
+    ? new Date(demande)
+    : startOfWeek(new Date())
+
+  const { data, error } = await asUser(tokenOf(c))
+    .from('attendance_detail')
+    .select('session_id, child_name, subject_name, minutes, minutes_so_far')
+    .gte('joined_at', depuis.toISOString())
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  const lignes = data ?? []
+  const parEnfant = new Map<string, number>()
+  const parMatiere = new Map<string, number>()
+  const seances = new Set<string>()
+  let total = 0
+
+  for (const ligne of lignes) {
+    // `minutes_so_far` couvre la seance en cours ; `minutes` les terminees. La
+    // vue rend la seconde dans la premiere quand la ligne est fermee, donc une
+    // seule lecture suffit.
+    const duree = Number(ligne.minutes_so_far ?? ligne.minutes ?? 0)
+    if (!Number.isFinite(duree) || duree <= 0) continue
+    total += duree
+    seances.add(String(ligne.session_id))
+
+    const enfant = (ligne.child_name as string | null) ?? 'Mon compte'
+    parEnfant.set(enfant, (parEnfant.get(enfant) ?? 0) + duree)
+
+    const matiere = (ligne.subject_name as string | null) ?? 'Autre'
+    parMatiere.set(matiere, (parMatiere.get(matiere) ?? 0) + duree)
+  }
+
+  const classe = (table: Map<string, number>, cle: 'childName' | 'subjectName') =>
+    [...table.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([nom, minutes]) => ({ [cle]: nom, minutes }))
+
+  return c.json({
+    since: depuis.toISOString(),
+    totalMinutes: total,
+    sessions: seances.size,
+    perChild: classe(parEnfant, 'childName'),
+    perSubject: classe(parMatiere, 'subjectName'),
+  })
+})
+
+/** Lundi 00 h 00 de la semaine d'une date. */
+function startOfWeek(reference: Date): Date {
+  const jour = reference.getUTCDay()
+  // Dimanche vaut 0 : il ferme la semaine, il ne l'ouvre pas.
+  const recul = jour === 0 ? 6 : jour - 1
+  const lundi = new Date(
+    Date.UTC(
+      reference.getUTCFullYear(),
+      reference.getUTCMonth(),
+      reference.getUTCDate() - recul,
+    ),
+  )
+  return lundi
+}
+
+/**
+ * La rediffusion d'une seance.
+ *
+ * --- Qui y a droit --------------------------------------------------------
+ *
+ * Les memes que dans la salle : le professeur du cours, et les inscrits payes.
+ * Un eleve qui a paye la seance du mardi a droit a la rediffusion du mardi —
+ * c'est le meme cours, et c'est la reponse a « j'ai eu une coupure de courant »,
+ * qui est la premiere raison de rater un cours ici.
+ *
+ * --- Pourquoi l'etat se verifie a la lecture ------------------------------
+ *
+ * Stream transcode en quelques minutes et ne nous previent pas. Interroger a la
+ * demande, plutot que d'attendre un balayage nocturne, fait que l'eleve qui
+ * revient une heure apres le cours trouve sa rediffusion — et nous evite une
+ * tache planifiee qui interroge Stream pour des seances que personne ne regarde.
+ */
+app.get('/live/sessions/:id/replay', async (c) => {
+  if (!video) {
+    return c.json({ error: 'L’hebergement video n’est pas configure.' }, 503)
+  }
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const sessionId = c.req.param('id')
+  const service = asService()
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select(
+      'id, starts_at, status, opened_at, recording_video_id, recording_status, live_courses ( id, teacher_id, title )',
+    )
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  if (!seance) return c.json({ error: 'Seance introuvable.' }, 404)
+
+  const cours = one(seance.live_courses as never) as
+    | Record<string, unknown>
+    | undefined
+
+  const { data: prof } = await service
+    .from('teachers')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  let autorise = prof != null && cours != null && prof.id === cours.teacher_id
+
+  if (!autorise) {
+    const { data: parent } = await service
+      .from('parents')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (parent) {
+      const { data: places } = await service
+        .from('session_enrolments')
+        .select('id')
+        .eq('session_id', sessionId)
+        .eq('parent_id', parent.id as string)
+        .eq('status', 'CONFIRMED')
+        .limit(1)
+      autorise = (places ?? []).length > 0
+    }
+  }
+
+  if (!autorise) {
+    return c.json({ error: 'Cette seance n’est pas accessible.' }, 403)
+  }
+
+  const videoId = seance.recording_video_id as string | null
+  let etat = (seance.recording_status as string | null) ?? null
+
+  if (!videoId) {
+    return c.json({ status: etat ?? 'NONE', available: false })
+  }
+
+  if (etat !== 'READY') {
+    /*
+     * Trois etats, pas six codes numeriques.
+     *
+     * Bunny rendait un entier (4 = « finished », 5 et 6 des echecs) que ce
+     * fichier devait traduire. `_lib/stream.ts` rend directement le vocabulaire
+     * du schema : la traduction vit dans le module du fournisseur, qui est le
+     * seul endroit cense connaitre ses conventions.
+     */
+    const constate = await video.videoState(videoId).catch(() => null)
+    if (constate) etat = constate
+    if (etat !== seance.recording_status) {
+      await service
+        .from('live_sessions')
+        .update({ recording_status: etat })
+        .eq('id', sessionId)
+    }
+  }
+
+  if (etat !== 'READY') {
+    return c.json({ status: etat, available: false })
+  }
+
+  /*
+   * --- Les quatre modules, sans decouper la video ------------------------
+   *
+   * Le plan (strategy_implementation.md §B7) prevoyait de produire quatre
+   * segments et autant de `course_items`. On rend des **reperes temporels** a la
+   * place, et c'est mieux pour trois raisons :
+   *
+   *   * aucun re-encodage : decouper 90 minutes en quatre demanderait de
+   *     retraiter la video, donc du temps machine et une occasion d'echouer ;
+   *   * aucun stockage en plus : quatre segments, c'est deux fois la video chez
+   *     Stream, facture ;
+   *   * un seul lien a signer. Quatre videos, c'est quatre URL signees a tenir
+   *     a jour, et quatre chances d'en laisser fuir une.
+   *
+   * Ce que l'eleve voulait — « atterrir sur le module que j'ai manque » — est
+   * obtenu avec `?t=`, que le lecteur de Stream comme `video_player` savent
+   * faire. Le decoupage physique resolvait un probleme qu'on n'avait pas.
+   *
+   * --- D'ou viennent les bornes ------------------------------------------
+   *
+   * `live_sessions.opened_at` est l'instant ou la salle s'ouvre, donc l'instant
+   * ou l'egress commence : c'est le zero de l'enregistrement. Chaque point de
+   * controle est ouvert par le professeur **a la fin** de son module, donc son
+   * `opened_at` marque la fin du module et le debut du suivant.
+   *
+   * Sans point de controle, pas de repere : on ne coupe pas au hasard a 0, 22,
+   * 45 et 67 minutes. Mieux vaut une rediffusion sans chapitres qu'une
+   * rediffusion dont les chapitres mentent.
+   */
+  const chapitres: Array<{
+    index: number
+    label: string
+    startSeconds: number
+  }> = []
+
+  const ouverture = seance.opened_at
+    ? new Date(String(seance.opened_at)).getTime()
+    : null
+
+  if (ouverture != null) {
+    const { data: points } = await service
+      .from('session_checkpoints')
+      .select('module_index, opened_at')
+      .eq('session_id', sessionId)
+      .order('module_index', { ascending: true })
+
+    let debut = 0
+    for (const point of points ?? []) {
+      chapitres.push({
+        index: Number(point.module_index ?? 0),
+        label: `Module ${Number(point.module_index ?? 0) + 1}`,
+        startSeconds: debut,
+      })
+      const fin = Math.max(
+        0,
+        Math.round(
+          (new Date(String(point.opened_at)).getTime() - ouverture) / 1000,
+        ),
+      )
+      // Cinq secondes avant la bascule : l'egress demarre une seconde ou deux
+      // apres l'ouverture de la salle, et un eleve qui atterrit apres la
+      // premiere phrase du module croit avoir manque quelque chose.
+      debut = Math.max(0, fin - 5)
+    }
+
+    // Le dernier module n'a pas de point de controle apres lui : il va de la
+    // derniere bascule a la fin de l'enregistrement.
+    if (chapitres.length > 0 && chapitres.length < 4) {
+      chapitres.push({
+        index: chapitres.length,
+        label: `Module ${chapitres.length + 1}`,
+        startSeconds: debut,
+      })
+    }
+  }
+
+  /*
+   * Quatre heures : de quoi regarder 90 minutes en s'interrompant, sans qu'un
+   * lien copie reste valable une semaine.
+   *
+   * Un seul appel rend les deux adresses — chez Bunny il en fallait deux, donc
+   * deux jetons avec deux expirations differentes pour la meme video.
+   */
+  const lecture = await video.playbackUrls(videoId, { ttlSeconds: 4 * 3600 })
+
+  return c.json({
+    status: 'READY',
+    available: true,
+    // `embed` pour le site (Chrome et Firefox ne lisent pas HLS sans
+    // bibliotheque), `hls` pour l'application Flutter, ou `video_player` le lit
+    // nativement par ExoPlayer.
+    embed: lecture.iframe,
+    hls: lecture.hls,
+    signed: lecture.signed,
+    expiresAt: lecture.expiresAt,
+    title: (cours?.title as string) ?? null,
+    startsAt: seance.starts_at,
+    // Vide quand la seance n'a pas eu de point de controle : l'ecran affiche
+    // alors la video sans chapitres, ce qui est honnete.
+    chapters: chapitres,
+  })
+})
+
+/**
+ * Une URL de lecture signee pour une video de cours.
+ *
+ * **Verification de l'achat d'abord, signature ensuite.** C'est le seul ordre
+ * acceptable : une URL signee emise sans controle vaut un cours offert, et elle
+ * circule.
+ */
+app.get('/videos/:itemId/url', async (c) => {
+  if (!video) {
+    return c.json({ error: 'L’hebergement video n’est pas configure.' }, 503)
+  }
+
+  const itemId = c.req.param('itemId')
+
+  // La lecture passe par le jeton de l'appelant : c'est RLS qui decide s'il a
+  // le droit de voir cet element, et `course_items` est fermee a qui n'a pas
+  // achete (migration 0010). On ne contourne pas cette regle avec la cle de
+  // service — ce serait la defaire.
+  const { data: element, error } = await asUser(tokenOf(c))
+    .from('course_items')
+    .select('id, title, provider_video_id, provider_status')
+    .eq('id', itemId)
+    .maybeSingle()
+
+  if (error || !element) {
+    // Indistinguable d'un element inexistant, volontairement : dire « vous
+    // n'avez pas achete » confirmerait l'existence du contenu.
+    return c.json({ error: 'Video indisponible.' }, 404)
+  }
+
+  const videoId = element.provider_video_id as string | undefined
+  if (!videoId) {
+    return c.json({ error: 'Cette video n’est pas encore deposee.' }, 409)
+  }
+  // Ouvrir un lecteur sur une video encore en transcodage
+  // donne un cadre noir.
+  if (element.provider_status && element.provider_status !== 'READY') {
+    return c.json(
+      { error: 'Cette video est en preparation.', status: element.provider_status },
+      409,
+    )
+  }
+
+  const lecture = await video.playbackUrls(videoId)
+  // `url` conserve pour les appelants existants : le lecteur du telephone lit
+  // HLS nativement, et c'est ce que cette route servait deja.
+  return c.json({ ...lecture, url: lecture.hls })
+})
+
+// --- Cours en direct : generation des seances -------------------------------
+//
+// Un cours recurrent ne porte que ses creneaux ; ce sont ses occurrences qu'on
+// achete. Le generateur les cree a l'avance, et il est **rejouable** : la
+// contrainte `unique (live_course_id, starts_at)` fait que relancer ne cree
+// aucun doublon. C'est ce qui permet de le declencher par cron sans tenir de
+// curseur.
+
+/** Combien de semaines d'avance. Quatre : un mois d'agenda visible. */
+const WEEKS_AHEAD = 4
+
+/**
+ * Cree les seances manquantes de tous les cours publies.
+ *
+ * Rend le nombre cree. Ne supprime rien : une seance annulee garde son etat
+ * `CANCELLED` et ne doit pas reapparaitre au prochain passage — ce que
+ * garantit la contrainte d'unicite, pas une logique de suppression.
+ */
+async function generateSessions(): Promise<{ created: number; courses: number }> {
+  const service = asService()
+
+  const { data: cours } = await service
+    .from('live_courses')
+    .select('id, slot_ids')
+    .eq('status', 'PUBLISHED')
+
+  if (!cours || cours.length === 0) return { created: 0, courses: 0 }
+
+  const lignes: Record<string, unknown>[] = []
+  const maintenant = new Date()
+
+  for (const c of cours) {
+    const creneaux = Array.isArray(c.slot_ids)
+      ? (c.slot_ids as unknown[]).map(String)
+      : []
+    for (const occurrence of occurrencesFor(creneaux, {
+      from: maintenant,
+      weeks: WEEKS_AHEAD,
+    })) {
+      lignes.push({
+        live_course_id: c.id,
+        slot_id: occurrence.slotId,
+        starts_at: occurrence.startsAt.toISOString(),
+        duration_minutes: occurrence.durationMinutes,
+        status: 'PLANNED',
+      })
+    }
+  }
+
+  if (lignes.length === 0) return { created: 0, courses: cours.length }
+
+  // `ignoreDuplicates` plutot qu'un `upsert` qui ecrase : une seance existante
+  // peut avoir ete annulee, renommee, ou porter une salle. La regenerer
+  // effacerait ces changements.
+  const { error, count } = await service
+    .from('live_sessions')
+    .upsert(lignes, {
+      onConflict: 'live_course_id,starts_at',
+      ignoreDuplicates: true,
+      count: 'exact',
+    })
+
+  if (error) {
+    console.error('[seances] generation impossible', error.message)
+    return { created: 0, courses: cours.length }
+  }
+  return { created: count ?? 0, courses: cours.length }
+}
+
+/**
+ * Declenchement manuel, reserve a la cle de service.
+ *
+ * Le cron fait le travail en temps normal ; ce point d'entree sert a verifier
+ * apres un deploiement, et a rattraper si une execution a ete manquee. Il
+ * n'est pas ouvert a un compte : un client qui pourrait le declencher pourrait
+ * le declencher mille fois.
+ */
+app.post('/live/sessions/generate', async (c) => {
+  const cle = c.req.header('X-Service-Key')
+  if (!cle || cle !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return c.json({ error: 'Non autorise.' }, 401)
+  }
+  const bilan = await generateSessions()
+  const liberees = await releaseExpiredSeats()
+  return c.json({ ...bilan, seatsReleased: liberees })
+})
+
+// --- S'inscrire a une seance ------------------------------------------------
+
+const enrolSchema = z.object({
+  sessionId: z.string().min(1),
+  /** L'eleve concerne. Absent : c'est l'etudiant majeur lui-meme. */
+  childId: z.string().min(1).optional(),
+  method: z.enum(['OM', 'MOMO']).optional(),
+  payerPhone: z.string().min(8).max(20).optional(),
+})
+
+/** Combien de temps une place reste retenue sans paiement. */
+const SEAT_HOLD_MINUTES = 20
+
+/**
+ * Inscrit a une seance et lance le paiement.
+ *
+ * L'ordre compte et il n'est pas interchangeable :
+ *
+ *  1. **prendre la place** — avant tout, parce que c'est la ressource rare.
+ *     Lancer le paiement d'abord ferait payer quelqu'un pour une salle pleine ;
+ *  2. creer l'inscription, qui retient la place 20 minutes ;
+ *  3. lancer le paiement.
+ *
+ * Si l'une des deux dernieres etapes echoue, la place est rendue tout de suite.
+ * Si personne ne paie, le cron la rend a l'expiration.
+ */
+app.post('/live/enrol', async (c) => {
+  const parsed = enrolSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) return c.json({ error: 'Seance non precisee.' }, 400)
+
+  const db = asUser(tokenOf(c))
+  const { data: parent } = await db.from('parents').select('id').maybeSingle()
+  if (!parent) {
+    return c.json({ error: 'Ce compte n’a pas de fiche famille.' }, 403)
+  }
+  const parentId = parent.id as string
+
+  const service = asService()
+
+  // La seance, son cours, son prix. Le prix est relu ici : un montant envoye
+  // par le client serait un montant choisi par le client.
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select(
+      'id, starts_at, status, live_courses ( id, price, title, teacher_id, seats )',
+    )
+    .eq('id', parsed.data.sessionId)
+    .maybeSingle()
+
+  if (!seance) return c.json({ error: 'Seance introuvable.' }, 404)
+  if (seance.status !== 'PLANNED') {
+    return c.json({ error: 'Cette seance n’accepte plus d’inscription.' }, 409)
+  }
+  if (new Date(String(seance.starts_at)).getTime() <= Date.now()) {
+    return c.json({ error: 'Cette seance a deja commence.' }, 409)
+  }
+
+  // PostgREST rend l'objet lie tantot seul, tantot dans un tableau selon la
+  // cardinalite qu'il deduit. On accepte les deux plutot que de parier.
+  const lie = seance.live_courses as unknown
+  const cours = (Array.isArray(lie) ? lie[0] : lie) as
+    | Record<string, unknown>
+    | null
+  const prix = Number(cours?.price ?? 0)
+  if (!cours || prix <= 0) {
+    return c.json({ error: 'Ce cours n’a pas de prix.' }, 409)
+  }
+
+  // Deja inscrit ? On rend l'inscription existante. Les deux index partiels la
+  // refuseraient, et un 409 ferait croire a une panne alors que la place est
+  // acquise.
+  let dejaQuery = service
+    .from('session_enrolments')
+    .select('id, status')
+    .eq('session_id', seance.id as string)
+    .eq('parent_id', parentId)
+    .limit(1)
+  dejaQuery = parsed.data.childId
+    ? dejaQuery.eq('child_id', parsed.data.childId)
+    : dejaQuery.is('child_id', null)
+
+  const { data: dejas } = await dejaQuery
+  if (dejas && dejas.length > 0) {
+    return c.json({
+      id: dejas[0].id,
+      status: dejas[0].status,
+      alreadyEnrolled: true,
+    })
+  }
+
+  // 1. La place, de maniere atomique.
+  const { data: prise } = await service.rpc('claim_session_seat', {
+    session: seance.id as string,
+  })
+  if (prise !== true) {
+    return c.json({ error: 'Cette seance est complete.' }, 409)
+  }
+
+  const rendreLaPlace = () =>
+    service.rpc('release_session_seat', { session: seance.id as string })
+
+  // 2. L'inscription, qui retient la place.
+  const { data: inscription, error: echecInscription } = await service
+    .from('session_enrolments')
+    .insert({
+      id: crypto.randomUUID(),
+      session_id: seance.id as string,
+      parent_id: parentId,
+      child_id: parsed.data.childId ?? null,
+      status: 'PENDING',
+      holds_until: new Date(
+        Date.now() + SEAT_HOLD_MINUTES * 60_000,
+      ).toISOString(),
+    })
+    .select('id, status')
+    .single()
+
+  if (echecInscription || !inscription) {
+    await rendreLaPlace()
+    return c.json({ error: 'L’inscription n’a pas abouti.' }, 500)
+  }
+
+  // 3. Le paiement — exactement le meme chemin que pour un cours video, avec le
+  // prix relu en base et la commission calculee ici.
+  const commission = Math.round(prix * COURSE_COMMISSION)
+  const { data: achat, error: echecAchat } = await service
+    .from('course_purchases')
+    .insert({
+      id: crypto.randomUUID(),
+      // Un achat porte soit un cours video, soit une inscription — jamais les
+      // deux (contrainte `course_purchases_target_check`, migration 0015).
+      course_id: null,
+      enrolment_id: inscription.id as string,
+      parent_id: parentId,
+      amount: prix,
+      commission,
+      status: 'PENDING',
+    })
+    .select('id')
+    .single()
+
+  if (echecAchat || !achat) {
+    // Sans ligne de paiement, personne ne pourra jamais payer cette place :
+    // on la rend tout de suite plutot que de la laisser bloquee 20 minutes.
+    await service
+      .from('session_enrolments')
+      .update({ status: 'CANCELLED' })
+      .eq('id', inscription.id as string)
+    await rendreLaPlace()
+    return c.json({ error: 'Le paiement n’a pas pu etre prepare.' }, 500)
+  }
+
+  const lancement = await startPayment(c, {
+    purchaseId: achat.id as string,
+    amount: prix,
+    method: parsed.data.method,
+    payerPhone: parsed.data.payerPhone,
+    courseTitle: String(cours.title ?? 'Cours en direct'),
+  })
+
+  return c.json(
+    {
+      id: inscription.id,
+      purchaseId: achat.id,
+      status: 'PENDING',
+      amount: prix,
+      holdsMinutes: SEAT_HOLD_MINUTES,
+      alreadyEnrolled: false,
+      ...lancement,
+    },
+    201,
+  )
+})
+
+/**
+ * Libere les places retenues sans paiement.
+ *
+ * Appelee par le cron. Sans elle, une inscription abandonnee garderait sa place
+ * pour toujours et la seance afficherait complet en etant vide.
+ */
+async function releaseExpiredSeats(): Promise<number> {
+  const service = asService()
+  const { data: expirees } = await service
+    .from('session_enrolments')
+    .select('id, session_id')
+    .eq('status', 'PENDING')
+    .lt('holds_until', new Date().toISOString())
+    .limit(200)
+
+  if (!expirees || expirees.length === 0) return 0
+
+  for (const e of expirees) {
+    await service
+      .from('session_enrolments')
+      .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
+      .eq('id', e.id as string)
+    await service.rpc('release_session_seat', { session: e.session_id })
+  }
+  return expirees.length
+}
+
+/** Les seances a venir d'un cours, pour le professeur comme pour l'eleve. */
+app.get('/live/courses/:id/sessions', async (c) => {
+  const rows = await asUser(tokenOf(c))
+    .from('live_sessions')
+    .select('id, slot_id, starts_at, duration_minutes, status')
+    .eq('live_course_id', c.req.param('id'))
+    .gte('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
+    .limit(60)
+
+  if (rows.error) return c.json({ error: 'Lecture impossible.' }, 500)
+  return c.json(rows.data ?? [])
+})
+
+// --- Achat d'un cours video ------------------------------------------------
+//
+// **Le client n'envoie que l'identifiant du cours.** Il n'envoie pas le prix :
+// un montant qui vient du navigateur est un montant choisi par le navigateur.
+// Le prix se relit dans `video_courses`, la commission se calcule ici, et la
+// ligne est ecrite avec la cle de service — la politique d'insertion a ete
+// retiree du client par la migration 0012.
+//
+// L'achat est enregistre `PENDING`. Il n'y a pas encore d'encaissement : aucun
+// fournisseur de paiement n'est branche, et `has_bought_course()` n'ouvre les
+// videos qu'a l'etat `PAID`. Ce point d'entree cree donc une demande, pas un
+// acces — ce qui est la verite de ce qui se passe, et ce qui evite de donner
+// le cours a qui appuie sur le bouton.
+//
+// Quand l'API de l'operateur sera branchee, c'est ici que partira la demande
+// de paiement, et un second point d'entree recevra sa confirmation
+// (`provider_ref`, `paid_at`, puis `status = 'PAID'`).
+
+/**
+ * L'encaisseur, quand il est configure.
+ *
+ * `null` sans configuration, et c'est un mode de fonctionnement a part
+ * entiere : la demande d'achat s'enregistre `PENDING` et personne n'est
+ * debite. C'est l'etat du produit tant que le compte marchand n'existe pas, et
+ * l'ecran le dit — « rien n'est debite maintenant ».
+ */
+const djomyConfig = {
+  // `DJOMY_ENVIRONMENT` vient de `[vars]` dans `wrangler.toml`, pas d'un
+  // secret : ce n'est pas une donnee sensible, et la voir versionnee par
+  // environnement de deploiement est precisement ce qui evite de se tromper.
+  environment: process.env.DJOMY_ENVIRONMENT as
+    | 'sandbox'
+    | 'production'
+    | undefined,
+  baseUrl: (process.env.DJOMY_BASE_URL ?? '').replace(/\/$/, ''),
+  clientId: process.env.DJOMY_CLIENT_ID ?? '',
+  clientSecret: process.env.DJOMY_CLIENT_SECRET ?? '',
+  // La documentation dit « la cle secrete du marchand (clientSecret) ». On
+  // accepte une cle distincte au cas ou l'espace developpeur en delivre une.
+  webhookSecret:
+    process.env.DJOMY_WEBHOOK_SECRET ?? process.env.DJOMY_CLIENT_SECRET ?? '',
+  countryCode: process.env.DJOMY_COUNTRY ?? 'GN',
+}
+
+const djomy = Djomy.isConfigured(djomyConfig) ? new Djomy(djomyConfig) : null
+
+/**
+ * Des cles sans environnement declare : on refuse d'encaisser.
+ *
+ * C'est le cas qui merite un refus plutot qu'un defaut. Choisir « production »
+ * facturerait de vrais clients depuis un poste de developpement ; choisir
+ * « sandbox » laisserait une mise en ligne encaisser dans le vide pendant des
+ * semaines, et le defaut ne se verrait qu'au premier client qui reclame son
+ * cours. Les deux se decouvrent trop tard.
+ */
+if (!djomy && djomyConfig.clientId !== '') {
+  console.error(
+    '[djomy] cles presentes mais configuration incomplete — encaissement ' +
+      'desactive. Verifier DJOMY_ENVIRONMENT (sandbox|production), ' +
+      'DJOMY_BASE_URL, DJOMY_CLIENT_ID, DJOMY_CLIENT_SECRET.',
+  )
+} else if (djomy) {
+  console.log(`[djomy] encaissement actif en ${djomy.environment}`)
+}
+
+const purchaseSchema = z.object({
+  courseId: z.string().min(1),
+  /**
+   * Le portefeuille choisi. Absent, aucun paiement n'est demande : la ligne
+   * reste une intention, ce qui sert tant que l'encaissement n'existe pas.
+   */
+  method: z.enum(['OM', 'MOMO']).optional(),
+  /**
+   * Le numero qui paie. Par defaut celui du compte — mais on paie souvent avec
+   * le portefeuille d'un proche, et imposer celui du compte ferait echouer la
+   * moitie des paiements.
+   */
+  payerPhone: z.string().min(8).max(20).optional(),
+})
+
+/** La part retenue par la plateforme, identique aux deux clients. */
+const COURSE_COMMISSION = 0.2
+
+app.post('/purchases', async (c) => {
+  const parsed = purchaseSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) {
+    return c.json({ error: 'Cours non precise.' }, 400)
+  }
+
+  // La fiche de l'acheteur, lue sous SON jeton : c'est RLS qui garantit qu'on
+  // ne peut pas acheter au nom de quelqu'un d'autre, et non un parametre.
+  const db = asUser(tokenOf(c))
+  const { data: parent } = await db.from('parents').select('id').maybeSingle()
+  if (!parent) {
+    return c.json(
+      { error: 'Ce compte n’a pas de fiche famille. Connectez-vous.' },
+      403,
+    )
+  }
+
+  const service = asService()
+  const { data: course } = await service
+    .from('video_courses')
+    .select('id, title, price, status, teacher_id')
+    .eq('id', parsed.data.courseId)
+    .maybeSingle()
+  if (!course) return c.json({ error: 'Cours introuvable.' }, 404)
+  if (course.status !== 'PUBLISHED') {
+    return c.json({ error: 'Ce cours n’est plus en vente.' }, 409)
+  }
+
+  const parentId = parent.id as string
+
+  // Deja achete ? On rend la ligne existante au lieu d'en creer une seconde :
+  // la contrainte d'unicite la refuserait, et un 409 ferait croire a une panne
+  // alors que l'acces est deja acquis — ou la demande deja enregistree.
+  const { data: existing } = await service
+    .from('course_purchases')
+    .select('id, status, amount, provider_ref')
+    .eq('course_id', course.id)
+    .eq('parent_id', parentId)
+    .maybeSingle()
+
+  if (existing) {
+    // Une demande en attente **sans reference d'operateur** est une tentative
+    // qui n'a pas abouti : l'appel a Djomy a echoue, ou aucun n'a ete fait. La
+    // contrainte d'unicite empeche d'en creer une seconde, donc sans cette
+    // reprise le cours devenait inachetable pour toujours.
+    const aRelancer =
+      existing.status === 'PENDING' && existing.provider_ref == null
+
+    if (!aRelancer) {
+      return c.json({
+        id: existing.id,
+        status: existing.status,
+        amount: existing.amount,
+        alreadyRequested: true,
+      })
+    }
+
+    const relance = await startPayment(c, {
+      purchaseId: existing.id as string,
+      amount: Number(existing.amount ?? 0),
+      method: parsed.data.method,
+      payerPhone: parsed.data.payerPhone,
+      courseTitle: String(course.title ?? ''),
+    })
+    return c.json({
+      id: existing.id,
+      status: 'PENDING',
+      amount: existing.amount,
+      alreadyRequested: true,
+      ...relance,
+    })
+  }
+
+  const price = Number(course.price ?? 0)
+  if (price <= 0) {
+    return c.json({ error: 'Ce cours n’a pas de prix.' }, 409)
+  }
+
+  // Le prix et la commission sont figes maintenant : changer le tarif plus
+  // tard ne doit pas reecrire ce qui a ete demande.
+  const commission = Math.round(price * COURSE_COMMISSION)
+
+  const { data: created, error } = await service
+    .from('course_purchases')
+    .insert({
+      id: crypto.randomUUID(),
+      course_id: course.id,
+      parent_id: parentId,
+      amount: price,
+      commission,
+      status: 'PENDING',
+    })
+    .select('id, status, amount')
+    .single()
+
+  if (error || !created) {
+    return c.json({ error: 'La demande n’a pas pu être enregistrée.' }, 500)
+  }
+
+  // La ligne existe avant l'appel a l'operateur, et dans cet ordre : si Djomy
+  // repond apres un delai ou pas du tout, la demande est deja tracee et le
+  // webhook saura la retrouver par `merchantPaymentReference`. L'inverse —
+  // appeler d'abord — perdrait un paiement reussi dont nous n'aurions aucune
+  // trace.
+  const lancement = await startPayment(c, {
+    purchaseId: created.id as string,
+    amount: price,
+    method: parsed.data.method,
+    payerPhone: parsed.data.payerPhone,
+    courseTitle: String(course.title ?? ''),
+  })
+
+  // Aucun appel au journal ici : l'intergiciel d'audit enregistre toute
+  // mutation (`isAuditable`), celle-ci comprise, avec l'appelant et la charge
+  // utile. Un second enregistrement ferait deux lignes pour un achat.
+
+  return c.json(
+    {
+      id: created.id,
+      status: created.status,
+      amount: created.amount,
+      alreadyRequested: false,
+      ...lancement,
+    },
+    201,
+  )
+})
+
+/**
+ * Demande le paiement a Djomy et enregistre ce qu'il rend.
+ *
+ * Rend ce que le client doit savoir : si une confirmation est attendue sur le
+ * telephone du payeur, ou s'il faut le rediriger. Un echec n'est pas fatal — la
+ * demande reste enregistree, le message explique, et un nouvel appel reprendra
+ * la meme ligne.
+ */
+async function startPayment(
+  c: Context,
+  input: {
+    purchaseId: string
+    amount: number
+    method?: 'OM' | 'MOMO'
+    payerPhone?: string
+    courseTitle: string
+  },
+): Promise<{
+  payment: 'none' | 'awaiting_confirmation' | 'redirect'
+  redirectUrl?: string
+  paymentError?: string
+  sandbox?: boolean
+}> {
+  if (!djomy || !input.method) return { payment: 'none' }
+  // Porte jusqu'a l'ecran : un paiement de test doit se voir. Sans cela, une
+  // demonstration en bac a sable passe pour un encaissement reel, et personne
+  // ne s'en apercoit avant de chercher l'argent.
+  const sandbox = djomy.isSandbox
+
+  // Le numero du compte sert de defaut. Il est lu sous la cle de service :
+  // `profiles` est ferme a tout le monde sauf son proprietaire, et nous
+  // agissons ici pour lui.
+  let payerPhone = input.payerPhone
+  if (!payerPhone) {
+    const { data: profile } = await asService()
+      .from('profiles')
+      .select('phone')
+      .eq('id', c.get('userId') ?? '')
+      .maybeSingle()
+    payerPhone = (profile?.phone as string | undefined) ?? undefined
+  }
+  if (!payerPhone) {
+    return {
+      payment: 'none',
+      paymentError: 'Aucun numéro de téléphone pour le paiement.',
+      sandbox,
+    }
+  }
+
+  try {
+    const paiement = await djomy.chargeWallet({
+      method: input.method,
+      payerPhone,
+      amount: input.amount,
+      // Notre identifiant d'achat : c'est lui qui revient dans le webhook et
+      // qui permet de retrouver la ligne sans dependre de `provider_ref`.
+      reference: input.purchaseId,
+      description: `Cours : ${input.courseTitle}`.slice(0, 255),
+      metadata: { purchase_id: input.purchaseId },
+    })
+
+    await asService()
+      .from('course_purchases')
+      .update({
+        provider: 'DJOMY',
+        provider_ref: paiement.transactionId,
+        provider_method: input.method,
+        payer_identifier: toDjomyPhone(payerPhone),
+      })
+      .eq('id', input.purchaseId)
+
+    return paiement.redirectUrl
+      ? { payment: 'redirect', redirectUrl: paiement.redirectUrl, sandbox }
+      : { payment: 'awaiting_confirmation', sandbox }
+  } catch (cause) {
+    const message =
+      cause instanceof DjomyError
+        ? cause.message
+        : 'Le paiement n’a pas pu être lancé.'
+    console.error('[djomy] initiation', message)
+    // La demande reste `PENDING` sans reference : le prochain appel la
+    // reprendra au lieu de buter sur la contrainte d'unicite.
+    return { payment: 'none', paymentError: message, sandbox }
+  }
+}
+
+/**
+ * Ou en est une demande d'achat.
+ *
+ * La page de retour interroge ce point d'entree plutot que de croire les
+ * parametres d'URL que Djomy y ajoute : `?status=SUCCESS` se tape a la main.
+ * Le webhook est la seule source de verite, et ceci la relit.
+ */
+app.get('/purchases/:id', async (c) => {
+  const db = asUser(tokenOf(c))
+  const { data: parent } = await db.from('parents').select('id').maybeSingle()
+  if (!parent) return c.json({ error: 'Compte sans fiche famille.' }, 403)
+
+  const { data: purchase } = await asService()
+    .from('course_purchases')
+    .select('id, course_id, status, amount, provider_method, paid_at')
+    .eq('id', c.req.param('id'))
+    // Filtre sur le proprietaire : sans lui, un identifiant devine donnerait
+    // l'etat de l'achat de quelqu'un d'autre.
+    .eq('parent_id', parent.id as string)
+    .maybeSingle()
+
+  if (!purchase) return c.json({ error: 'Demande introuvable.' }, 404)
+
+  // Filet quand le webhook n'est pas arrive : on demande a Djomy. Le resultat
+  // n'est pas ecrit ici — seul le webhook, signe, modifie l'achat. On le rend
+  // comme information, en le nommant pour ce qu'il est.
+  let providerStatus: string | undefined
+  if (djomy && purchase.status === 'PENDING') {
+    const { data: withRef } = await asService()
+      .from('course_purchases')
+      .select('provider_ref')
+      .eq('id', purchase.id as string)
+      .maybeSingle()
+    const reference = withRef?.provider_ref as string | undefined
+    if (reference) {
+      providerStatus = await djomy
+        .paymentStatus(reference)
+        .catch(() => undefined)
+    }
+  }
+
+  return c.json({
+    id: purchase.id,
+    courseId: purchase.course_id,
+    status: purchase.status,
+    amount: purchase.amount,
+    method: purchase.provider_method,
+    paidAt: purchase.paid_at,
+    providerStatus,
+  })
+})
+
+/**
+ * Webhook Djomy : changement de statut d'un paiement.
+ *
+ * Public et non authentifie — c'est Djomy qui appelle, pas un compte. Ce qui
+ * tient la porte est la signature HMAC du corps, verifiee **avant** toute
+ * analyse : re-serialiser le JSON changerait les octets et la signature ne
+ * correspondrait plus.
+ *
+ * Trois regles portent la correction de ce point d'entree :
+ *
+ *  1. **Signature d'abord.** Sans elle, n'importe qui crédite n'importe quel
+ *     achat en envoyant `payment.success`.
+ *  2. **Deduplication par `eventId`.** Djomy reessaie ce qui n'a pas repondu
+ *     200 ; un reessai ne doit pas rejouer un encaissement.
+ *  3. **Pas de retour en arriere.** Les evenements arrivent dans un ordre
+ *     quelconque : un `payment.pending` reçu apres un `payment.success` ne doit
+ *     pas retirer un cours deja paye.
+ */
+app.post('/payments/djomy/webhook', async (c) => {
+  if (!djomy) return c.json({ error: 'Encaissement non configuré.' }, 503)
+
+  const rawBody = await c.req.text()
+  const signature = c.req.header('X-Webhook-Signature')
+
+  if (!(await djomy.verifyWebhook(rawBody, signature))) {
+    // 401 et aucun detail : un message precis aiderait a fabriquer une
+    // signature valide.
+    return c.json({ error: 'Signature invalide.' }, 401)
+  }
+
+  let enveloppe: Record<string, unknown>
+  try {
+    enveloppe = JSON.parse(rawBody) as Record<string, unknown>
+  } catch {
+    return c.json({ error: 'Corps illisible.' }, 400)
+  }
+
+  const eventType = String(enveloppe.eventType ?? '')
+  const eventId = String(enveloppe.eventId ?? '')
+  if (!eventId) return c.json({ error: 'eventId manquant.' }, 400)
+
+  // V1 pose les donnees directement dans `data` ; V2 les met sous
+  // `data.payment`. Les deux formes coexistent selon la configuration du
+  // marchand, et on ne choisit pas la sienne.
+  const data = (enveloppe.data ?? {}) as Record<string, unknown>
+  const paiement = (data.payment ?? data) as Record<string, unknown>
+
+  const service = asService()
+
+  // La deduplication passe par l'insertion : la contrainte de cle primaire
+  // tranche, sans lecture prealable et donc sans course entre deux reessais
+  // simultanes.
+  const { error: dejaVu } = await service.from('payment_events').insert({
+    event_id: eventId,
+    event_type: eventType,
+    transaction_id: (paiement.transactionId as string) ?? null,
+    merchant_ref: (paiement.merchantPaymentReference as string) ?? null,
+    status: (paiement.status as string) ?? null,
+    paid_amount:
+      typeof paiement.paidAmount === 'number' ? paiement.paidAmount : null,
+    payload: enveloppe,
+  })
+  if (dejaVu) {
+    // Deja traite. On repond 200 : un 4xx ferait reessayer Djomy
+    // indefiniment pour un evenement dont nous avons fini.
+    return c.json({ received: true, duplicate: true })
+  }
+
+  const nouveau = purchaseStatusFor(eventType)
+  // Un `payout.*`, ou un type ajoute plus tard : journalise, sans toucher a
+  // l'achat.
+  if (!nouveau) return c.json({ received: true, ignored: eventType })
+
+  const reference = paiement.merchantPaymentReference as string | undefined
+  const transactionId = paiement.transactionId as string | undefined
+
+  // Par notre reference d'abord — c'est l'identifiant de l'achat, et il ne
+  // depend pas d'une ecriture qui a pu echouer a l'initiation.
+  let requete = service
+    .from('course_purchases')
+    .select('id, status, amount')
+    .limit(1)
+  requete = reference
+    ? requete.eq('id', reference)
+    : requete.eq('provider_ref', transactionId ?? '')
+
+  const { data: achats } = await requete
+  const achat = achats?.[0]
+  if (!achat) {
+    // L'evenement est garde : il concerne peut-etre un paiement initie
+    // ailleurs, et le perdre rendrait un rapprochement impossible.
+    return c.json({ received: true, unmatched: true })
+  }
+
+  if (!canTransition(String(achat.status), nouveau)) {
+    return c.json({ received: true, unchanged: String(achat.status) })
+  }
+
+  const miseAJour: Record<string, unknown> = {
+    status: nouveau,
+    updated_at: new Date().toISOString(),
+  }
+  if (transactionId) miseAJour.provider_ref = transactionId
+  if (typeof paiement.fees === 'number') miseAJour.provider_fees = paiement.fees
+  if (typeof paiement.receivedAmount === 'number') {
+    miseAJour.provider_received = paiement.receivedAmount
+  }
+  if (typeof paiement.paymentMethod === 'string') {
+    miseAJour.provider_method = paiement.paymentMethod
+  }
+  if (typeof paiement.payerIdentifier === 'string') {
+    miseAJour.payer_identifier = paiement.payerIdentifier
+  }
+  if (nouveau === 'PAID') miseAJour.paid_at = new Date().toISOString()
+
+  const { error: echec } = await service
+    .from('course_purchases')
+    .update(miseAJour)
+    .eq('id', achat.id as string)
+
+  if (echec) {
+    // 500 : Djomy reessaiera, et la deduplication a deja enregistre
+    // l'evenement — donc le reessai sera ignore. On retire la ligne de journal
+    // pour que la reprise puisse reellement rejouer.
+    await service.from('payment_events').delete().eq('event_id', eventId)
+    return c.json({ error: 'Mise a jour impossible.' }, 500)
+  }
+
+  // Une inscription a une seance se confirme au paiement. Sans cela la place
+  // reste « retenue » et le cron la rendrait au bout de vingt minutes — alors
+  // qu'elle est payee.
+  const { data: porte } = await service
+    .from('course_purchases')
+    .select('enrolment_id')
+    .eq('id', achat.id as string)
+    .maybeSingle()
+
+  const enrolmentId = porte?.enrolment_id as string | undefined
+  if (enrolmentId) {
+    if (nouveau === 'PAID') {
+      await service
+        .from('session_enrolments')
+        .update({
+          status: 'CONFIRMED',
+          // La place n'expire plus : elle est payee.
+          holds_until: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', enrolmentId)
+
+      // Le groupe du cours s'ouvre a la premiere place payee, et la famille y
+      // entre du meme coup — son appartenance se deduit de cette place.
+      //
+      // Appele a chaque paiement : `assurerGroupe` ne fait rien si le groupe
+      // existe, ce qui evite d'avoir a savoir qui est le premier.
+      const { data: cours } = await service
+        .from('session_enrolments')
+        .select(
+          'live_sessions!inner ( live_course_id, ' +
+            'live_courses!inner ( title, subjects ( name ) ) )',
+        )
+        .eq('id', enrolmentId)
+        .maybeSingle()
+
+      // Le typage de supabase-js ne traverse pas un `!inner` imbrique : il
+      // rend `GenericStringError`. Le meme contournement qu'ailleurs dans ce
+      // fichier.
+      const ligne = cours as unknown as Record<string, unknown> | null
+      const brut = ligne?.live_sessions
+      const seance = (Array.isArray(brut) ? brut[0] : brut) as Record<
+        string,
+        unknown
+      > | null
+      const fiche = (Array.isArray(seance?.live_courses)
+        ? seance?.live_courses[0]
+        : seance?.live_courses) as Record<string, unknown> | null
+      const matiere = fiche?.subjects as { name?: string } | null
+
+      if (seance?.live_course_id) {
+        await assurerGroupe(
+          'COURSE',
+          seance.live_course_id as string,
+          (fiche?.title as string) ?? matiere?.name ?? 'Cours en direct',
+        )
+      }
+    } else if (nouveau === 'FAILED' || nouveau === 'CANCELLED') {
+      const { data: avant } = await service
+        .from('session_enrolments')
+        .select('session_id, status')
+        .eq('id', enrolmentId)
+        .maybeSingle()
+
+      await service
+        .from('session_enrolments')
+        .update({ status: 'CANCELLED', updated_at: new Date().toISOString() })
+        .eq('id', enrolmentId)
+
+      // On ne rend la place que si elle etait encore tenue : un double
+      // evenement ne doit pas offrir une place de plus que la salle n'en a.
+      if (avant && avant.status !== 'CANCELLED') {
+        await service.rpc('release_session_seat', {
+          session: avant.session_id,
+        })
+      }
+    }
+  }
+
+  // Le compteur de ventes ne bouge qu'au paiement confirme, et seulement pour
+  // un cours video : une seance en direct compte ses places, pas ses ventes.
+  if (nouveau === 'PAID' && !enrolmentId) {
+    const { data: cours } = await service
+      .from('video_courses')
+      .select('purchase_count')
+      .eq('id', (await courseOf(achat.id as string)) ?? '')
+      .maybeSingle()
+    if (cours) {
+      await service
+        .from('video_courses')
+        .update({ purchase_count: Number(cours.purchase_count ?? 0) + 1 })
+        .eq('id', (await courseOf(achat.id as string)) ?? '')
+    }
+  }
+
+  return c.json({ received: true, status: nouveau })
+})
+
+/** Le cours d'un achat. */
+async function courseOf(purchaseId: string): Promise<string | undefined> {
+  const { data } = await asService()
+    .from('course_purchases')
+    .select('course_id')
+    .eq('id', purchaseId)
+    .maybeSingle()
+  return (data?.course_id as string | undefined) ?? undefined
+}
+
+app.post('/applications', async (c) => {
+  const parsed = applySchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) {
+    return c.json({ error: 'Offre non precisee.' }, 400)
+  }
+
+  const db = asUser(tokenOf(c))
+  const { data: teacher } = await db.from('teachers').select('id').maybeSingle()
+  if (!teacher) return c.json({ error: 'Profil enseignant introuvable.' }, 403)
+
+  const service = asService()
+  const { data: job } = await service
+    .from('jobs')
+    .select('id, subject_id, level_ids, city, min_experience, requires_certification')
+    .eq('id', parsed.data.jobId)
+    .maybeSingle()
+  if (!job) return c.json({ error: 'Offre introuvable.' }, 404)
+
+  const profile = await loadTeacher(teacher.id as string)
+  // Le score est fige a la candidature : le profil evoluera, la decision de
+  // l'etablissement doit rester lisible telle qu'elle a ete prise.
+  const match = profile
+    ? scoreMatch(
+        {
+          subjectId: job.subject_id as string,
+          levelIds: (job.level_ids as string[]) ?? [],
+          city: job.city as string,
+          minExperience: (job.min_experience as number) ?? 0,
+          requiresCertification: Boolean(job.requires_certification),
+        },
+        toCandidate(profile),
+      )
+    : null
+
+  const { data, error } = await db
+    .from('applications')
+    .insert({
+      job_id: job.id,
+      teacher_id: teacher.id,
+      cover_note: parsed.data.note,
+      match_score: match?.value,
+      match_factors: match?.factors,
+    })
+    .select('id, status, applied_at, match_score')
+    .single()
+
+  if (error) {
+    const duplicate = error.code === '23505'
+    return c.json(
+      {
+        error: duplicate
+          ? 'Vous avez deja postule a cette offre.'
+          : 'La candidature n’a pas pu etre enregistree.',
+      },
+      duplicate ? 409 : 500,
+    )
+  }
+
+  return c.json(data, 201)
+})
+
+// --- Etablissements (surface eleve) ----------------------------------------
+
+app.get('/institutions', async (c) => {
+  const { city, type } = c.req.query()
+  let request = asUser(tokenOf(c))
+    .from('institutions')
+    .select('id, name, type, city, address, description, verification_status')
+    .order('name')
+
+  if (city) request = request.eq('city', city)
+  if (type) request = request.eq('type', type)
+
+  const { data, error } = await request
+  if (error) throw error
+
+  const list = (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    city: row.city,
+    address: row.address ?? undefined,
+    description: row.description ?? undefined,
+    verified: row.verification_status === 'VERIFIED',
+  }))
+
+  // Un etablissement verifie passe devant : c'est la seule hierarchie que
+  // l'eleve peut verifier lui-meme.
+  return c.json(
+    list.sort(
+      (a, b) =>
+        Number(b.verified) - Number(a.verified) || a.name.localeCompare(b.name),
+    ),
+  )
+})
+
+// --- Demandes d'inscription (l'eleve postule a un etablissement) -----------
+
+const ENROLMENT_FIELDS = `
+  id, status, school_year, message, level_id, created_at, responded_at,
+  child:children (id, first_name, level_id),
+  institution:institutions (id, name, type, city, verification_status)
+`
+
+app.get('/enrolments', async (c) => {
+  const { data, error } = await asUser(tokenOf(c))
+    .from('enrolment_requests')
+    .select(ENROLMENT_FIELDS)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+
+  return c.json((data ?? []).map(shapeEnrolment))
+})
+
+const enrolmentSchema = z.object({
+  childId: z.string().min(1),
+  institutionId: z.string().min(1),
+  levelId: z.string().min(1).optional(),
+  message: z.string().max(2000).optional(),
+})
+
+app.post('/enrolments', async (c) => {
+  const parsed = enrolmentSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) {
+    return c.json({ error: 'Etablissement non precise.' }, 400)
+  }
+
+  const db = asUser(tokenOf(c))
+  const { data: parent } = await db.from('parents').select('id').maybeSingle()
+  if (!parent) return c.json({ error: 'Profil parent introuvable.' }, 403)
+
+  const { data, error } = await db
+    .from('enrolment_requests')
+    .insert({
+      parent_id: parent.id,
+      child_id: parsed.data.childId,
+      institution_id: parsed.data.institutionId,
+      level_id: parsed.data.levelId,
+      message: parsed.data.message,
+      school_year: currentSchoolYear(),
+    })
+    .select(ENROLMENT_FIELDS)
+    .single()
+
+  if (error) {
+    const duplicate = error.code === '23505'
+    return c.json(
+      {
+        error: duplicate
+          ? 'Une demande est deja en cours dans cet etablissement.'
+          : 'La demande n’a pas pu etre enregistree.',
+      },
+      duplicate ? 409 : 500,
+    )
+  }
+
+  return c.json(shapeEnrolment(data), 201)
+})
+
+const decisionSchema = z.object({
+  status: z.enum(['VIEWED', 'ACCEPTED', 'REJECTED', 'CANCELLED']),
+})
+
+app.patch('/enrolments/:id', async (c) => {
+  const parsed = decisionSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) return c.json({ error: 'Statut inconnu.' }, 400)
+
+  const db = asUser(tokenOf(c))
+  const [{ data: parent }, { data: institution }] = await Promise.all([
+    db.from('parents').select('id').maybeSingle(),
+    db.from('institutions').select('id').maybeSingle(),
+  ])
+
+  const actor: EnrolmentActor | null = institution
+    ? 'institution'
+    : parent
+      ? 'parent'
+      : null
+  if (!actor) return c.json({ error: 'Profil introuvable.' }, 403)
+
+  // Le statut courant est relu cote serveur : le client ne le fournit pas,
+  // donc il ne peut pas mentir sur le point de depart de la transition.
+  const { data: existing } = await db
+    .from('enrolment_requests')
+    .select('status')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+  if (!existing) return c.json({ error: 'Demande introuvable.' }, 404)
+
+  if (
+    !canSetEnrolmentStatus(
+      actor,
+      existing.status as EnrolmentStatus,
+      parsed.data.status,
+    )
+  ) {
+    return c.json({ error: 'Cette suite n’est pas possible.' }, 409)
+  }
+
+  const { data, error } = await db
+    .from('enrolment_requests')
+    .update({
+      status: parsed.data.status,
+      status_changed_at: new Date().toISOString(),
+      responded_at:
+        parsed.data.status === 'VIEWED' ? null : new Date().toISOString(),
+    })
+    .eq('id', c.req.param('id'))
+    .select(ENROLMENT_FIELDS)
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) return c.json({ error: 'Demande introuvable.' }, 404)
+  return c.json(shapeEnrolment(data))
+})
+
+// --- Tests (§10 a §13) -----------------------------------------------------
+
+app.get('/tests', async (c) => {
+  const db = asUser(tokenOf(c))
+  const { data: teacher } = await db.from('teachers').select('id').maybeSingle()
+
+  const { data: subjects } = teacher
+    ? await db
+        .from('teacher_subjects')
+        .select('subject_id')
+        .eq('teacher_id', teacher.id)
+    : { data: [] }
+
+  const subjectIds = (subjects ?? []).map((s) => s.subject_id as string)
+
+  let request = db
+    .from('tests')
+    .select(
+      'id, title, question_count, duration_minutes, passing_score, rules, subject:subjects (id, name), level:levels (id, name)',
+    )
+    .eq('active', true)
+
+  // Un enseignant ne passe que les tests de ses matieres (§10.1).
+  if (subjectIds.length > 0) request = request.in('subject_id', subjectIds)
+
+  const { data, error } = await request
+  if (error) throw error
+
+  const { data: certs } = teacher
+    ? await db
+        .from('teacher_certifications')
+        .select('subject_id, level_id, score, issued_at')
+        .eq('teacher_id', teacher.id)
+    : { data: [] }
+
+  return c.json(
+    (data ?? []).map((test) => {
+      const subject = one(test.subject)
+      const level = one(test.level)
+      const cert = (certs ?? []).find(
+        (x) => x.subject_id === subject?.id && x.level_id === level?.id,
+      )
+      return {
+        id: test.id,
+        title: test.title,
+        subject,
+        level,
+        questionCount: test.question_count,
+        durationMinutes: test.duration_minutes,
+        passingScore: test.passing_score,
+        rules: test.rules,
+        certification: cert
+          ? { score: cert.score, issuedAt: cert.issued_at }
+          : undefined,
+      }
+    }),
+  )
+})
+
+/** Questions sans la bonne reponse — elle ne quitte jamais le serveur. */
+app.get('/tests/:id/questions', async (c) => {
+  const { data, error } = await asUser(tokenOf(c))
+    .from('test_questions_public')
+    .select('id, statement, options, domain, position')
+    .eq('test_id', c.req.param('id'))
+    .order('position')
+  if (error) throw error
+  return c.json(data)
+})
+
+const submitSchema = z.object({
+  answers: z.record(z.string(), z.string().nullable()),
+})
+
+/**
+ * Correction (§12).
+ *
+ * Le calcul est refait ici a partir des reponses stockees : le serveur reste
+ * la source officielle du resultat, meme lorsque le test s'est deroule hors
+ * ligne (§11).
+ */
+app.post('/tests/:id/submit', async (c) => {
+  const parsed = submitSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) return c.json({ error: 'Reponses illisibles.' }, 400)
+
+  const testId = c.req.param('id')
+  const db = asUser(tokenOf(c))
+  const { data: teacher } = await db.from('teachers').select('id').maybeSingle()
+  if (!teacher) return c.json({ error: 'Profil enseignant introuvable.' }, 403)
+
+  const service = asService()
+  const { data: test } = await service
+    .from('tests')
+    .select('id, subject_id, level_id, passing_score')
+    .eq('id', testId)
+    .maybeSingle()
+  if (!test) return c.json({ error: 'Test introuvable.' }, 404)
+
+  const { data: questions } = await service
+    .from('test_questions')
+    .select('id, correct_key, domain')
+    .eq('test_id', testId)
+
+  const outcome = scoreTest(
+    (questions ?? []) as { id: string; correct_key: string; domain: string }[],
+    parsed.data.answers,
+    test.passing_score as number,
+  )
+
+  await service.from('test_sessions').insert({
+    teacher_id: teacher.id,
+    test_id: testId,
+    status: 'SUBMITTED',
+    expires_at: new Date().toISOString(),
+    submitted_at: new Date().toISOString(),
+    score: outcome.score,
+    passed: outcome.passed,
+    correct_count: outcome.correctCount,
+    domain_scores: outcome.domainScores,
+  })
+
+  // La certification n'est delivree qu'au-dessus du seuil, et porte toujours
+  // la matiere et le niveau evalues (§13).
+  if (outcome.passed) {
+    await service.from('teacher_certifications').upsert(
+      {
+        teacher_id: teacher.id,
+        subject_id: test.subject_id,
+        level_id: test.level_id,
+        score: outcome.score,
+        issued_at: new Date().toISOString(),
+      },
+      { onConflict: 'teacher_id,subject_id,level_id' },
+    )
+  }
+
+  return c.json(outcome)
+})
+
+// --- Synchronisation (§44) -------------------------------------------------
+
+/**
+ * `/sync/push` — ce que le telephone a ecrit hors ligne.
+ *
+ * --- Le trou que cette route comble --------------------------------------
+ *
+ * L'application mobile poussait ici depuis le premier jour. La route n'existait
+ * pas : tout ce qu'une personne saisissait restait sur son telephone,
+ * definitivement. Un professeur qui cree un cours, un parent qui ajoute un
+ * enfant — rien ne remontait, et une reinstallation de l'APK effacait le tout.
+ *
+ * --- Deux barrieres, aucune ne remplace l'autre --------------------------
+ *
+ *   * **RLS**, parce que l'ecriture passe par `asUser(jeton)` : Postgres refuse
+ *     une ligne qui n'appartient pas a l'appelant ;
+ *   * **la liste de colonnes** de `_lib/sync.ts`, parce que RLS ne regarde que
+ *     la ligne. Un professeur possede sa ligne `teachers` : RLS le laisserait
+ *     ecrire `identity_status = 'VERIFIED'` sur lui-meme, ou prolonger son
+ *     propre `boosted_until`, qui se paie.
+ *
+ * --- Pourquoi chaque element est traite seul ----------------------------
+ *
+ * Pas de transaction englobante. Une file de synchronisation accumule des
+ * operations independantes : si la trente-deuxieme est refusee, les trente-et-une
+ * precedentes doivent rester. Tout annuler renverrait le telephone a son etat
+ * initial a chaque element fautif, et il reessaierait indefiniment.
+ *
+ * Le client sait traiter un resultat par element — c'est la forme qu'il attend
+ * (`clientRef`, `status`, `message`).
+ */
+app.post('/sync/push', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const corps = (await c.req.json().catch(() => ({}))) as Record<string, unknown>
+  const brut = Array.isArray(corps.operations) ? corps.operations : []
+
+  if (brut.length === 0) {
+    // Une file vide n'est pas une erreur : le moteur pousse de maniere
+    // opportuniste, parfois sans rien a dire.
+    return c.json({ results: [] })
+  }
+
+  /*
+   * Plafond par appel.
+   *
+   * Un telephone reste hors ligne une semaine, revient avec deux mille
+   * operations, et un seul appel depasserait le temps processeur du Worker. Le
+   * client garde les suivantes en file et rappelle : c'est exactement ce que son
+   * moteur fait deja apres un envoi partiel.
+   */
+  const LOT = 100
+  const lot = brut.slice(0, LOT)
+
+  // Sous le jeton de l'appelant : c'est RLS qui decide a quelles lignes il
+  // touche. `asService()` ici annulerait la premiere des deux barrieres.
+  const db = asUser(tokenOf(c))
+  const results: SyncPushResult[] = []
+
+  for (const element of lot) {
+    const item = element as Record<string, unknown>
+    const push: SyncPushItem = {
+      clientRef: Number(item.clientRef ?? 0),
+      entity: String(item.entity ?? ''),
+      entityId: String(item.entityId ?? ''),
+      operation: String(item.operation ?? ''),
+      payload:
+        item.payload && typeof item.payload === 'object'
+          ? (item.payload as Record<string, unknown>)
+          : {},
+    }
+
+    const plan = planWrite(push)
+
+    if (plan.kind === 'refuse') {
+      results.push({
+        clientRef: push.clientRef,
+        entity: push.entity,
+        entityId: push.entityId,
+        status: plan.status,
+        message: plan.message,
+      })
+      continue
+    }
+
+    try {
+      if (plan.kind === 'delete') {
+        const { error } = await db.from(plan.table).delete().eq('id', plan.id)
+        if (error) throw error
+      } else {
+        const { error } = await db
+          .from(plan.table)
+          .upsert(plan.row, { onConflict: 'id' })
+        if (error) throw error
+
+        if (plan.ignored.length > 0) {
+          // Journalise sans echouer : une version plus recente de l'application
+          // peut envoyer un champ que ce serveur ne connait pas encore, et
+          // refuser tout l'element pour cela bloquerait la file.
+          console.warn(
+            '[sync] colonnes ignorees',
+            push.entity,
+            plan.ignored.join(', '),
+          )
+        }
+      }
+
+      results.push({
+        clientRef: push.clientRef,
+        entity: push.entity,
+        entityId: push.entityId,
+        status: 'applied',
+      })
+    } catch (cause) {
+      /*
+       * Un refus de RLS est un **conflit**, pas un echec.
+       *
+       * La distinction decide du comportement du telephone : `failed` se remet
+       * en file et se reessaie, `conflict` s'arrete. Reessayer une ecriture que
+       * RLS refusera toujours — une ligne qui n'est pas la sienne — occuperait la
+       * file indefiniment, et la personne verrait un compteur d'erreurs qui ne
+       * descend jamais.
+       *
+       * Postgres rend `42501` (insufficient_privilege) quand une politique
+       * refuse ; PostgREST le relaie en `PGRST116` sur une ligne invisible.
+       */
+      const erreur = cause as { code?: string; message?: string }
+      const refusePolitique =
+        erreur.code === '42501' ||
+        erreur.code === 'PGRST116' ||
+        /row-level security|permission denied/i.test(erreur.message ?? '')
+
+      results.push({
+        clientRef: push.clientRef,
+        entity: push.entity,
+        entityId: push.entityId,
+        status: refusePolitique ? 'conflict' : 'failed',
+        message: refusePolitique
+          ? 'Cette donnee n’appartient pas a ce compte.'
+          : // Le detail technique reste dans les journaux : il nommerait des
+            // colonnes et des contraintes.
+            'Le serveur n’a pas pu enregistrer cette modification.',
+      })
+      if (!refusePolitique) {
+        console.error('[sync] echec', push.entity, push.entityId, cause)
+      }
+    }
+  }
+
+  return c.json({
+    results,
+    // Ce qui reste a envoyer, pour que le client rappelle sans deviner.
+    remaining: Math.max(0, brut.length - lot.length),
+  })
+})
+
+app.get('/sync/pull', async (c) => {
+  const cursor = Number(c.req.query('cursor') ?? 0)
+  const { data, error } = await asUser(tokenOf(c))
+    .from('sync_events')
+    .select('id, entity, entity_id, operation, payload, created_at')
+    .gt('id', Number.isFinite(cursor) ? cursor : 0)
+    .order('id')
+    .limit(200)
+  if (error) throw error
+
+  const changes = data ?? []
+  return c.json({
+    changes,
+    cursor: changes.length > 0 ? String(changes[changes.length - 1].id) : String(cursor),
+  })
+})
+
+// --- Helpers ---------------------------------------------------------------
+
+function shapeEnrolment(row: any) {
+  const institution = one<any>(row.institution)
+  const child = one<any>(row.child)
+  return {
+    id: row.id,
+    child: child
+      ? { id: child.id, firstName: child.first_name, levelId: child.level_id }
+      : null,
+    status: row.status,
+    schoolYear: row.school_year,
+    message: row.message ?? undefined,
+    levelId: row.level_id ?? undefined,
+    createdAt: row.created_at,
+    respondedAt: row.responded_at ?? undefined,
+    institution: institution
+      ? {
+          id: institution.id,
+          name: institution.name,
+          type: institution.type,
+          city: institution.city,
+          verified: institution.verification_status === 'VERIFIED',
+        }
+      : null,
+  }
+}
+
+/** Supabase renvoie une relation comme objet ou tableau selon le contexte. */
+function one<T>(value: T | T[] | null | undefined): T | undefined {
+  if (Array.isArray(value)) return value[0]
+  return value ?? undefined
+}
+
+async function levelLookup(
+  db: ReturnType<typeof asUser>,
+): Promise<Map<string, { id: string; name: string }>> {
+  const { data } = await db.from('levels').select('id, name')
+  return new Map((data ?? []).map((l) => [l.id as string, { id: l.id as string, name: l.name as string }]))
+}
+
+function shapeJob(row: any, levels: Map<string, { id: string; name: string }>) {
+  const institution = one<any>(row.institution)
+  return {
+    id: row.id,
+    title: row.title,
+    subject: one<any>(row.subject),
+    levels: ((row.level_ids as string[]) ?? [])
+      .map((id) => levels.get(id))
+      .filter(Boolean),
+    city: row.city,
+    contractType: row.contract_type,
+    description: row.description,
+    salaryMin: row.salary_min,
+    salaryMax: row.salary_max,
+    salaryPublished: row.salary_published,
+    minExperience: row.min_experience,
+    requiresCertification: row.requires_certification,
+    publishedAt: row.published_at,
+    applicationCount: 0,
+    institution: institution
+      ? {
+          id: institution.id,
+          name: institution.name,
+          type: institution.type,
+          city: institution.city,
+          verified: institution.verification_status === 'VERIFIED',
+        }
+      : null,
+  }
+}
+
+/** Profil complet, assemble avec la cle de service pour le calcul du score. */
+async function loadTeacher(teacherId: string) {
+  const db = asService()
+
+  const { data: teacher } = await db
+    .from('teachers')
+    .select(
+      'id, headline, bio, city, years_experience, availability, identity_status, diploma_status, boosted_until, user_id',
+    )
+    .eq('id', teacherId)
+    .maybeSingle()
+  if (!teacher) return null
+
+  const { data: profile } = await db
+    .from('profiles')
+    .select('first_name, last_name, photo_path')
+    .eq('id', teacher.user_id)
+    .maybeSingle()
+
+  const [subjects, levels, certs, experiences] = await Promise.all([
+    db.from('teacher_subjects').select('subject:subjects (id, name)').eq('teacher_id', teacherId),
+    db
+      .from('teacher_levels')
+      // `cycle` en plus du nom : c'est lui qui dit si un enseignant couvre
+      // le palier de l'eleve. Sans lui, la recherche comparait des
+      // identifiants exacts et proposait un professeur d'universite a une
+      // famille de 9eme.
+      .select('subject_id, level:levels (id, name, cycle)')
+      .eq('teacher_id', teacherId),
+    db
+      .from('teacher_certifications')
+      .select('id, score, issued_at, subject:subjects (id, name), level:levels (id, name)')
+      .eq('teacher_id', teacherId),
+    db
+      .from('teacher_experiences')
+      .select('id, institution_name, position, city, start_date, end_date, verification_status')
+      .eq('teacher_id', teacherId),
+  ])
+
+  const certifications = (certs.data ?? []).map((row) => ({
+    id: row.id,
+    subject: one<any>(row.subject),
+    level: one<any>(row.level),
+    score: row.score,
+    issuedAt: row.issued_at,
+  }))
+
+  const verifiedExperience = (experiences.data ?? []).filter(
+    (e) => e.verification_status === 'VERIFIED',
+  ).length
+
+  const identityVerified = teacher.identity_status === 'VERIFIED'
+  const diplomaVerified = teacher.diploma_status === 'VERIFIED'
+
+  const badges = {
+    identity: identityVerified,
+    diploma: diplomaVerified,
+    competency: certifications.length > 0,
+    experience: verifiedExperience > 0,
+    profile: false,
+  }
+  badges.profile = badges.identity && badges.diploma && badges.competency
+
+  const trust = trustScore({
+    identityVerified,
+    diplomaVerified,
+    certificationScores: certifications.map((c) => c.score as number),
+    verifiedExperienceCount: verifiedExperience,
+    yearsExperience: teacher.years_experience as number,
+    reviewAverage: null,
+    completedRecruitments: 0,
+  })
+
+  const subjectItems = (subjects.data ?? []).map((r) => one<any>(r.subject)).filter(Boolean)
+
+  return {
+    id: teacher.id as string,
+    firstName: profile?.first_name ?? '',
+    lastName: profile?.last_name ?? '',
+    fullName: `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim(),
+    headline: teacher.headline ?? '',
+    bio: teacher.bio,
+    city: teacher.city,
+    photoUrl: profile?.photo_path ?? undefined,
+    yearsExperience: teacher.years_experience as number,
+    availability: teacher.availability as string,
+    identityStatus: teacher.identity_status as string,
+    diplomaStatus: teacher.diploma_status as string,
+    subjects: subjectItems,
+    levels: (levels.data ?? []).map((r) => one<any>(r.level)).filter(Boolean),
+    levelPairs: (levels.data ?? []).map(
+      (r) => pairKey(r.subject_id as string, (one<any>(r.level))?.id),
+    ),
+    certifications,
+    experiences: (experiences.data ?? []).map((e) => ({
+      id: e.id,
+      institutionName: e.institution_name,
+      position: e.position,
+      city: e.city,
+      startYear: new Date(e.start_date as string).getFullYear(),
+      endYear: e.end_date ? new Date(e.end_date as string).getFullYear() : null,
+      verified: e.verification_status === 'VERIFIED',
+    })),
+    badges,
+    trustScore: trust.value,
+    trustDimensions: trust.dimensions,
+    boosted:
+      teacher.boosted_until != null &&
+      new Date(teacher.boosted_until as string) > new Date(),
+    completionRate: completionRate({
+      personal_info: Boolean(profile?.first_name),
+      photo: Boolean(profile?.photo_path),
+      identity: identityVerified,
+      diploma: diplomaVerified,
+      subjects: subjectItems.length > 0,
+      levels: (levels.data ?? []).length > 0,
+      experience: (experiences.data ?? []).length > 0,
+      availability: true,
+      certification: certifications.length > 0,
+    }),
+  }
+}
+
+function toCandidate(profile: Awaited<ReturnType<typeof loadTeacher>>): Candidate {
+  return {
+    subjectIds: profile!.subjects.map((s: any) => s.id),
+    levelPairs: profile!.levelPairs,
+    certifications: Object.fromEntries(
+      profile!.certifications.map((c: any) => [
+        pairKey(c.subject?.id, c.level?.id),
+        c.score,
+      ]),
+    ),
+    yearsExperience: profile!.yearsExperience,
+    city: profile!.city,
+    availability: profile!.availability,
+  }
+}
+
+// --- Points de fidelite et concours (D1, D4) --------------------------------
+//
+// Le solde se calcule cote serveur et jamais dans le client : la vue
+// `point_balances` somme le journal, et le client ne fait que l'afficher. Un
+// solde calcule dans l'application divergerait du jour ou une ecriture arrive
+// pendant que le telephone est hors ligne.
+
+app.get('/points/balance', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  // Sous le jeton de l'appelant : RLS garantit qu'il ne lit que sa ligne.
+  const { data, error } = await asUser(tokenOf(c))
+    .from('point_balances')
+    .select('balance, entries, last_entry_at')
+    .maybeSingle()
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  // Aucune ligne = aucun point encore gagne. Un zero, pas une erreur : c'est
+  // l'etat de tout compte neuf, et le refuser afficherait un message d'echec a
+  // chaque nouvelle inscription.
+  return c.json({
+    balance: data?.balance ?? 0,
+    entries: data?.entries ?? 0,
+    lastEntryAt: data?.last_entry_at ?? null,
+  })
+})
+
+app.get('/points/ledger', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { data, error } = await asUser(tokenOf(c))
+    .from('point_ledger')
+    .select('id, delta, reason, reference, created_at')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+  return c.json({ entries: data ?? [] })
+})
+
+/** Les concours ouverts et ceux qui arrivent. Visible sans compte. */
+app.get('/contests', async (c) => {
+  const { data, error } = await asService()
+    .from('contests')
+    .select('id, test_id, title, opens_at, closes_at, points_prize')
+    .gte('closes_at', new Date(Date.now() - 7 * 24 * 3600_000).toISOString())
+    .order('opens_at', { ascending: true })
+    .limit(20)
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  const maintenant = Date.now()
+  return c.json({
+    contests: (data ?? []).map((concours) => ({
+      ...concours,
+      state:
+        Date.parse(concours.opens_at) > maintenant
+          ? 'UPCOMING'
+          : Date.parse(concours.closes_at) > maintenant
+            ? 'OPEN'
+            : 'CLOSED',
+    })),
+  })
+})
+
+/**
+ * Entrer dans un concours.
+ *
+ * La fenetre de temps n'est pas verifiee ici mais par la politique RLS
+ * (`participation : s'inscrire pendant la fenetre`). Le controle vit donc a un
+ * seul endroit, et une route oubliee demain ne pourra pas le contourner.
+ */
+app.post('/contests/:id/enter', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { data, error } = await asUser(tokenOf(c))
+    .from('contest_entries')
+    .insert({ contest_id: c.req.param('id'), user_id: userId })
+    .select('id, started_at')
+    .maybeSingle()
+
+  if (error) {
+    // Deja inscrit : ce n'est pas une erreur, c'est l'etat attendu quand on
+    // revient sur l'ecran. Renvoyer un echec ferait croire a une panne.
+    //
+    // `23505` est la violation d'unicite de Postgres — ici la contrainte
+    // `unique (contest_id, user_id)`.
+    if (error.code === '23505') {
+      const { data: existante } = await asUser(tokenOf(c))
+        .from('contest_entries')
+        .select('id, started_at')
+        .eq('contest_id', c.req.param('id'))
+        // RLS filtrerait deja sur le compte, mais l'ecrire ici dit ce que la
+        // requete veut : une requete juste seulement grace a une politique
+        // devient fausse le jour ou la politique bouge.
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (existante) return c.json({ entry: existante, resumed: true })
+    }
+    return c.json(
+      { error: 'Ce concours n’accepte pas de participation en ce moment.' },
+      409,
+    )
+  }
+
+  return c.json({ entry: data, resumed: false })
+})
+
+const submitContestSchema = z.object({
+  answers: z.record(z.string(), z.string().nullable()),
+})
+
+/**
+ * Rendre sa copie.
+ *
+ * Corrigee avec la cle de service, parce qu'elle seule voit
+ * `test_questions.correct_key` — c'est la meme raison qui ferme la table aux
+ * clients. Le score n'est pas davantage accepte depuis le corps de la requete :
+ * il est calcule ici, avec `scoreTest`, deja utilise par le test de competence.
+ */
+app.post('/contests/:id/submit', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const corps = submitContestSchema.safeParse(await c.req.json().catch(() => null))
+  if (!corps.success) return c.json({ error: 'Reponses illisibles.' }, 400)
+
+  const contestId = c.req.param('id')
+  const service = asService()
+
+  const { data: concours } = await service
+    .from('contests')
+    .select('id, test_id, title, closes_at')
+    .eq('id', contestId)
+    .maybeSingle()
+  if (!concours) return c.json({ error: 'Concours inconnu.' }, 404)
+
+  // La fermeture se verifie au moment de rendre, pas a l'ouverture : une copie
+  // commencee a temps mais rendue le lendemain ne doit pas compter.
+  if (Date.parse(concours.closes_at) < Date.now()) {
+    return c.json({ error: 'Ce concours est termine.' }, 409)
+  }
+
+  const { data: participation } = await service
+    .from('contest_entries')
+    .select('id, submitted_at')
+    .eq('contest_id', contestId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (!participation) {
+    return c.json({ error: 'Entrez d’abord dans le concours.' }, 409)
+  }
+  // Une copie se rend une fois : sans cela on recommencerait jusqu'a obtenir un
+  // bon score, et le classement ne voudrait plus rien dire.
+  if (participation.submitted_at) {
+    return c.json({ error: 'Votre copie est deja rendue.' }, 409)
+  }
+
+  const { data: questions } = await service
+    .from('test_questions')
+    .select('id, correct_key, domain')
+    .eq('test_id', concours.test_id)
+
+  const { data: test } = await service
+    .from('tests')
+    .select('passing_score')
+    .eq('id', concours.test_id)
+    .maybeSingle()
+
+  const bilan = scoreTest(
+    questions ?? [],
+    corps.data.answers,
+    test?.passing_score ?? 0,
+  )
+
+  const { error } = await service
+    .from('contest_entries')
+    .update({
+      score: bilan.score,
+      correct_count: bilan.correctCount,
+      submitted_at: new Date().toISOString(),
+    })
+    .eq('id', participation.id)
+
+  if (error) return c.json({ error: 'Enregistrement impossible.' }, 500)
+
+  // Pas de points ici : ils sont attribues a la fermeture, quand le classement
+  // est connu. Crediter maintenant demanderait de deviner le rang final.
+  return c.json({
+    score: bilan.score,
+    correctCount: bilan.correctCount,
+    totalQuestions: bilan.totalQuestions,
+  })
+})
+
+/**
+ * Le classement d'un concours.
+ *
+ * Calcule a la lecture, jamais stocke : un rang ecrit en base se desynchronise
+ * des scores au premier incident, et donnerait des chiffres saisis la ou l'on
+ * attend des chiffres calcules.
+ *
+ * Lu avec la cle de service parce qu'un classement porte sur les copies des
+ * autres, que RLS cache a juste titre. **Aucun identifiant de compte ne sort**
+ * d'ici : seulement un rang, un prenom et un score.
+ *
+ * --- Pourquoi il faut un compte -----------------------------------------
+ *
+ * La liste des concours est publique ; ce classement ne l'est pas. Il rend des
+ * prenoms d'eleves et leurs notes. Ouvert sans compte, n'importe qui avec
+ * l'adresse lirait « Fatoumata, 14/20 » — une donnee d'enfant, sortie pour la
+ * seule commodite de ne pas demander a se connecter.
+ *
+ * Le controle d'`auth-context.test.ts` a signale cette route alors qu'elle
+ * laissait passer les visiteurs, et il avait raison.
+ */
+app.get('/contests/:id/leaderboard', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const contestId = c.req.param('id')
+  const service = asService()
+
+  const { data: participations, error } = await service
+    .from('contest_entries')
+    .select('user_id, score, started_at, submitted_at')
+    .eq('contest_id', contestId)
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  const vue = leaderboardFor(
+    (participations ?? []).map((p) => ({
+      userId: p.user_id as string,
+      score: p.score as number | null,
+      startedAt: p.started_at as string,
+      submittedAt: p.submitted_at as string | null,
+    })),
+    { me: userId },
+  )
+
+  // Les prenoms des seuls classes affiches : un podium sans nom ne motive
+  // personne, et un nom complet n'est pas necessaire pour s'y reconnaitre.
+  const ids = vue.podium.map((p) => p.userId)
+  const prenoms = new Map<string, string>()
+  if (ids.length > 0) {
+    const { data: profils } = await service
+      .from('profiles')
+      .select('id, first_name')
+      .in('id', ids)
+    for (const profil of profils ?? []) {
+      prenoms.set(profil.id as string, (profil.first_name as string) ?? '')
+    }
+  }
+
+  return c.json({
+    published: vue.published,
+    participants: vue.participants,
+    missing: vue.missing,
+    // Le rang personnel avant le podium, ici comme a l'ecran : c'est ce que
+    // l'eleve vient chercher.
+    me: vue.me
+      ? { rank: vue.me.rank, score: vue.me.score }
+      : null,
+    podium: vue.podium.map((place) => ({
+      rank: place.rank,
+      score: place.score,
+      firstName: prenoms.get(place.userId) ?? 'Participant',
+    })),
+  })
+})
+
+/**
+ * Fermer un concours et crediter les points.
+ *
+ * Reserve a la cle de service, comme la generation des seances : un client qui
+ * pourrait la declencher pourrait la declencher mille fois.
+ *
+ * **Rejouable.** Les ecritures portent `reference = 'contest:<id>'`, et la
+ * fonction commence par regarder si elles existent deja. Fermer deux fois le
+ * meme concours ne double donc pas les gains — ce qui compte, parce qu'un cron
+ * qui echoue a mi-chemin sera relance.
+ */
+app.post('/contests/:id/close', async (c) => {
+  const cle = c.req.header('X-Service-Key')
+  if (!cle || cle !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return c.json({ error: 'Non autorise.' }, 401)
+  }
+
+  const contestId = c.req.param('id')
+  const reference = `contest:${contestId}`
+  const service = asService()
+
+  const { data: concours } = await service
+    .from('contests')
+    .select('id, title, points_prize, closes_at')
+    .eq('id', contestId)
+    .maybeSingle()
+  if (!concours) return c.json({ error: 'Concours inconnu.' }, 404)
+
+  const { data: deja } = await service
+    .from('point_ledger')
+    .select('id')
+    .eq('reference', reference)
+    .limit(1)
+  if ((deja ?? []).length > 0) {
+    return c.json({ awarded: 0, alreadyClosed: true })
+  }
+
+  const { data: participations } = await service
+    .from('contest_entries')
+    .select('user_id, score, started_at, submitted_at')
+    .eq('contest_id', contestId)
+
+  const ecritures = closingEntries(
+    contestId,
+    concours.title as string,
+    (concours.points_prize as number) ?? 0,
+    (participations ?? []).map((p) => ({
+      userId: p.user_id as string,
+      score: p.score as number | null,
+      startedAt: p.started_at as string,
+      submittedAt: p.submitted_at as string | null,
+    })),
+  )
+
+  if (ecritures.length === 0) return c.json({ awarded: 0, alreadyClosed: false })
+
+  const { error } = await service.from('point_ledger').insert(ecritures)
+  if (error) return c.json({ error: 'Attribution impossible.' }, 500)
+
+  return c.json({ awarded: ecritures.length, alreadyClosed: false })
+})
+
+// --- Le professeur et sa classe ---------------------------------------------
+
+/** L'identifiant professeur de l'appelant, ou null. */
+async function teacherIdOf(userId: string): Promise<string | null> {
+  const { data } = await asService()
+    .from('teachers')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  return (data?.id as string) ?? null
+}
+
+/**
+ * Les seances du professeur : celle en cours, et les suivantes.
+ *
+ * Sert le gros bouton de l'accueil. Il n'existait aucune route pour cela — le
+ * cote famille avait `/live/my-sessions`, le professeur rien — et un professeur
+ * ne pouvait donc atteindre sa propre salle qu'en passant par la grille
+ * publique de tous les cours.
+ */
+app.get('/live/teacher/sessions', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ sessions: [] })
+
+  const service = asService()
+  const { data, error } = await service
+    .from('live_sessions')
+    .select(
+      'id, starts_at, duration_minutes, status, seats_taken, ' +
+        'live_courses!inner ( id, title, teacher_id, seats, subjects ( name ) )',
+    )
+    .eq('live_courses.teacher_id', teacherId)
+    .neq('status', 'CANCELLED')
+    // Les seances d'hier n'interessent plus personne ; celle d'il y a deux
+    // heures peut encore attendre une rediffusion ou un retardataire.
+    .gte('starts_at', new Date(Date.now() - 4 * 3600_000).toISOString())
+    .order('starts_at', { ascending: true })
+    .limit(10)
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  // Les jointures `!inner` imbriquees depassent l'inference de supabase-js, qui
+  // rend alors un type d'erreur. Le fichier fait deja ce transtypage pour les
+  // relations ; on l'applique a la ligne entiere.
+  const seances = (data ?? []) as unknown as Record<string, unknown>[]
+
+  return c.json({
+    sessions: seances.map((seance) => {
+      const lie = seance.live_courses as unknown
+      const cours = (Array.isArray(lie) ? lie[0] : lie) as Record<
+        string,
+        unknown
+      > | null
+      const matiere = cours?.subjects as { name?: string } | null
+      return {
+        id: seance.id,
+        startsAt: seance.starts_at,
+        durationMinutes: seance.duration_minutes,
+        status: seance.status,
+        seatsTaken: seance.seats_taken,
+        seats: cours?.seats ?? 0,
+        title: cours?.title ?? null,
+        subject: matiere?.name ?? null,
+      }
+    }),
+  })
+})
+
+/**
+ * Qui est attendu, et qui est la.
+ *
+ * Deux listes en une : les places vendues (`session_enrolments`) et la presence
+ * constatee (`attendance_detail`). Le professeur a besoin des deux ensemble —
+ * « douze inscrits, sept presents » est la seule phrase qui lui dit s'il doit
+ * attendre ou commencer.
+ *
+ * Lu avec la cle de service : les places appartiennent aux familles, et RLS les
+ * cache au professeur a juste titre. Ce qui sort d'ici est donc restreint a la
+ * main — un prenom d'enfant et un etat de presence, jamais un telephone ni un
+ * identifiant de compte.
+ */
+app.get('/live/sessions/:id/roster', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const sessionId = c.req.param('id')
+  const service = asService()
+
+  // La seance est-elle bien la sienne ? Sans ce controle, un professeur lirait
+  // la classe d'un autre.
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select('id, starts_at, live_courses!inner ( teacher_id )')
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  const lie = seance?.live_courses as unknown
+  const cours = (Array.isArray(lie) ? lie[0] : lie) as Record<
+    string,
+    unknown
+  > | null
+  if (!seance || cours?.teacher_id !== teacherId) {
+    return c.json({ error: 'Seance introuvable.' }, 404)
+  }
+
+  const { data: places } = await service
+    .from('session_enrolments')
+    .select('id, status, parent_id, children ( first_name )')
+    .eq('session_id', sessionId)
+    .eq('status', 'CONFIRMED')
+
+  const { data: presents } = await service
+    .from('attendance_detail')
+    .select('enrolment_id, minutes_so_far, left_at')
+    .eq('session_id', sessionId)
+    .is('left_at', null)
+
+  const enSalle = new Map<string, number>()
+  for (const ligne of presents ?? []) {
+    if (ligne.enrolment_id) {
+      enSalle.set(
+        ligne.enrolment_id as string,
+        (ligne.minutes_so_far as number) ?? 0,
+      )
+    }
+  }
+
+  return c.json({
+    expected: (places ?? []).length,
+    present: enSalle.size,
+    roster: (places ?? []).map((place) => {
+      const enfant = place.children as { first_name?: string } | null
+      return {
+        enrolmentId: place.id,
+        // Le prenom de l'eleve, et rien d'autre : le professeur n'a pas besoin
+        // du compte de la famille pour faire son cours.
+        name: enfant?.first_name ?? 'Élève',
+        present: enSalle.has(place.id as string),
+        minutes: enSalle.get(place.id as string) ?? 0,
+      }
+    }),
+  })
+})
+
+/**
+ * Prevenir que le cours commence.
+ *
+ * Une place, ou toutes. Ecrit des lignes dans `notifications`, que le
+ * destinataire lit avec sa propre politique — c'est la seule table que le
+ * serveur ecrit pour quelqu'un d'autre, et elle n'a volontairement aucune
+ * politique d'insertion pour les clients.
+ *
+ * **Pas de SMS.** Chaque message coute, et un professeur qui previent quinze
+ * familles deux fois par seance y passerait son benefice. La notification entre
+ * dans l'application ; le jour ou le SMS existera, il sera une decision avec un
+ * budget, pas un effet de bord d'un bouton.
+ */
+const notifySchema = z.object({
+  enrolmentIds: z.array(z.string().min(1)).max(60).optional(),
+  all: z.boolean().optional(),
+})
+
+app.post('/live/sessions/:id/notify', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = notifySchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) return c.json({ error: 'Demande illisible.' }, 400)
+
+  const sessionId = c.req.param('id')
+  const service = asService()
+
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select(
+      'id, starts_at, live_courses!inner ( teacher_id, title, subjects ( name ) )',
+    )
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  const lie = seance?.live_courses as unknown
+  const cours = (Array.isArray(lie) ? lie[0] : lie) as Record<
+    string,
+    unknown
+  > | null
+  if (!seance || cours?.teacher_id !== teacherId) {
+    return c.json({ error: 'Seance introuvable.' }, 404)
+  }
+
+  let requete = service
+    .from('session_enrolments')
+    .select('id, parents!inner ( user_id )')
+    .eq('session_id', sessionId)
+    .eq('status', 'CONFIRMED')
+
+  if (!corps.data.all) {
+    const choisies = corps.data.enrolmentIds ?? []
+    if (choisies.length === 0) {
+      return c.json({ error: 'Personne a prevenir.' }, 400)
+    }
+    requete = requete.in('id', choisies)
+  }
+
+  const { data: places, error } = await requete
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  const matiere = cours?.subjects as { name?: string } | null
+  const titre = (cours?.title as string) ?? matiere?.name ?? 'Cours en direct'
+
+  // Un compte peut avoir deux places sur la meme seance — deux enfants. Une
+  // seule notification : deux lignes identiques dans la liste se lisent comme
+  // un bogue.
+  const comptes = new Set<string>()
+  for (const place of places ?? []) {
+    const parent = place.parents as unknown
+    const ligne = (Array.isArray(parent) ? parent[0] : parent) as Record<
+      string,
+      unknown
+    > | null
+    if (ligne?.user_id) comptes.add(ligne.user_id as string)
+  }
+
+  if (comptes.size === 0) return c.json({ notified: 0 })
+
+  const maintenant = new Date().toISOString()
+  const { error: erreurEcriture } = await service.from('notifications').insert(
+    [...comptes].map((compte) => ({
+      id: crypto.randomUUID(),
+      user_id: compte,
+      kind: 'LIVE_STARTING',
+      title: `${titre} commence`,
+      body: 'Le professeur vous attend dans la salle.',
+      // Le chemin exact de l'application mobile : la notification n'existe que
+      // pour ouvrir la salle, et go_router ne resout rien d'autre. Une
+      // notification dont le lien ne mene nulle part est pire qu'absente — on
+      // la touche, rien ne se passe, et le cours commence sans l'eleve.
+      route: `/direct/${sessionId}/salle`,
+      created_at: maintenant,
+      updated_at: maintenant,
+    })),
+  )
+
+  if (erreurEcriture) {
+    console.error('[live] notification impossible', erreurEcriture)
+    return c.json({ error: 'Envoi impossible.' }, 500)
+  }
+
+  return c.json({ notified: comptes.size })
+})
+
+/**
+ * Le repertoire du professeur — **derive, jamais stocke**.
+ *
+ * --- Pourquoi pas une table de contacts ---------------------------------
+ *
+ * Un professeur connait deja des familles : celles inscrites a ses seances,
+ * celles sous contrat, celles qui lui ont ecrit une demande. Ces liens existent
+ * en base. Une table `contacts` en ferait une copie, et une copie diverge : le
+ * contrat se termine, la ligne reste.
+ *
+ * Surtout, **l'acces suit la relation**. Une liste stockee est une copie
+ * permanente des coordonnees d'enfants dans l'application ; derivee, elle
+ * disparait d'elle-meme quand la relation s'arrete. Pour un produit qui
+ * manipule des mineurs, c'est la difference qui compte.
+ *
+ * --- Pourquoi pas le carnet d'adresses du telephone ---------------------
+ *
+ * `READ_CONTACTS` est une permission lourde, la plupart des entrees ne sont pas
+ * des comptes, et cela ajouterait un greffon a un APK qui pese deja 77,9 Mo —
+ * pour un resultat moins bon que ce que la base sait deja.
+ *
+ * Ce que ceci ne couvre pas : inviter quelqu'un sans relation prealable. C'est
+ * une **invitation par numero**, pas un contact, et cela ne stocke toujours
+ * rien.
+ */
+app.get('/live/teacher/contacts', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ contacts: [] })
+
+  const service = asService()
+
+  // Les familles passees par mes seances.
+  const { data: parMesSeances } = await service
+    .from('session_enrolments')
+    .select(
+      'parent_id, parents!inner ( user_id, profiles!inner ( first_name, last_name ) ), ' +
+        'live_sessions!inner ( live_courses!inner ( teacher_id ) )',
+    )
+    .eq('live_sessions.live_courses.teacher_id', teacherId)
+    .eq('status', 'CONFIRMED')
+    .limit(200)
+
+  // Celles sous contrat avec moi.
+  const { data: parContrat } = await service
+    .from('work_contracts')
+    .select('parent_id, parents ( user_id, profiles ( first_name, last_name ) )')
+    .eq('teacher_id', teacherId)
+    .in('status', ['PENDING', 'ACTIVE'])
+    .limit(200)
+
+  const repertoire = new Map<
+    string,
+    { parentId: string; name: string; sources: Set<string> }
+  >()
+
+  const ajouter = (ligne: Record<string, unknown>, source: string) => {
+    const parent = ligne.parents as unknown
+    const p = (Array.isArray(parent) ? parent[0] : parent) as Record<
+      string,
+      unknown
+    > | null
+    if (!p) return
+    const profil = p.profiles as unknown
+    const pr = (Array.isArray(profil) ? profil[0] : profil) as Record<
+      string,
+      unknown
+    > | null
+    const parentId = ligne.parent_id as string
+    if (!parentId) return
+
+    const nom = [pr?.first_name, pr?.last_name]
+      .filter(Boolean)
+      .join(' ')
+      .trim()
+    const existant = repertoire.get(parentId)
+    if (existant) {
+      existant.sources.add(source)
+      return
+    }
+    repertoire.set(parentId, {
+      parentId,
+      name: nom.length > 0 ? nom : 'Famille',
+      sources: new Set([source]),
+    })
+  }
+
+  const desSeances = (parMesSeances ?? []) as unknown as Record<
+    string,
+    unknown
+  >[]
+  const desContrats = (parContrat ?? []) as unknown as Record<
+    string,
+    unknown
+  >[]
+  for (const ligne of desSeances) ajouter(ligne, 'SESSION')
+  for (const ligne of desContrats) ajouter(ligne, 'CONTRACT')
+
+  return c.json({
+    contacts: [...repertoire.values()]
+      .map((contact) => ({
+        parentId: contact.parentId,
+        name: contact.name,
+        // D'ou je le connais : « a suivi vos seances » se lit mieux qu'une
+        // liste de noms sans contexte.
+        sources: [...contact.sources],
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr')),
+  })
+})
+
+/**
+ * Ouvre le groupe d'une relation, si personne ne l'a encore fait.
+ *
+ * --- Pourquoi le serveur, et pas le client ------------------------------
+ *
+ * `chat_groups` n'a **aucune politique d'ecriture** : un client qui pourrait
+ * creer un groupe choisirait ses propres membres, puisque l'appartenance se
+ * deduit de `kind` et `source_id`. La creation passe donc par la cle de
+ * service, au moment ou la relation nait.
+ *
+ * --- Pourquoi c'est sans danger de l'appeler deux fois ------------------
+ *
+ * `unique (kind, source_id)` : le deuxieme appel se heurte a la contrainte et
+ * ne fait rien. On peut donc l'appeler a chaque paiement confirme sans se
+ * demander si c'est le premier — ce qui evite d'avoir a le savoir.
+ */
+async function assurerGroupe(
+  kind: 'COURSE' | 'CONTRACT',
+  sourceId: string,
+  name: string,
+): Promise<void> {
+  const { error } = await asService()
+    .from('chat_groups')
+    .insert({ kind, source_id: sourceId, name })
+
+  // `23505` : il existait deja. C'est le cas courant, pas une anomalie.
+  if (error && error.code !== '23505') {
+    console.error('[chat] groupe non ouvert', kind, sourceId, error)
+  }
+}
+
+// --- Les groupes de discussion (04/10) --------------------------------------
+//
+// Un groupe par relation : un cours en direct, un contrat. L'appartenance est
+// derivee par `est_membre_groupe()` cote Postgres et jamais stockee — l'acces
+// suit la relation, donc il expire avec elle. Voir la migration 0027.
+//
+// Les trois routes lisent et ecrivent **sous le jeton du lecteur**, jamais sous
+// la cle de service : c'est RLS qui decide qui voit quoi, et passer par la cle
+// reviendrait a recopier la regle d'appartenance dans du TypeScript — une
+// seconde definition qui finirait par s'ecarter de celle de la base.
+
+/**
+ * Les groupes de la personne, avec leur dernier message.
+ *
+ * `chat_groups` ne rend que les siens : la politique de select appelle
+ * `est_membre_groupe`. On n'a donc rien a filtrer ici, et c'est voulu.
+ */
+app.get('/chat/groups', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const db = asUser(tokenOf(c))
+
+  const { data: groupes, error } = await db
+    .from('chat_groups')
+    .select('id, kind, source_id, name, updated_at')
+    .order('updated_at', { ascending: false })
+
+  if (error) {
+    console.error('[chat] lecture des groupes impossible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  // Le dernier message de chacun, en une requete plutot qu'une par groupe :
+  // quinze groupes feraient quinze allers-retours sur une connexion lente.
+  const ids = (groupes ?? []).map((g) => g.id as string)
+  const derniers = new Map<string, { body: string; at: string }>()
+  if (ids.length > 0) {
+    const { data: messages } = await db
+      .from('chat_messages')
+      .select('group_id, body, created_at')
+      .in('group_id', ids)
+      .order('created_at', { ascending: false })
+      .limit(200)
+    for (const message of messages ?? []) {
+      const groupe = message.group_id as string
+      if (derniers.has(groupe)) continue
+      derniers.set(groupe, {
+        body: message.body as string,
+        at: message.created_at as string,
+      })
+    }
+  }
+
+  return c.json({
+    groups: (groupes ?? []).map((g) => ({
+      id: g.id,
+      kind: g.kind,
+      sourceId: g.source_id,
+      name: g.name,
+      lastBody: derniers.get(g.id as string)?.body ?? null,
+      lastAt: derniers.get(g.id as string)?.at ?? null,
+    })),
+  })
+})
+
+/**
+ * Les messages d'un groupe, du plus ancien au plus recent.
+ *
+ * Pagine par le haut (`before`) : une discussion se lit par le bas, et on
+ * remonte. Cinquante a la fois — assez pour remplir un ecran deux fois, pas
+ * assez pour faire attendre sur un reseau lent.
+ */
+app.get('/chat/groups/:id/messages', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const db = asUser(tokenOf(c))
+  const groupId = c.req.param('id')
+  const avant = c.req.query('before')
+
+  let requete = db
+    .from('chat_messages')
+    .select('id, group_id, author_id, body, created_at')
+    .eq('group_id', groupId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (avant) requete = requete.lt('created_at', avant)
+
+  const { data: messages, error } = await requete
+  if (error) {
+    console.error('[chat] lecture des messages impossible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  // Un groupe dont on n'est pas membre rend zero message, pas une erreur :
+  // c'est RLS qui filtre, et il n'a pas a dire si le groupe existe.
+  const auteurs = [
+    ...new Set((messages ?? []).map((m) => m.author_id as string)),
+  ]
+  const noms = new Map<string, { name: string; role: string }>()
+  if (auteurs.length > 0) {
+    // Sous la cle de service, et pour une seule raison : `profiles` est ferme
+    // a tout le monde sauf son proprietaire, or afficher « Fatoumata » plutot
+    // qu'un identifiant est le minimum d'une discussion. Seuls le prenom et le
+    // role sortent — ni telephone, ni adresse.
+    const { data: profils } = await asService()
+      .from('profiles')
+      .select('id, first_name, role')
+      .in('id', auteurs)
+    for (const profil of profils ?? []) {
+      noms.set(profil.id as string, {
+        name: (profil.first_name as string) ?? 'Quelqu’un',
+        role: (profil.role as string) ?? 'PARENT',
+      })
+    }
+  }
+
+  return c.json({
+    messages: (messages ?? [])
+      .map((m) => ({
+        id: m.id,
+        groupId: m.group_id,
+        authorId: m.author_id,
+        authorName: noms.get(m.author_id as string)?.name ?? 'Quelqu’un',
+        authorRole: noms.get(m.author_id as string)?.role ?? 'PARENT',
+        body: m.body,
+        sentAt: m.created_at,
+      }))
+      // Rendus dans l'ordre de lecture, apres avoir ete pris dans l'ordre
+      // inverse : c'est la seule facon de prendre les cinquante *derniers*.
+      .reverse(),
+  })
+})
+
+const chatEnvoiSchema = z.object({ body: z.string().min(1).max(2000) })
+
+/**
+ * Ecrire dans un groupe.
+ *
+ * L'auteur vient du jeton, jamais du corps : `author_id = auth.uid()` est dans
+ * la politique d'insertion, donc ecrire au nom d'un autre est refuse par la
+ * base et non par une verification qu'on pourrait oublier ici.
+ */
+app.post('/chat/groups/:id/messages', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const corps = chatEnvoiSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) return c.json({ error: 'Message vide ou trop long.' }, 400)
+
+  const db = asUser(tokenOf(c))
+  const groupId = c.req.param('id')
+
+  const { data: ligne, error } = await db
+    .from('chat_messages')
+    .insert({
+      group_id: groupId,
+      author_id: userId,
+      body: corps.data.body.trim(),
+    })
+    .select('id, created_at')
+    .maybeSingle()
+
+  if (error) {
+    // `42501` : la politique a refuse. Le compte n'est pas membre — place
+    // annulee, contrat termine. Le dire franchement vaut mieux qu'une erreur
+    // technique, parce que c'est une situation normale.
+    if (error.code === '42501') {
+      return c.json({ error: 'Vous ne faites plus partie de ce groupe.' }, 403)
+    }
+    console.error('[chat] envoi impossible', error)
+    return c.json({ error: 'Envoi impossible.' }, 500)
+  }
+
+  // Remonter le groupe dans la liste. Sous la cle de service : `chat_groups`
+  // n'a aucune politique d'ecriture, a dessein — un client qui pourrait la
+  // modifier pourrait se renommer un groupe. Ici le serveur ne touche qu'une
+  // date, et seulement apres que la base a accepte le message.
+  await asService()
+    .from('chat_groups')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', groupId)
+
+  return c.json({ id: ligne?.id, sentAt: ligne?.created_at })
+})
+
+// --- La boutique (D2) -------------------------------------------------------
+
+/**
+ * Le catalogue, et ou l'on en est.
+ *
+ * Le solde et la distance au lot suivant partent avec le catalogue, en une
+ * seule reponse : trois appels pour peindre un ecran, sur une connexion
+ * guineenne, ce sont trois occasions d'afficher la page a moitie.
+ */
+app.get('/shop/items', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const db = asUser(tokenOf(c))
+
+  const { data: lots, error } = await db
+    .from('shop_items')
+    .select(
+      'id, name, summary, image, points_price, value_gnf, stock, kind, draws_at',
+    )
+    .eq('active', true)
+    .order('position', { ascending: true })
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  // RLS limite la vue des soldes a sa propre ligne : pas de ligne = zero point.
+  const { data: solde } = await db
+    .from('point_balances')
+    .select('balance')
+    .maybeSingle()
+  const balance = (solde?.balance as number) ?? 0
+
+  const progression = shopProgress(
+    balance,
+    (lots ?? []).map((lot) => ({
+      id: lot.id as string,
+      pointsPrice: lot.points_price as number,
+      stock: lot.stock as number,
+    })),
+  )
+
+  // Les lots mis de cote, dans le meme appel : un second aller-retour pour
+  // savoir quels coeurs allumer ferait apparaitre la liste puis les coeurs,
+  // ce qui se lit comme un defaut d'affichage.
+  const { data: favoris } = await db.from('shop_favorites').select('item_id')
+  const misDeCote = new Set((favoris ?? []).map((f) => f.item_id as string))
+
+  // Combien de mises par tirage, pour que l'ecran puisse dire « vous avez trois
+  // chances » plutot que de laisser compter.
+  const { data: mises } = await db
+    .from('redemptions')
+    .select('item_id')
+    .eq('kind', 'RAFFLE')
+    .eq('status', 'PENDING')
+  const chances = new Map<string, number>()
+  for (const mise of mises ?? []) {
+    const cle = mise.item_id as string
+    chances.set(cle, (chances.get(cle) ?? 0) + 1)
+  }
+
+  return c.json({
+    balance,
+    nextId: progression.nextId,
+    missing: progression.missing,
+    items: (lots ?? []).map((lot) => ({
+      ...lot,
+      affordable: progression.affordable.includes(lot.id as string),
+      favorite: misDeCote.has(lot.id as string),
+      entries: chances.get(lot.id as string) ?? 0,
+    })),
+  })
+})
+
+/**
+ * Les lots mis de cote, avec leur fiche.
+ *
+ * Sert l'accueil, qui les affiche sans ouvrir la boutique : la jointure se fait
+ * ici plutot que de demander a l'ecran de croiser deux listes.
+ */
+app.get('/shop/favorites', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { data, error } = await asUser(tokenOf(c))
+    .from('shop_favorites')
+    .select(
+      'item_id, created_at, shop_items ( id, name, summary, image, points_price, value_gnf, stock )',
+    )
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+
+  return c.json({
+    items: (data ?? [])
+      .map((ligne) => ligne.shop_items)
+      .filter((lot) => lot != null),
+  })
+})
+
+/**
+ * Mettre un lot de cote, ou l'en retirer.
+ *
+ * `PUT` et `DELETE` plutot qu'une bascule : les deux sont **idempotents**. Un
+ * telephone qui reessaie apres une coupure ne doit pas eteindre le coeur qu'il
+ * venait d'allumer, ce qu'une bascule ferait exactement une fois sur deux.
+ */
+app.put('/shop/items/:id/favorite', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { error } = await asUser(tokenOf(c))
+    .from('shop_favorites')
+    .upsert(
+      { user_id: userId, item_id: c.req.param('id') },
+      { onConflict: 'user_id,item_id' },
+    )
+
+  if (error) return c.json({ error: 'Enregistrement impossible.' }, 500)
+  return c.json({ favorite: true })
+})
+
+app.delete('/shop/items/:id/favorite', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { error } = await asUser(tokenOf(c))
+    .from('shop_favorites')
+    .delete()
+    .eq('user_id', userId)
+    .eq('item_id', c.req.param('id'))
+
+  if (error) return c.json({ error: 'Suppression impossible.' }, 500)
+  return c.json({ favorite: false })
+})
+
+/**
+ * Echanger ses points contre un lot.
+ *
+ * Tout le travail est dans `redeem_shop_item`, cote base : verifier le solde,
+ * debiter le journal et decrementer le stock doivent tenir dans une seule
+ * instruction. Fait ici en trois requetes, deux demandes simultanees — un
+ * telephone qui reessaie apres une coupure — passeraient toutes deux la
+ * verification et debiteraient deux fois.
+ *
+ * La fonction est appelee **sous le jeton de l'appelant** : elle lit `auth.uid()`
+ * pour savoir qui echange. Avec la cle de service, `auth.uid()` serait nul et
+ * l'echange serait refuse — ce qui est la bonne facon d'echouer.
+ */
+app.post('/shop/items/:id/redeem', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { data, error } = await asUser(tokenOf(c)).rpc('redeem_shop_item', {
+    item: c.req.param('id'),
+  })
+
+  if (error) {
+    console.error('[boutique] echange impossible', error)
+    return c.json({ error: 'Echange impossible pour le moment.' }, 500)
+  }
+
+  const resultat = Array.isArray(data) ? data[0] : data
+  if (resultat?.redemption_id) {
+    return c.json({ redemptionId: resultat.redemption_id })
+  }
+
+  /*
+   * Un refus est une reponse, pas une panne.
+   *
+   * Les motifs sont traduits ici et non dans la base : la base dit ce qui s'est
+   * passe, l'API dit ce que la personne doit lire. « NOT_ENOUGH_POINTS » affiche
+   * tel quel serait du jargon sur un ecran d'enfant.
+   */
+  const motifs: Record<string, string> = {
+    NOT_ENOUGH_POINTS: 'Il vous manque des points pour ce lot.',
+    OUT_OF_STOCK: 'Ce lot vient d’etre pris. Il revient bientot.',
+    UNKNOWN_ITEM: 'Ce lot n’existe plus.',
+    DRAW_CLOSED: 'Le tirage de ce lot est deja passe.',
+    NOT_SIGNED_IN: 'Connectez-vous.',
+  }
+  const motif = String(resultat?.reason ?? 'UNKNOWN_ITEM')
+  return c.json({ error: motifs[motif] ?? 'Echange refuse.', reason: motif }, 409)
+})
+
+/** Ses propres demandes, en cours ou traitees. */
+app.get('/shop/redemptions', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { data, error } = await asUser(tokenOf(c))
+    .from('redemptions')
+    .select('id, item_id, points_spent, status, requested_at, note')
+    .order('requested_at', { ascending: false })
+    .limit(20)
+
+  if (error) return c.json({ error: 'Lecture impossible.' }, 500)
+  return c.json({ redemptions: data ?? [] })
+})
+
+/**
+ * Les tests proposes en concours, dans l'ordre de rotation.
+ *
+ * Les tests de niveau universitaire (`_l1`, `_l2`) sont ecartes : un concours
+ * hebdomadaire s'adresse aux eleves, et proposer un test de L2 a un collegien
+ * donnerait une page de zeros et plus personne la semaine suivante.
+ */
+const TESTS_DE_CONCOURS = [
+  'test_math_lycee',
+  'test_fran_lycee',
+  'test_angl_lycee',
+]
+
+/** Ce que gagne le premier d'un concours hebdomadaire. */
+const ENJEU_HEBDOMADAIRE = 100
+
+/**
+ * Le cycle des concours : fermer ceux qui sont echus, ouvrir celui de la semaine.
+ *
+ * --- Pourquoi un seul point d'entree pour les deux ----------------------
+ *
+ * Les deux gestes vont ensemble : un concours qui se termine doit distribuer ses
+ * points, et la semaine suivante doit en proposer un autre. Separes, on
+ * deploierait un cron qui ouvre sans jamais fermer — des concours qui
+ * s'accumulent et ne recompensent personne, ce qui est exactement l'etat du
+ * 03/10 avant ce code.
+ *
+ * --- Rejouable, et c'est la propriete qui compte -----------------------
+ *
+ * Le cron tourne chaque nuit. La fenetre de la semaine est **derivee de la
+ * date** (`weekWindow`), donc mardi et mercredi calculent le meme `opens_at` :
+ * il suffit de regarder s'il existe deja. Et la fermeture reconnait les
+ * concours deja payes a leur `reference` dans le journal. Une execution manquee
+ * se rattrape au passage suivant, sans etat a reparer.
+ */
+async function cycleContests(now: Date = new Date()): Promise<{
+  closed: number
+  awarded: number
+  opened: string | null
+}> {
+  const service = asService()
+  const maintenant = now.toISOString()
+  let closed = 0
+  let awarded = 0
+
+  // --- Fermer ce qui est echu ---------------------------------------------
+  const { data: echus } = await service
+    .from('contests')
+    .select('id, title, points_prize')
+    .lt('closes_at', maintenant)
+    // Une quinzaine suffit : au-dela, c'est un rattrapage et le passage suivant
+    // prendra la suite. Tout traiter d'un coup depasserait le temps processeur
+    // du Worker un lendemain de panne.
+    .order('closes_at', { ascending: false })
+    .limit(15)
+
+  for (const concours of echus ?? []) {
+    const reference = `contest:${concours.id}`
+
+    const { data: deja } = await service
+      .from('point_ledger')
+      .select('id')
+      .eq('reference', reference)
+      .limit(1)
+    if ((deja ?? []).length > 0) continue
+
+    const { data: participations } = await service
+      .from('contest_entries')
+      .select('user_id, score, started_at, submitted_at')
+      .eq('contest_id', concours.id)
+
+    const ecritures = closingEntries(
+      concours.id as string,
+      concours.title as string,
+      (concours.points_prize as number) ?? 0,
+      (participations ?? []).map((p) => ({
+        userId: p.user_id as string,
+        score: p.score as number | null,
+        startedAt: p.started_at as string,
+        submittedAt: p.submitted_at as string | null,
+      })),
+    )
+
+    // Un concours sans copie rendue n'est pas une erreur : personne n'a joue.
+    // Il reste « non paye », et le passage suivant le reverra sans rien faire.
+    if (ecritures.length === 0) continue
+
+    const { error } = await service.from('point_ledger').insert(ecritures)
+    if (error) {
+      console.error(`[concours] attribution impossible ${concours.id}`, error)
+      continue
+    }
+    closed += 1
+    awarded += ecritures.length
+  }
+
+  // --- Ouvrir celui de la semaine ----------------------------------------
+  const fenetre = weekWindow(now)
+  const { data: dejaOuvert } = await service
+    .from('contests')
+    .select('id')
+    .eq('opens_at', fenetre.opensAt)
+    .limit(1)
+
+  if ((dejaOuvert ?? []).length > 0) {
+    return { closed, awarded, opened: null }
+  }
+
+  const testId = testForWeek(fenetre.opensAt, TESTS_DE_CONCOURS)
+  if (!testId) return { closed, awarded, opened: null }
+
+  // Le test doit exister : sur une base dont le referentiel n'est pas seme,
+  // inserer echouerait sur la cle etrangere et le cron se plaindrait chaque
+  // nuit sans que personne ne sache pourquoi.
+  const { data: test } = await service
+    .from('tests')
+    .select('id')
+    .eq('id', testId)
+    .maybeSingle()
+  if (!test) {
+    console.warn(`[concours] test ${testId} absent : aucun concours ouvert`)
+    return { closed, awarded, opened: null }
+  }
+
+  const semaine = fenetre.opensAt.slice(0, 10)
+  const { data: ouvert, error: erreurOuverture } = await service
+    .from('contests')
+    .insert({
+      test_id: testId,
+      title: `Concours de la semaine du ${semaine}`,
+      opens_at: fenetre.opensAt,
+      closes_at: fenetre.closesAt,
+      points_prize: ENJEU_HEBDOMADAIRE,
+    })
+    .select('id')
+    .maybeSingle()
+
+  if (erreurOuverture) {
+    console.error('[concours] ouverture impossible', erreurOuverture)
+    return { closed, awarded, opened: null }
+  }
+
+  return { closed, awarded, opened: (ouvert?.id as string) ?? null }
+}
+
+/**
+ * Declenchement du cycle, reserve a la cle de service.
+ *
+ * Le cron l'appelle chaque nuit ; ce point d'entree sert aussi a verifier apres
+ * un deploiement, et a rattraper une execution manquee. Comme la generation des
+ * seances, il n'est pas ouvert a un compte : un client qui pourrait le
+ * declencher pourrait le declencher mille fois.
+ */
+app.post('/contests/cycle', async (c) => {
+  const cle = c.req.header('X-Service-Key')
+  if (!cle || cle !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return c.json({ error: 'Non autorise.' }, 401)
+  }
+  return c.json(await cycleContests())
+})
+
+/**
+ * L'application elle-meme, sans adaptateur.
+ *
+ * Exportee pour que Cloudflare Workers la serve directement
+ * (`worker.ts`) : Hono tourne nativement sur les deux plateformes, et un
+ * second exemplaire du code de routage aurait diverge du premier.
+ */
+export { app }
+
+export const GET = handle(app)
+export const POST = handle(app)
+export const PATCH = handle(app)
+export const DELETE = handle(app)
+export default handle(app)

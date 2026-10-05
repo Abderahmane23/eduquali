@@ -1,0 +1,79 @@
+{
+  "_comment": [
+    "Les créneaux des cours en direct, et la durée d'une séance.",
+    "",
+    "Source unique, lue par le serveur et par les deux clients. Six créneaux,",
+    "90 minutes chacun, soit 14 occurrences par semaine : 2 par jour du lundi",
+    "au vendredi, 4 le samedi.",
+    "",
+    "Pourquoi un fichier partagé et non une constante par client : ces six",
+    "créneaux seraient autrement recopiés dans le formulaire du professeur, la",
+    "grille de l'élève, le générateur de séances et une validation serveur.",
+    "Ce dépôt a déjà payé cette erreur trois fois — catalog.json existait en",
+    "deux copies divergentes de onze matières, il y avait trois seuils",
+    "d'affichage pour une seule idée, et la commission est encore écrite à",
+    "trois endroits.",
+    "",
+    "`shared/onboarding/sync.mjs` copie ce fichier vers les deux clients et",
+    "VÉRIFIE que chaque créneau dure exactement `sessionMinutes`. Un créneau",
+    "plus court ne pourrait pas accueillir une séance, et le défaut ne se",
+    "verrait qu'au moment où un cours serait coupé en plein milieu."
+  ],
+
+  "sessionMinutes": 90,
+
+  "slots": [
+    {
+      "id": "WD_18",
+      "label": "18 h – 19 h 30",
+      "days": ["MON", "TUE", "WED", "THU", "FRI"],
+      "start": "18:00",
+      "end": "19:30"
+    },
+    {
+      "id": "WD_20",
+      "label": "20 h – 21 h 30",
+      "days": ["MON", "TUE", "WED", "THU", "FRI"],
+      "start": "20:00",
+      "end": "21:30"
+    },
+    {
+      "id": "SAT_10",
+      "label": "10 h – 11 h 30",
+      "days": ["SAT"],
+      "start": "10:00",
+      "end": "11:30"
+    },
+    {
+      "id": "SAT_12",
+      "label": "12 h – 13 h 30",
+      "days": ["SAT"],
+      "start": "12:00",
+      "end": "13:30"
+    },
+    {
+      "id": "SAT_1730",
+      "label": "17 h 30 – 19 h",
+      "days": ["SAT"],
+      "start": "17:30",
+      "end": "19:00"
+    },
+    {
+      "id": "SAT_19",
+      "label": "19 h – 20 h 30",
+      "days": ["SAT"],
+      "start": "19:00",
+      "end": "20:30"
+    }
+  ],
+
+  "weekdayLabels": {
+    "MON": "Lundi",
+    "TUE": "Mardi",
+    "WED": "Mercredi",
+    "THU": "Jeudi",
+    "FRI": "Vendredi",
+    "SAT": "Samedi",
+    "SUN": "Dimanche"
+  }
+}

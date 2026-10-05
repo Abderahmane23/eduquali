@@ -1,0 +1,318 @@
+{
+  "id": "institution_onboarding",
+  "version": 1,
+  "audience": "INSTITUTION",
+  "locale": "fr",
+  "currency": "GNF",
+  "sections": [
+    {
+      "id": "intro",
+      "label": "Bienvenue",
+      "steps": [
+        {
+          "id": "institution_identity",
+          "type": "form",
+          "title": "Votre établissement",
+          "fields": [
+            {
+              "id": "institution_name",
+              "type": "text",
+              "label": "Nom de l’établissement",
+              "required": true,
+              "autofocus": true
+            },
+            {
+              "id": "institution_type",
+              "type": "dropdown",
+              "label": "Type d'établissement",
+              "required": true,
+              "options": [
+                {
+                  "value": "SCHOOL",
+                  "label": "École primaire ou collège"
+                },
+                {
+                  "value": "HIGH_SCHOOL",
+                  "label": "Lycée"
+                },
+                {
+                  "value": "UNIVERSITY",
+                  "label": "Université"
+                },
+                {
+                  "value": "INSTITUTE",
+                  "label": "Institut"
+                },
+                {
+                  "value": "TRAINING_CENTER",
+                  "label": "Centre de formation"
+                },
+                {
+                  "value": "OTHER",
+                  "label": "Autre"
+                }
+              ]
+            },
+            {
+              "id": "manager_name",
+              "type": "text",
+              "label": "Votre nom",
+              "required": true
+            },
+            {
+              "id": "manager_role",
+              "type": "dropdown",
+              "label": "Votre fonction dans l’établissement",
+              "required": true,
+              "optionsSource": "institution_roles"
+            },
+            {
+              "id": "region",
+              "type": "dropdown",
+              "label": "Région",
+              "required": true,
+              "optionsSource": "regions"
+            },
+            {
+              "id": "city",
+              "type": "dropdown",
+              "label": "Préfecture ou commune",
+              "required": true,
+              "optionsSource": "prefectures",
+              "optionsFilter": {
+                "field": "region"
+              }
+            },
+            {
+              "id": "district",
+              "type": "text",
+              "label": "Quartier ou secteur (facultatif)",
+              "required": false
+            },
+            {
+              "id": "phone",
+              "type": "phone",
+              "label": "Téléphone",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "credentials",
+          "type": "form",
+          "title": "Choisissez votre mot de passe",
+          "body": "Il protege votre compte. C'est le meme compte sur le site et dans l'application : vous vous connecterez avec ce numero et ce mot de passe des deux cotes.",
+          "fields": [
+            {
+              "id": "password",
+              "type": "password",
+              "label": "Mot de passe",
+              "hint": "Huit caracteres au minimum.",
+              "minLength": 8,
+              "required": true,
+              "autofocus": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "needs",
+      "label": "Besoins",
+      "steps": [
+        {
+          "id": "subjects",
+          "type": "multi_choice",
+          "title": "Quelles matières enseignez-vous ?",
+          "fieldId": "subject_ids",
+          "required": true,
+          "optionsSource": "subjects",
+          "allOption": {
+            "value": "ALL",
+            "label": "Toutes les matières"
+          },
+          "minSelected": 1,
+          "body": "Vos besoins de recrutement se limiteront à celles-ci.",
+          "searchable": true,
+          "searchHint": "Tapez une matière…"
+        },
+        {
+          "id": "priorities",
+          "type": "multi_choice",
+          "title": "Qu’est-ce qui compte le plus pour vous ?",
+          "fieldId": "priorities",
+          "required": true,
+          "minSelected": 1,
+          "options": [
+            {
+              "value": "FAST",
+              "label": "Aller vite, sans mauvaise surprise"
+            },
+            {
+              "value": "CHOICE",
+              "label": "Avoir plusieurs profils au choix"
+            },
+            {
+              "value": "CONTRACT",
+              "label": "Un contrat prêt à signer"
+            },
+            {
+              "value": "VERIFIED",
+              "label": "Des profils vérifiés et certifiés"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "criteria",
+      "label": "Critères",
+      "steps": [
+        {
+          "id": "teacher_location",
+          "type": "single_choice",
+          "title": "Le professeur doit être",
+          "fieldId": "teacher_location",
+          "required": true,
+          "options": [
+            {
+              "value": "IN_TOWN",
+              "label": "Dans la ville"
+            },
+            {
+              "value": "CAN_MOVE",
+              "label": "Prêt à se rapprocher"
+            }
+          ]
+        },
+        {
+          "id": "work_days",
+          "type": "form",
+          "title": "Quels jours donnez-vous des cours ?",
+          "body": "Et à quelles heures. Les candidats verront ces horaires avant de postuler.",
+          "fields": [
+            {
+              "id": "work_days",
+              "type": "dropdown",
+              "label": "Rythme de la semaine",
+              "required": true,
+              "options": [
+                {
+                  "value": "MON_FRI",
+                  "label": "Du lundi au vendredi"
+                },
+                {
+                  "value": "MON_SAT",
+                  "label": "Du lundi au samedi"
+                },
+                {
+                  "value": "OTHER",
+                  "label": "Autre — je choisis les jours"
+                }
+              ]
+            },
+            {
+              "id": "work_start",
+              "type": "text",
+              "label": "Heure de début",
+              "required": true
+            },
+            {
+              "id": "work_end",
+              "type": "text",
+              "label": "Heure de fin",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "work_days_custom",
+          "type": "multi_choice",
+          "title": "Quels jours, exactement ?",
+          "showIf": {
+            "field": "work_days",
+            "equals": "OTHER"
+          },
+          "fieldId": "work_days_custom",
+          "required": true,
+          "minSelected": 1,
+          "options": [
+            {
+              "value": "MON",
+              "label": "Lundi"
+            },
+            {
+              "value": "TUE",
+              "label": "Mardi"
+            },
+            {
+              "value": "WED",
+              "label": "Mercredi"
+            },
+            {
+              "value": "THU",
+              "label": "Jeudi"
+            },
+            {
+              "value": "FRI",
+              "label": "Vendredi"
+            },
+            {
+              "value": "SAT",
+              "label": "Samedi"
+            },
+            {
+              "value": "SUN",
+              "label": "Dimanche"
+            }
+          ]
+        },
+        {
+          "id": "max_distance",
+          "type": "single_choice",
+          "title": "À quelle distance au maximum ?",
+          "fieldId": "max_distance",
+          "required": true,
+          "options": [
+            {
+              "value": "1_5",
+              "label": "1 à 5 km"
+            },
+            {
+              "value": "5_10",
+              "label": "5 à 10 km"
+            },
+            {
+              "value": "10_PLUS",
+              "label": "10 km et plus"
+            }
+          ]
+        },
+        {
+          "id": "subscription",
+          "type": "plan_select",
+          "title": "Commencer fort !",
+          "fieldId": "subscription",
+          "plans": [
+            {
+              "value": "PRO",
+              "name": "Pro",
+              "price": 100000,
+              "highlight": "Votre établissement dans les 10 premiers pendant un mois entier, et l’assistant IA pour préparer vos contenus.",
+              "recommended": true
+            },
+            {
+              "value": "MASTER",
+              "name": "Master",
+              "price": 200000,
+              "highlight": "Tout Pro, plus la messagerie directe avec tous les professeurs."
+            }
+          ],
+          "declineLabel": "Commencer sans abonnement",
+          "declineValue": "FREE",
+          "cta": "Souscrire"
+        }
+      ]
+    }
+  ]
+}

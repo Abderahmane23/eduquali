@@ -1,0 +1,270 @@
+{
+  "id": "teacher_onboarding",
+  "version": 1,
+  "audience": "TEACHER",
+  "locale": "fr",
+  "currency": "GNF",
+  "sections": [
+    {
+      "id": "about_you",
+      "label": "Vous",
+      "steps": [
+        {
+          "id": "identity",
+          "type": "form",
+          "title": "Comment vous appelez-vous ?",
+          "fields": [
+            {
+              "id": "first_name",
+              "type": "text",
+              "label": "Prénom",
+              "required": true,
+              "autofocus": true
+            },
+            {
+              "id": "last_name",
+              "type": "text",
+              "label": "Nom",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "services",
+          "type": "multi_choice",
+          "title": "Sélectionnez vos services",
+          "body": "Vous pouvez choisir les deux.",
+          "fieldId": "service_types",
+          "required": true,
+          "minSelected": 1,
+          "options": [
+            {
+              "value": "HOME",
+              "label": "Cours à domicile",
+              "description": "Vous vous déplacez chez l’élève"
+            },
+            {
+              "value": "FULL_TIME",
+              "label": "Poste à temps plein",
+              "description": "Vous cherchez un emploi en établissement"
+            }
+          ]
+        },
+        {
+          "id": "cycles",
+          "type": "multi_choice",
+          "title": "Vous enseignez à quel niveau ?",
+          "fieldId": "cycles",
+          "required": true,
+          "options": [
+            {
+              "value": "PRIMAIRE",
+              "label": "Primaire"
+            },
+            {
+              "value": "COLLEGE",
+              "label": "Collège"
+            },
+            {
+              "value": "LYCEE",
+              "label": "Lycée"
+            },
+            {
+              "value": "SUPERIEUR",
+              "label": "Université / Institut"
+            }
+          ],
+          "body": "Cela détermine les classes et les matières qu’on vous proposera.",
+          "minSelected": 1
+        },
+        {
+          "id": "levels",
+          "type": "multi_choice",
+          "title": "Quelles classes ?",
+          "fieldId": "level_ids",
+          "required": true,
+          "optionsSource": "levels",
+          "minSelected": 1,
+          "optionsFilter": {
+            "field": "cycles"
+          }
+        },
+        {
+          "id": "subjects",
+          "type": "multi_choice",
+          "title": "Quelles matières enseignez-vous ?",
+          "fieldId": "subject_ids",
+          "required": true,
+          "optionsSource": "subjects",
+          "minSelected": 1,
+          "optionsFilter": {
+            "field": "level_ids"
+          },
+          "body": "Seules les matières enseignées dans les classes que vous avez choisies sont proposées.",
+          "searchable": true,
+          "searchHint": "Tapez une matière…"
+        }
+      ]
+    },
+    {
+      "id": "preferences",
+      "label": "Préférences",
+      "steps": [
+        {
+          "id": "location",
+          "type": "form",
+          "title": "Vous habitez où ?",
+          "fields": [
+            {
+              "id": "region",
+              "type": "dropdown",
+              "label": "Région",
+              "required": true,
+              "optionsSource": "regions"
+            },
+            {
+              "id": "city",
+              "type": "dropdown",
+              "label": "Préfecture ou commune",
+              "required": true,
+              "optionsSource": "prefectures",
+              "optionsFilter": {
+                "field": "region"
+              }
+            },
+            {
+              "id": "district",
+              "type": "text",
+              "label": "Quartier ou secteur (facultatif)",
+              "required": false
+            },
+            {
+              "id": "phone",
+              "type": "phone",
+              "label": "Téléphone",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "credentials",
+          "type": "form",
+          "title": "Choisissez votre mot de passe",
+          "body": "Il protege votre compte. C'est le meme compte sur le site et dans l'application : vous vous connecterez avec ce numero et ce mot de passe des deux cotes.",
+          "fields": [
+            {
+              "id": "password",
+              "type": "password",
+              "label": "Mot de passe",
+              "hint": "Huit caracteres au minimum.",
+              "minLength": 8,
+              "required": true,
+              "autofocus": true
+            }
+          ]
+        },
+        {
+          "id": "mobility",
+          "type": "single_choice",
+          "title": "Vous pouvez bouger ?",
+          "fieldId": "mobility",
+          "required": true,
+          "options": [
+            {
+              "value": "STAY",
+              "label": "Je reste dans ma zone"
+            },
+            {
+              "value": "MOVE",
+              "label": "Je peux déménager"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "logistics",
+      "label": "Déplacements",
+      "steps": [
+        {
+          "id": "availability",
+          "type": "day_hours",
+          "title": "Vos disponibilités pour une école",
+          "body": "Cochez les jours où vous pouvez enseigner, puis retirez les moments qui ne vous conviennent pas.",
+          "fieldId": "availability",
+          "required": true,
+          "showIf": {
+            "field": "service_types",
+            "equals": [
+              "FULL_TIME"
+            ]
+          }
+        },
+        {
+          "id": "home_availability",
+          "type": "day_hours",
+          "title": "Vos disponibilités pour les cours à domicile",
+          "body": "Trois jours au minimum : en dessous, presque aucune famille ne trouve un créneau qui tombe avec le vôtre.",
+          "showIf": {
+            "field": "service_types",
+            "equals": [
+              "HOME"
+            ]
+          },
+          "fieldId": "home_availability",
+          "required": true,
+          "minSelected": 3
+        }
+      ]
+    },
+    {
+      "id": "experience",
+      "label": "Expérience",
+      "steps": [
+        {
+          "id": "documents",
+          "type": "upload",
+          "title": "Votre CV et vos diplômes",
+          "body": "Ce sont eux qui font la différence quand un établissement compare deux candidats.",
+          "optional": true,
+          "uploads": [
+            {
+              "id": "cv_path",
+              "label": "CV",
+              "accept": "pdf,image"
+            },
+            {
+              "id": "diploma_path",
+              "label": "Diplôme",
+              "accept": "pdf,image"
+            }
+          ]
+        },
+        {
+          "id": "subscription",
+          "type": "plan_select",
+          "title": "Commencer fort !",
+          "fieldId": "subscription",
+          "plans": [
+            {
+              "value": "PRO",
+              "name": "Pro",
+              "price": 100000,
+              "highlight": "Votre profil dans les 10 premiers pendant un mois entier, et l’assistant IA entraîné sur le programme guinéen pour créer vos cours et corriger les exercices de vos élèves.",
+              "recommended": true
+            },
+            {
+              "value": "MASTER",
+              "name": "Master",
+              "price": 200000,
+              "highlight": "Tout Pro, plus la messagerie directe avec les élèves, les parents et les établissements."
+            }
+          ],
+          "declineLabel": "Commencer sans abonnement",
+          "declineValue": "FREE",
+          "cta": "Souscrire"
+        }
+      ]
+    }
+  ]
+}

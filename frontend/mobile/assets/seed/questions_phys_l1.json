@@ -1,0 +1,42 @@
+{
+  "testId": "test_phys_l1",
+  "title": "Physique — L1",
+  "durationMinutes": 15,
+  "passingScore": 70,
+  "rules": "Test individuel et chronometre. Une seule reponse par question.",
+  "questions": [
+    { "q": "L'unite de la force dans le systeme international est :", "o": ["le joule", "le newton", "le watt", "le pascal"], "a": "B", "d": "Mecanique", "x": 1, "e": "La force se mesure en newtons (N)." },
+    { "q": "La deuxieme loi de Newton s'ecrit :", "o": ["F = mv", "F = ma", "F = mgh", "F = m/a"], "a": "B", "d": "Mecanique", "x": 1, "e": "La somme des forces est egale au produit de la masse par l'acceleration." },
+    { "q": "L'energie cinetique d'un corps de masse m et de vitesse v vaut :", "o": ["mv", "mv^2", "mv^2/2", "mgh"], "a": "C", "d": "Mecanique", "x": 2, "e": "Ec = (1/2) m v^2." },
+    { "q": "L'energie potentielle de pesanteur vaut :", "o": ["mgh", "mv^2/2", "mg", "gh"], "a": "A", "d": "Mecanique", "x": 2, "e": "Ep = m g h, avec h la hauteur." },
+    { "q": "L'acceleration de la pesanteur sur Terre vaut environ :", "o": ["1,8 m/s^2", "9,8 m/s^2", "98 m/s^2", "0,98 m/s^2"], "a": "B", "d": "Mecanique", "x": 1, "e": "g vaut environ 9,8 metres par seconde au carre." },
+    { "q": "Le principe d'inertie affirme qu'un corps isole :", "o": ["accelere", "reste au repos ou en mouvement rectiligne uniforme", "tombe", "tourne"], "a": "B", "d": "Mecanique", "x": 2, "e": "Premiere loi de Newton." },
+    { "q": "La quantite de mouvement d'un corps vaut :", "o": ["mv", "ma", "mv^2", "m/v"], "a": "A", "d": "Mecanique", "x": 2, "e": "p = m v, grandeur vectorielle." },
+    { "q": "L'unite de la puissance est :", "o": ["le joule", "le newton", "le watt", "le volt"], "a": "C", "d": "Mecanique", "x": 1, "e": "La puissance se mesure en watts (W)." },
+    { "q": "Un mouvement rectiligne uniforme se caracterise par :", "o": ["une vitesse constante", "une acceleration constante non nulle", "une force croissante", "une trajectoire circulaire"], "a": "A", "d": "Mecanique", "x": 2, "e": "Vitesse constante en direction et en norme." },
+    { "q": "Le travail d'une force constante F sur un deplacement d colineaire vaut :", "o": ["F/d", "F x d", "F + d", "F x d^2"], "a": "B", "d": "Mecanique", "x": 2, "e": "W = F x d lorsque force et deplacement sont colineaires." },
+
+    { "q": "La loi d'Ohm s'ecrit :", "o": ["U = RI", "U = R/I", "I = UR", "R = UI"], "a": "A", "d": "Electricite", "x": 1, "e": "La tension est le produit de la resistance par l'intensite." },
+    { "q": "L'unite de l'intensite du courant electrique est :", "o": ["le volt", "l'ohm", "l'ampere", "le coulomb"], "a": "C", "d": "Electricite", "x": 1, "e": "L'intensite se mesure en amperes (A)." },
+    { "q": "Deux resistances R1 et R2 en serie ont pour resistance equivalente :", "o": ["R1 + R2", "R1 x R2", "1/(R1 + R2)", "(R1 x R2)/(R1 + R2)"], "a": "A", "d": "Electricite", "x": 2, "e": "En serie, les resistances s'additionnent." },
+    { "q": "Deux resistances egales R en parallele donnent une resistance equivalente de :", "o": ["2R", "R", "R/2", "R^2"], "a": "C", "d": "Electricite", "x": 3, "e": "1/Req = 1/R + 1/R = 2/R, donc Req = R/2." },
+    { "q": "La puissance dissipee par une resistance vaut :", "o": ["UI", "U/I", "U + I", "U^2 I"], "a": "A", "d": "Electricite", "x": 2, "e": "P = U x I, soit aussi R I^2." },
+    { "q": "Dans un circuit en serie, l'intensite du courant est :", "o": ["differente en chaque point", "la meme partout", "nulle", "proportionnelle a la resistance"], "a": "B", "d": "Electricite", "x": 2, "e": "Le courant est conserve dans une branche unique." },
+    { "q": "L'unite de la tension electrique est :", "o": ["l'ampere", "le volt", "le watt", "le farad"], "a": "B", "d": "Electricite", "x": 1, "e": "La tension se mesure en volts (V)." },
+    { "q": "La charge elementaire d'un electron vaut environ :", "o": ["1,6 x 10^-19 C", "9,1 x 10^-31 C", "3 x 10^8 C", "6,02 x 10^23 C"], "a": "A", "d": "Electricite", "x": 3, "e": "e vaut environ 1,6 x 10^-19 coulomb." },
+
+    { "q": "La vitesse de la lumiere dans le vide vaut environ :", "o": ["3 x 10^5 m/s", "3 x 10^8 m/s", "3 x 10^6 m/s", "3 x 10^10 m/s"], "a": "B", "d": "Ondes et optique", "x": 2, "e": "c vaut environ 300 000 km/s, soit 3 x 10^8 m/s." },
+    { "q": "La relation entre longueur d'onde, vitesse et frequence est :", "o": ["v = lambda x f", "v = lambda / f", "f = lambda x v", "lambda = v x f"], "a": "A", "d": "Ondes et optique", "x": 2, "e": "v = lambda f." },
+    { "q": "L'unite de la frequence est :", "o": ["le metre", "la seconde", "le hertz", "le decibel"], "a": "C", "d": "Ondes et optique", "x": 1, "e": "La frequence se mesure en hertz (Hz)." },
+    { "q": "La refraction correspond au changement de direction de la lumiere :", "o": ["lors d'une reflexion", "au passage entre deux milieux", "dans le vide", "en presence d'un champ magnetique"], "a": "B", "d": "Ondes et optique", "x": 2, "e": "Loi de Snell-Descartes." },
+    { "q": "Une lentille convergente fait converger les rayons vers :", "o": ["son centre optique", "son foyer image", "l'infini", "son axe secondaire"], "a": "B", "d": "Ondes et optique", "x": 2, "e": "Les rayons paralleles convergent au foyer image." },
+    { "q": "La periode d'une onde est l'inverse de :", "o": ["sa longueur d'onde", "sa frequence", "son amplitude", "sa vitesse"], "a": "B", "d": "Ondes et optique", "x": 2, "e": "T = 1/f." },
+
+    { "q": "L'unite de la temperature dans le systeme international est :", "o": ["le degre Celsius", "le kelvin", "le degre Fahrenheit", "le joule"], "a": "B", "d": "Thermodynamique", "x": 1, "e": "Le kelvin (K) est l'unite SI de temperature." },
+    { "q": "Zero degre Celsius correspond a :", "o": ["0 K", "100 K", "273,15 K", "373,15 K"], "a": "C", "d": "Thermodynamique", "x": 2, "e": "T(K) = T(degre C) + 273,15." },
+    { "q": "Le premier principe de la thermodynamique exprime :", "o": ["la conservation de l'energie", "l'augmentation de l'entropie", "la conservation de la masse", "la loi des gaz parfaits"], "a": "A", "d": "Thermodynamique", "x": 2, "e": "La variation d'energie interne egale la somme du travail et de la chaleur." },
+    { "q": "La loi des gaz parfaits s'ecrit :", "o": ["PV = nRT", "PV = RT/n", "P/V = nRT", "PVT = nR"], "a": "A", "d": "Thermodynamique", "x": 2, "e": "Equation d'etat des gaz parfaits." },
+    { "q": "L'unite de la pression dans le systeme international est :", "o": ["le newton", "le pascal", "le bar", "le joule"], "a": "B", "d": "Thermodynamique", "x": 1, "e": "La pression se mesure en pascals (Pa)." },
+    { "q": "Le second principe de la thermodynamique introduit la notion :", "o": ["d'energie interne", "d'entropie", "de travail", "d'enthalpie"], "a": "B", "d": "Thermodynamique", "x": 3, "e": "L'entropie d'un systeme isole ne peut que croitre." }
+  ]
+}

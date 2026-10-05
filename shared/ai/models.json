@@ -1,0 +1,37 @@
+{
+  "_comment": [
+    "Les modèles Gemini retenus, et à quoi chacun sert.",
+    "",
+    "Source unique : le Worker les lit par import JSON, et",
+    "`backend/scripts/check-gemini.mjs` les relit pour vérifier qu'ils",
+    "répondent avec la clé en place. Les écrire aux deux endroits les aurait",
+    "fait diverger à la première rotation de modèle — et le symptôme serait un",
+    "contrôle qui passe sur un modèle que la production n'utilise pas.",
+    "",
+    "⚠ OFFRE PAYANTE OBLIGATOIRE. En offre gratuite, Google se sert des données",
+    "envoyées pour améliorer ses produits. Ce serait inacceptable pour des",
+    "photos de devoirs d'enfants, et l'API ne dit pas de quelle offre relève",
+    "une clé : la facturation se vérifie à la main sur",
+    "console.cloud.google.com.",
+    "",
+    "Vérifiés le 19/09/2026 par check-gemini.mjs."
+  ],
+
+  "models": {
+    "build": {
+      "id": "gemini-3.6-flash",
+      "usage": "Construction d'un cours : la qualité prime."
+    },
+    "chat": {
+      "id": "gemini-3.5-flash-lite",
+      "usage": "Discussion et résumés courts : le moins cher qui reste utilisable."
+    }
+  },
+
+  "_retries": [
+    "Google renvoie des 503 « high demand » passagers. Sans reprise, un",
+    "professeur perdrait son résumé pour un incident qui dure dix secondes."
+  ],
+  "retries": 3,
+  "timeoutMs": 20000
+}

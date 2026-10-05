@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ce qui s'affiche entre le doigt sur l'icone et la premiere image de Flutter.
+  Sans la marque, ce temps-la est une page vide : sur un telephone d'entree de
+  gamme il dure assez longtemps pour qu'on croie que l'application n'a pas
+  demarre. Le symbole est detoure, il tient donc sur le fond clair comme sur
+  le fond sombre.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="?android:colorBackground" />
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@mipmap/ic_launcher_foreground" />
+    </item>
+</layer-list>

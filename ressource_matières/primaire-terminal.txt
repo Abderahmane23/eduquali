@@ -1,0 +1,260 @@
+Merci pour ces précisions. Je comprends maintenant que vous travaillez sur une **compilation structurée des programmes scolaires guinéens** et qu'il manque effectivement une grande partie des sous-chapitres détaillés pour toutes les matières et toutes les classes.
+
+Voici ce que j'ai pu reconstituer à partir des sources officielles et documents pédagogiques guinéens accessibles :
+
+***
+
+## Structure du système éducatif guinéen [ibe.unesco](https://www.ibe.unesco.org/sites/default/files/medias/fichiers/2023/10/COC%20R%C3%A9publique%20de%20Guin%C3%A9e%20Version%2028%2009%2023%20V3_0.pdf)
+
+Le système suit un modèle **6+4+3** :
+- **Primaire** : 6 années (CP1, CP2, CE1, CE2, CM1, CM2 ou 1ère à 6ème année)
+- **Collège** : 4 années (7ème, 8ème, 9ème, 10ème année)
+- **Lycée** : 3 années (11ème, 12ème, Terminale) avec 3 séries : Sciences Expérimentales (SE), Sciences Mathématiques (SM), Sciences Sociales (SS) [books.openedition](https://books.openedition.org/pum/14218?lang=fr)
+
+***
+
+## Programmes par cycle - Détails reconstitués
+
+### **PRIMAIRE (1ère à 6ème année)**
+
+#### **Matières principales**  : [stat-guinee](https://www.stat-guinee.org/images/Documents/Publications/SSN/mepua/secondaire/Annuaire_du_Secondaire_2023-2024-V03.pdf)
+- Français (Lecture, Dictée, Expression écrite/orale, Copie, Récitation)
+- Mathématiques (Numération, Calcul écrit, Opérations, Géométrie, Mesure, Problèmes)
+- Histoire-Géographie
+- Sciences d'observation
+- Éducation Civique et Morale (ECM)
+- Éducation physique et sportive (EPS)
+- Dessin, Écriture, Chant
+
+#### **Exemple - 6ème année (CEP)**  : [stat-guinee](https://www.stat-guinee.org/images/Documents/Publications/SSN/mepua/primaire/ANNUAIRES_PRIMAIRE_GUINEE_2022-2023_2.pdf)
+| Matière | Coefficient |
+|---------|-------------|
+| Calcul écrit | 2.00 |
+| Dictée et questions | 2.00 |
+| Expression écrite | 2.00 |
+| Expression Orale | 1.00 |
+| Lecture | 1.00 |
+| Géométrie | 1.00 |
+| Mesure | 1.00 |
+| Numération | 1.00 |
+| Opération | 1.00 |
+| Problème | 1.00 |
+| ECM | 1.00 |
+| Géographie | 1.00 |
+| Histoire | 1.00 |
+| Sciences d'observation | 1.00 |
+
+***
+
+### **COLLÈGE (7ème à 10ème année)**
+
+#### **Plan d'étude des disciplines**  : [magoe](https://magoe.fr/ecoleetuniversite_matiere.php?idNiveau=1722)
+
+| Matière | 7ème | 8ème | 9ème | 10ème |
+|---------|------|------|------|-------|
+| Français | 8h | 8h | 8h | 8h |
+| Mathématiques | 6h | 6h | 6h | 6h |
+| Histoire | 2h | 2h | 2h | 2h |
+| Géographie | 2h | 2h | 2h | 2h |
+| Physique | 3h | 3h | 3h | 3h |
+| Chimie | 2h | 2h | 2h | 2h |
+| Biologie | 2h | 2h | 2h | 2h |
+| ECM | 1h | 1h | 1h | - |
+| Anglais | 2h | 2h | 2h | 2h |
+| Arabe | 2h | 2h | 2h | 2h |
+| EPS | 1h | 1h | 1h | 1h |
+
+#### **Programme de Français au Collège - Détails**  : [magoe](https://magoe.fr/ecoleetuniversite_matiere.php?idNiveau=1722)
+
+**7ème année - Thèmes** :
+- L'école (rentrée scolaire, mon école, vie à l'école)
+- Les jeux et sports
+- La famille (vie en famille, parents, famille nucléaire/élargie)
+- Le travail des jeunes
+- Les fêtes (religieuses, familiales, scolaires, nationales)
+- Les paysages naturels (savane, forêt, montagne, cours d'eau, mer)
+- Les animaux (domestiques, sauvages, espèces protégées)
+- Les loisirs (pêche, chasse, lecture)
+- Le courrier (poste, lettre, télégramme, courriels)
+- Les voyages
+- La protection de l'environnement
+
+**Lectures recommandées** : Contes d'Amadou Koumba (Birago DIOP), L'enfant noir (CAMARA Laye), L'indigo, Le manguier
+
+**8ème année - Thèmes** :
+- Les besoins fondamentaux (alimentation, logement, habillement, instruction)
+- Le temps (saisons, effets du climat)
+- Le jour et la nuit
+- Les jeux et sports (collectifs, individuels, traditionnels)
+- Le travail des enfants
+- Les communications (téléphone, fax, internet, TIC)
+- Les voyages (départ, arrivée, accueil, découverte)
+- À la découverte d'autres horizons (autre monde, autres hommes, autres cultures)
+- Les âges de la vie
+
+**Lectures** : « Climbié » (Bernard DADIE), « Lieutenant de Kouta » (Mansa Makan DIABATE)
+
+**9ème année - Thèmes** :
+- La vie en société (conditions de vie, compréhension mutuelle, solidarité, tolérance)
+- Les métiers (travail manuel/intellectuel, complémentarité, choix, conscience professionnelle)
+- Les loisirs (théâtre, musique, danses traditionnelles, cinéma)
+- Les moyens d'information (lettre, journal, radio, télévision, internet)
+- Les mouvements de population (migrations, immigration, exode rural, tourisme, commerce)
+- La sécheresse (désertification, reboisement)
+
+**Lectures** : A l'écoute du monde, Indigo Français 4ème, Le manguier 4ème
+
+**10ème année - Thèmes** :
+- Les âges de la vie (enfance, adolescence, âge adulte, vieillesse, conflits de génération)
+- La famille (cérémonies, mariage, naissance, baptême, décès, héritage)
+- L'éducation (traditionnelle, moderne)
+- Le folklore (instruments, chants, danses)
+- Les traditions orales (proverbes, devinettes, fables, contes, légendes, mythes)
+- Tradition et modernisme (pratiques traditionnelles vs modernes, mirages de la ville)
+
+**Lectures** : Le Manguier 10ème, Indigo français 3ème, L'enfant noir (CAMARA Laye), Triballiques (Henri LOPES), Le vieux nègre et la médaille (Ferdinand OYONO)
+
+#### **Grammaire - Progression par classe**  : [magoe](https://magoe.fr/ecoleetuniversite_matiere.php?idNiveau=1722)
+
+**7ème année** :
+- Chapitre 1 : Généralités (phrase simple, groupe nominal, phonétique, ponctuation)
+- Chapitre 2 : La phrase simple (types et formes : déclarative, interrogative, impérative, exclamative)
+- Chapitre 3 : Constituants de la phrase simple (GN : déterminants, nom, adjectif, complément)
+- Chapitre 4 : Groupe verbal (définition, compléments essentiels/non essentiels, attribut, adverbe)
+- Chapitre 5 : De la phrase simple à la phrase complexe (coordination, juxtaposition, subordination, relative)
+
+**8ème année** :
+- Chapitre 1 : Étude du verbe et de la subordination
+- Chapitre 2 : Le groupe nominal (déterminants, comparatif/superlatif, substituts, pronoms)
+- Chapitre 3 : Le verbe (transitifs/intransitifs, pronominaux, voix passive/active, impersonnels, modes)
+- Chapitre 4 : La subordination (relative, complétive, interrogative, infinitive, participiale)
+
+**9ème année** :
+- Chapitre 1 : Révisions générales (pronom, déterminants, groupes fonctionnels)
+- Chapitre 2 : Le verbe (auxiliaires, périphrases, temps/aspects, subjonctif, participe, infinitif)
+- Chapitre 3 : La phrase simple (types, formes, mise en relief, emphatique)
+- Chapitre 4 : La phrase complexe (coordination, subordination : temps, cause, conséquence, but, condition, comparaison)
+
+**Conjugaison** :
+- **7ème** : Morphologie du verbe, modes, temps, indicatif, auxiliaires
+- **8ème** : Subjonctif, conditionnel, impératif, temps composés
+- **9ème** : Concordance des temps, verbes irréguliers, formes rares, infinitif, participe
+- **10ème** : Révision complète, verbes irréguliers par paires, justification des modes
+
+**Vocabulaire** :
+- **7ème** : Radical, préfixe, suffixe, familles de mots, sens propre/figuré, expressions figées, dictionnaire, personnification, comparaison
+- **8ème** : Champs lexicaux, synonymes/antonymes, niveaux de langue, métaphore
+- **9ème** : Polysémie, homonymes, vocabulaire journalistique et spécialisé, métaphore
+- **10ème** : Lexique littéraire (métonymie...), champs sémantiques, familles étymologiques, connotation/dénotation
+
+***
+
+### **LYCÉE (11ème, 12ème, Terminale)**
+
+#### **Plan d'étude par série**  : [magoe](https://magoe.fr/ecoleetuniversite_matiere.php?idNiveau=1722)
+
+| Matière | Sciences Sociales | Sciences Expérimentales | Sciences Mathématiques |
+|---------|-------------------|-------------------------|------------------------|
+| Français | 6h (11è), 6h (12è), 4h (T) | 6h, 6h, 4h | 4h, 4h, 4h |
+| Maths | 4h, 4h, 4h | 4h, 4h, 4h | 8h, 8h, 8h |
+| Physique | 2h, 2h, 2h | 5h, 5h, 5h | 4h, 4h, 4h |
+| Chimie | 2h, 2h, 2h | 4h, 4h, 4h | 4h, 4h, 4h |
+| Biologie | 2h, 2h, 2h | 4h, 4h, 4h | 1h, 1h, 1h |
+| Histoire-Géo | 2h, 2h, 2h | 2h, 2h, 2h | 1h, 1h, 1h |
+| Philosophie | 2h, 2h, 4h | 2h, 2h, 4h | 1h, 2h, 2h |
+| Économie | 2h, 2h, 2h | 1h, 1h, 1h | 1h, 1h, 1h |
+| Géologie | - | - | 2h, 2h, 2h |
+| Arabe | 3h, 3h, 3h | 3h, 3h, 3h | 3h, 3h, 3h |
+| Anglais | 1h, 1h, 1h | 1h, 1h, 1h | 1h, 1h, 1h |
+
+#### **Mathématiques 10ème année - Plan de progression détaillé**  : [fr.scribd](https://fr.scribd.com/document/655654503/PROGRAMMES-FRANCAIS-COLLEGE)
+
+**Premier trimestre** (octobre-décembre) :
+1. Rappel de notions antérieures
+2. Quotients
+3. Calcul littéral (expressions littérales, propriétés)
+4. Propriétés de THALÈS (triangle, triangles semblables, cas général)
+5. Racines carrées (opérations, calculs)
+6. Triangle rectangle (PYTHAGORE, cosinus, sinus, tangente)
+7. Trigonométrie
+8. Valeur absolue, intervalles, comparaison des réels
+9. Calcul numérique (calculs approchés, dénombrement)
+10. Vecteurs (somme, produit par un nombre, configurations)
+
+**Deuxième trimestre** (janvier-avril) :
+11. Coordonnées d'un vecteur (calculs dans un repère, colinéarité, orthogonalité)
+12. Équations du 1er degré dans ℝ
+13. Inéquations du 1er degré dans ℝ
+14. Équations dans ℝ×ℝ
+15. Équation de la droite (positions relatives de deux droites)
+16. Systèmes d'équations du 1er degré dans ℝ×ℝ
+17. Inéquations dans ℝ×ℝ
+18. Applications affines et linéaires
+19. Angles inscrits dans un cercle
+20. Statistiques (caractères qualitatifs/quantitatifs, regroupement en classes)
+
+**Troisième trimestre** (avril-juin) :
+21. Symétries, translations et configurations
+22. Rotation, homothéties
+23. Solides (pyramides, cônes)
+24. Secteurs plans
+
+***
+
+## Examens nationaux [fr.scribd](https://fr.scribd.com/document/940211409/plan-de-progression-10eme-Maths)
+
+### **CEP (Certificat d'Études Primaires)** - Fin 6ème année
+Épreuves : Dictée, Rédaction, Sciences d'observation, ECM, Histoire, Géographie, Calcul [iiep.unesco](https://www.iiep.unesco.org/sites/default/files/medias/fichiers/2024/04/informationsheet_ulad_guinee.pdf)
+
+### **BEPC (Brevet d'Études du Premier Cycle)** - Fin 10ème année
+Épreuves : Rédaction, Dictée/questions, Histoire-Géographie, Mathématiques, Physique, Chimie, Biologie, ECM, Anglais [fr.scribd](https://fr.scribd.com/document/940211409/plan-de-progression-10eme-Maths)
+
+### **Baccalauréat Unique** - Fin Terminale
+Épreuves communes : Français, Philosophie, Anglais
+Épreuves spécifiques selon série :
+- **SE** : Physique, Chimie, Biologie-Géologie
+- **SM** : Mathématiques, Physique, Chimie, Géologie
+- **SS** : Histoire-Géographie, Économie, Philosophie [fr.scribd](https://fr.scribd.com/document/940211409/plan-de-progression-10eme-Maths)
+
+***
+
+## Cadre d'Orientation Curriculaire (COC) - Septembre 2023 [ibe.unesco](https://www.ibe.unesco.org/sites/default/files/medias/fichiers/2023/10/COC%20R%C3%A9publique%20de%20Guin%C3%A9e%20Version%2028%2009%2023%20V3_0.pdf)
+
+Le document officiel de l'INRAP/MEPU-A structure le curriculum en **4 parties** :
+
+1. **Le COC** : description du parcours de l'apprenant et professionnalisation des enseignants
+2. **Contexte éducatif guinéen** : système, risques, indicateurs
+3. **Parcours de l'apprenant guinéen** :
+   - Préscolaire (organisation, finalités, profil de sortie, programmes)
+   - Enseignement fondamental (organisation, finalités, profil, programmes)
+   - Enseignement secondaire (organisation, finalités, profil, programmes)
+   - Franco-Arabe
+   - Éducation non formelle et alphabétisation
+4. **Parcours de professionnalisation des enseignants** : référentiels métier, compétences, formation
+
+**Domaines d'apprentissage au fondamental**  : [ibe.unesco](https://www.ibe.unesco.org/sites/default/files/medias/fichiers/2023/10/COC%20R%C3%A9publique%20de%20Guin%C3%A9e%20Version%2028%2009%2023%20V3_0.pdf)
+1. Langues (Français/Arabe : lecture, langage, écriture, vocabulaire)
+2. Mathématiques (opérations, numération, mesure, géométrie, résolution de problèmes)
+3. Sciences humaines (Histoire, Géographie, ECM, Éducation islamique pour franco-arabe)
+4. Sciences et technologie
+5. EPS, Art, Culture et Production
+
+***
+
+## Limites importantes ⚠️
+
+Comme indiqué dans votre document, **il n'existe pas de publication officielle unique** contenant l'intégralité des chapitres et sous-chapitres pour toutes les matières et toutes les classes dans un format homogène [source_priority]. Les informations ci-dessus proviennent de :
+
+- **COC (Cadre d'Orientation Curriculaire)** - INRAP/MEPU-A, Septembre 2023 [ibe.unesco](https://www.ibe.unesco.org/sites/default/files/medias/fichiers/2023/10/COC%20R%C3%A9publique%20de%20Guin%C3%A9e%20Version%2028%2009%2023%20V3_0.pdf)
+- **Programmes de Français au Collège** - INRAP, Octobre 2009 [magoe](https://magoe.fr/ecoleetuniversite_matiere.php?idNiveau=1722)
+- **Plans de progression** d'établissements guinéens [fr.scribd](https://fr.scribd.com/document/655654503/PROGRAMMES-FRANCAIS-COLLEGE)
+- **Annuaires statistiques** du MEPU-A [books.openedition](https://books.openedition.org/pum/14218?lang=fr)
+- **Sujets d'examens** officiels [guineelex](https://guineelex.com/decrets-arretes/arrete-a-97-1143-sgg-menrs-cab)
+
+Pour obtenir les **programmes détaillés complets** (tous les sous-chapitres de chaque matière), il faudrait consulter :
+- Les **manuels scolaires officiels** édités par l'INRAP
+- Les **guides pédagogiques** par matière et par classe
+- La **bibliothèque numérique NexEd** pour les ressources guinéennes [fr.scribd](https://fr.scribd.com/document/819134658/PLAN-DE-PROGRESSION)
+- Les **directions préfectorales/communales de l'éducation** (DPE/DCE)
+
+Souhaitez-vous que je poursuive les recherches sur des matières ou des classes spécifiques ?

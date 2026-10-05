@@ -1,0 +1,43 @@
+{
+  "testId": "test_math_lycee",
+  "title": "Mathematiques — Lycee",
+  "durationMinutes": 20,
+  "passingScore": 70,
+  "rules": "Test individuel et chronometre. Une seule reponse par question.",
+  "questions": [
+    { "q": "Le developpement de (x + 2)(x - 3) est :", "o": ["x^2 - x - 6", "x^2 + x - 6", "x^2 - 5x - 6", "x^2 - 6"], "a": "A", "d": "Algebre", "x": 2, "e": "x^2 - 3x + 2x - 6 = x^2 - x - 6." },
+    { "q": "La solution de 3x + 6 = 0 est :", "o": ["2", "-2", "6", "-6"], "a": "B", "d": "Algebre", "x": 1, "e": "3x = -6 donc x = -2." },
+    { "q": "L'identite remarquable (a - b)^2 vaut :", "o": ["a^2 - b^2", "a^2 - 2ab + b^2", "a^2 + 2ab + b^2", "a^2 + b^2"], "a": "B", "d": "Algebre", "x": 1, "e": "Carre d'une difference." },
+    { "q": "Si delta est strictement negatif, l'equation du second degre admet :", "o": ["deux racines reelles", "une racine double", "aucune racine reelle", "une infinite de racines"], "a": "C", "d": "Algebre", "x": 2, "e": "Un discriminant negatif ne donne pas de solution reelle." },
+    { "q": "La forme factorisee de x^2 + 6x + 9 est :", "o": ["(x + 3)^2", "(x - 3)^2", "(x + 9)(x + 1)", "(x + 6)(x + 3)"], "a": "A", "d": "Algebre", "x": 2, "e": "Carre parfait : (x + 3)^2." },
+    { "q": "La valeur de la racine carree de 144 est :", "o": ["11", "12", "14", "16"], "a": "B", "d": "Algebre", "x": 1, "e": "12 x 12 = 144." },
+    { "q": "L'inequation 2x - 4 > 0 a pour solution :", "o": ["x < 2", "x > 2", "x > -2", "x < -2"], "a": "B", "d": "Algebre", "x": 2, "e": "2x > 4 donc x > 2." },
+    { "q": "Le PGCD de 12 et 18 vaut :", "o": ["2", "3", "6", "36"], "a": "C", "d": "Algebre", "x": 2, "e": "Les diviseurs communs sont 1, 2, 3 et 6 : le plus grand est 6." },
+
+    { "q": "La derivee de f(x) = x^2 + 3x est :", "o": ["2x + 3", "2x", "x + 3", "3x"], "a": "A", "d": "Analyse", "x": 1, "e": "Derivee terme a terme." },
+    { "q": "La derivee de f(x) = 4x est :", "o": ["4", "4x", "0", "x"], "a": "A", "d": "Analyse", "x": 1, "e": "Derivee d'une fonction lineaire : son coefficient." },
+    { "q": "La fonction f(x) = x^2 admet un minimum en :", "o": ["x = 1", "x = 0", "x = -1", "elle n'a pas de minimum"], "a": "B", "d": "Analyse", "x": 2, "e": "La parabole a pour sommet l'origine." },
+    { "q": "Une fonction affine a pour representation graphique :", "o": ["une parabole", "une droite", "une hyperbole", "un cercle"], "a": "B", "d": "Analyse", "x": 1, "e": "f(x) = ax + b se represente par une droite." },
+    { "q": "Le coefficient directeur de la droite passant par A(0, 1) et B(2, 5) vaut :", "o": ["1", "2", "3", "4"], "a": "B", "d": "Analyse", "x": 2, "e": "(5 - 1) / (2 - 0) = 4/2 = 2." },
+    { "q": "La suite definie par u_n = 3n + 1 est :", "o": ["geometrique", "arithmetique de raison 3", "constante", "decroissante"], "a": "B", "d": "Analyse", "x": 2, "e": "u_(n+1) - u_n = 3, constante." },
+    { "q": "La derivee de f(x) = x^3 - 2x est :", "o": ["3x^2 - 2", "3x^2", "x^2 - 2", "3x - 2"], "a": "A", "d": "Analyse", "x": 2, "e": "Derivee terme a terme." },
+    { "q": "Si f'(x) = 0 et que f' change de signe en a, alors f admet en a :", "o": ["une asymptote", "un extremum local", "une discontinuite", "une racine double"], "a": "B", "d": "Analyse", "x": 3, "e": "Changement de signe de la derivee : extremum local." },
+
+    { "q": "La probabilite de tirer un as dans un jeu de 32 cartes est :", "o": ["1/8", "4/32", "1/32", "4/52"], "a": "A", "d": "Probabilites", "x": 2, "e": "4 as sur 32 cartes, soit 1/8." },
+    { "q": "La somme des probabilites de toutes les issues d'une experience vaut :", "o": ["0", "0,5", "1", "le nombre d'issues"], "a": "C", "d": "Probabilites", "x": 1, "e": "Axiome des probabilites." },
+    { "q": "On lance une piece trois fois. Le nombre d'issues possibles est :", "o": ["3", "6", "8", "9"], "a": "C", "d": "Probabilites", "x": 2, "e": "2^3 = 8." },
+    { "q": "La moyenne de 10, 20 et 30 vaut :", "o": ["15", "20", "25", "60"], "a": "B", "d": "Probabilites", "x": 1, "e": "60 / 3 = 20." },
+    { "q": "L'etendue de la serie 3, 7, 10, 15 vaut :", "o": ["12", "10", "15", "7"], "a": "A", "d": "Probabilites", "x": 2, "e": "15 - 3 = 12." },
+    { "q": "Dans une classe de 40 eleves, 25 % pratiquent le sport. Cela represente :", "o": ["4 eleves", "10 eleves", "15 eleves", "25 eleves"], "a": "B", "d": "Probabilites", "x": 2, "e": "40 x 0,25 = 10." },
+    { "q": "La probabilite d'un evenement impossible vaut :", "o": ["0", "0,5", "1", "-1"], "a": "A", "d": "Probabilites", "x": 1, "e": "Un evenement impossible ne se realise jamais." },
+
+    { "q": "Dans un triangle rectangle d'hypotenuse 10 et de cote 6, l'autre cote vaut :", "o": ["4", "8", "9", "16"], "a": "B", "d": "Geometrie", "x": 2, "e": "Racine de (100 - 36) = racine de 64 = 8." },
+    { "q": "Le perimetre d'un cercle de rayon 5 vaut :", "o": ["5 pi", "10 pi", "25 pi", "2,5 pi"], "a": "B", "d": "Geometrie", "x": 1, "e": "P = 2 pi r = 10 pi." },
+    { "q": "sin(90 degres) vaut :", "o": ["0", "1", "-1", "0,5"], "a": "B", "d": "Geometrie", "x": 1, "e": "Valeur de reference du sinus." },
+    { "q": "Le volume d'un cylindre de rayon r et de hauteur h vaut :", "o": ["2 pi r h", "pi r^2 h", "pi r h^2", "pi r^2"], "a": "B", "d": "Geometrie", "x": 2, "e": "Aire de base multipliee par la hauteur." },
+    { "q": "Dans un triangle equilateral, chaque angle mesure :", "o": ["45 degres", "60 degres", "90 degres", "30 degres"], "a": "B", "d": "Geometrie", "x": 1, "e": "180 / 3 = 60 degres." },
+    { "q": "Le theoreme de Thales concerne :", "o": ["les triangles rectangles", "des droites paralleles coupant deux secantes", "les cercles", "les volumes"], "a": "B", "d": "Geometrie", "x": 2, "e": "Il etablit une proportionnalite entre longueurs." },
+    { "q": "L'aire d'un rectangle de longueur 8 et de largeur 5 vaut :", "o": ["13", "26", "40", "45"], "a": "C", "d": "Geometrie", "x": 1, "e": "8 x 5 = 40." },
+    { "q": "tan(x) est egal a :", "o": ["cos(x) / sin(x)", "sin(x) / cos(x)", "sin(x) x cos(x)", "1 / sin(x)"], "a": "B", "d": "Geometrie", "x": 2, "e": "Definition de la tangente." }
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "id": "student_onboarding",
+  "version": 2,
+  "audience": "STUDENT",
+  "locale": "fr",
+  "currency": "GNF",
+  "sections": [
+    {
+      "id": "about_you",
+      "label": "Vous",
+      "steps": [
+        {
+          "id": "identity",
+          "type": "form",
+          "title": "Comment vous appelez-vous ?",
+          "fields": [
+            {
+              "id": "first_name",
+              "type": "text",
+              "label": "Prénom",
+              "required": true,
+              "autofocus": true
+            },
+            {
+              "id": "last_name",
+              "type": "text",
+              "label": "Nom",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "school",
+          "type": "form",
+          "title": "Où étudiez-vous ?",
+          "body": "Le quartier décide des professeurs qui peuvent venir.",
+          "fields": [
+            {
+              "id": "institution",
+              "type": "combo",
+              "label": "Nom de l’école",
+              "optionsSource": "institutions",
+              "allowCustom": true,
+              "required": false,
+              "hint": "Laissez vide si vous en cherchez une."
+            },
+            {
+              "id": "region",
+              "type": "dropdown",
+              "label": "Région",
+              "required": true,
+              "optionsSource": "regions"
+            },
+            {
+              "id": "city",
+              "type": "dropdown",
+              "label": "Commune ou préfecture",
+              "required": true,
+              "optionsSource": "prefectures",
+              "optionsFilter": {
+                "field": "region"
+              }
+            },
+            {
+              "id": "district",
+              "type": "text",
+              "label": "Quartier",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "level_stage",
+          "type": "single_choice",
+          "title": "Où en êtes-vous dans vos études ?",
+          "fieldId": "level_stage",
+          "required": true,
+          "optionsSource": "stages"
+        },
+        {
+          "id": "level_class",
+          "type": "single_choice",
+          "title": "En quelle classe ?",
+          "fieldId": "level_id",
+          "required": true,
+          "optionsSource": "levels",
+          "optionsFilter": {
+            "field": "level_stage"
+          },
+          "showIf": {
+            "field": "level_stage",
+            "equals": [
+              "COLLEGE",
+              "LYCEE",
+              "SUPERIEUR"
+            ]
+          }
+        },
+        {
+          "id": "filiere",
+          "type": "single_choice",
+          "title": "Quel profil suivez-vous ?",
+          "body": "À partir de la 12ème année, le lycée se partage en trois profils. C’est lui qui décide des matières.",
+          "fieldId": "filiere_id",
+          "required": true,
+          "optionsSource": "filieres",
+          "showIf": {
+            "field": "level_id",
+            "equals": [
+              "lvl_12",
+              "lvl_terminale"
+            ]
+          }
+        },
+        {
+          "id": "subjects",
+          "type": "multi_choice",
+          "title": "Dans quelles matières cherchez-vous de l’aide ?",
+          "fieldId": "subject_ids",
+          "required": true,
+          "minSelected": 1,
+          "optionsSource": "subjects",
+          "searchable": true,
+          "searchHint": "Tapez une matière…",
+          "optionsFilter": {
+            "fields": [
+              "level_stage",
+              "level_id"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "contact",
+      "label": "Contact",
+      "steps": [
+        {
+          "id": "credentials",
+          "type": "form",
+          "title": "Votre numéro et votre mot de passe",
+          "body": "Il protege votre compte. C'est le meme compte sur le site et dans l'application : vous vous connecterez avec ce numero et ce mot de passe des deux cotes.",
+          "fields": [
+            {
+              "id": "phone",
+              "type": "phone",
+              "label": "Téléphone",
+              "required": true
+            },
+            {
+              "id": "password",
+              "type": "password",
+              "label": "Mot de passe",
+              "hint": "Huit caracteres au minimum.",
+              "minLength": 8,
+              "required": true,
+              "autofocus": true
+            }
+          ]
+        },
+        {
+          "id": "subscription",
+          "type": "plan_select",
+          "title": "Commencer fort !",
+          "fieldId": "subscription",
+          "plans": [
+            {
+              "value": "PRO",
+              "name": "Pro",
+              "price": 100000,
+              "highlight": "L’assistant IA entraîné sur le programme guinéen : créez des exercices, corrigez-les et obtenez un programme de révision.",
+              "recommended": true
+            },
+            {
+              "value": "MASTER",
+              "name": "Master",
+              "price": 200000,
+              "highlight": "Tout Pro, plus la messagerie directe avec tous les professeurs."
+            }
+          ],
+          "declineLabel": "Commencer sans abonnement",
+          "declineValue": "FREE",
+          "cta": "Souscrire"
+        }
+      ]
+    }
+  ]
+}

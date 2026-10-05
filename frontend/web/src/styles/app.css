@@ -1,0 +1,1566 @@
+/*
+ * Composants d'interface. Mobile d'abord : la mise en page est concue pour un
+ * telephone, puis elargie. Au-dela de 720 px le contenu reste centre dans une
+ * colonne lisible plutot que de s'etirer.
+ */
+
+/* --- Ossature -------------------------------------------------------- */
+
+.shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--c-bg);
+}
+
+.screen {
+  flex: 1;
+  padding: var(--s-5) var(--gutter) var(--s-9);
+}
+
+.screen--flush {
+  padding-top: 0;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.stack--loose {
+  gap: var(--s-6);
+}
+
+.stack--tight {
+  gap: var(--s-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.row--between {
+  justify-content: space-between;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* --- En-tete --------------------------------------------------------- */
+
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--gutter);
+  background: var(--c-bar);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.appbar__title {
+  font-size: var(--t-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--c-ink);
+}
+
+.iconbtn:hover {
+  background: var(--c-surface);
+}
+
+/* --- Titres d'ecran -------------------------------------------------- */
+
+.page-title {
+  font-size: var(--t-display);
+  margin-bottom: var(--s-2);
+}
+
+.page-lede {
+  color: var(--c-ink-muted);
+  margin-bottom: var(--s-6);
+  max-width: var(--measure);
+}
+
+/* A poser sur un paragraphe long dans une colonne large. `.page-lede` et
+ * `.flow__body-text` l'ont deja. */
+.measure {
+  max-width: var(--measure);
+}
+
+.section-title {
+  font-size: var(--t-small);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ink-faint);
+  margin-bottom: var(--s-3);
+}
+
+/* --- Carte ----------------------------------------------------------- */
+
+.card {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  background: var(--c-bg);
+  /* Detache la carte du fond : une bordure fine seule disparait en plein
+     soleil sur un ecran de telephone. */
+  box-shadow: var(--shadow-sm);
+}
+
+.card--tap {
+  display: block;
+  width: 100%;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card--tap:hover {
+  border-color: var(--c-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.card--accent {
+  background: var(--c-accent-soft);
+  border-color: transparent;
+}
+
+/* --- Boutons --------------------------------------------------------- */
+/* Rapport 2:1 entre remplissage horizontal et vertical : le texte se lit
+   horizontalement, il lui faut de l'air sur les cotes. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: var(--tap);
+  padding: var(--s-3) var(--s-6);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  font-size: var(--t-body);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn--primary {
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  box-shadow: var(--shadow-md);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--c-accent-strong);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--c-border-strong);
+  color: var(--c-ink);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--c-surface);
+}
+
+.btn--quiet {
+  background: transparent;
+  color: var(--c-ink-muted);
+  padding-inline: var(--s-3);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  color: var(--c-ink);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Champs ---------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.field__label {
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--c-ink-muted);
+}
+
+.field__input {
+  min-height: var(--tap);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  background: var(--c-bg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease;
+}
+
+.field__input:focus-visible {
+  border-color: var(--c-accent);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Aide en ligne : elle previent l'erreur au lieu de la sanctionner. */
+.field__hint {
+  font-size: var(--t-small);
+  color: var(--c-ink-faint);
+}
+
+.field__error {
+  font-size: var(--t-small);
+  color: var(--c-danger);
+}
+
+/* --- Etiquettes ------------------------------------------------------ */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.tag {
+  min-height: var(--tap);
+  padding: var(--s-2) var(--s-5);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--c-ink);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tag[aria-pressed='true'] {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-on-accent);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-3);
+  border-radius: var(--r-pill);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  background: var(--c-surface);
+  color: var(--c-ink-muted);
+}
+
+.chip--success {
+  background: var(--c-success-soft);
+  color: var(--c-success);
+}
+.chip--warning {
+  background: var(--c-warning-soft);
+  color: var(--c-warning);
+}
+.chip--danger {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+.chip--accent {
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+
+/* --- Choix pleine largeur -------------------------------------------- */
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-bg);
+  text-align: left;
+  font-weight: 500;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.choice[aria-pressed='true'] {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+  color: var(--c-accent-strong);
+  font-weight: 600;
+}
+
+.choice__check {
+  margin-left: auto;
+  color: var(--c-accent);
+}
+
+/* --- Progression ----------------------------------------------------- */
+
+.progress {
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--c-border);
+  overflow: hidden;
+}
+
+.progress__bar {
+  height: 100%;
+  background: var(--c-accent);
+  border-radius: var(--r-pill);
+  transition: width 0.3s ease;
+}
+
+/* --- Parcours d'inscription ------------------------------------------ */
+
+/*
+ * Le parcours tient dans un ecran : c'est une question a la fois, on ne
+ * defile pas pour trouver le bouton. `100dvh` suit la barre d'adresse mobile
+ * qui se retracte, `100vh` ne suffit pas.
+ */
+.flow {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.flow__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--gutter);
+}
+
+.flow__body {
+  flex: 1;
+  min-height: 0;
+  /* Si une liste d'options deborde malgre tout, c'est elle qui defile, pas
+     la page : l'en-tete et le bouton restent visibles. */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--s-5) var(--gutter) var(--s-5);
+}
+
+.flow__question {
+  font-size: var(--t-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: var(--lh-tight);
+  margin-bottom: var(--s-5);
+}
+
+/* L'action principale reste toujours en bas a droite. */
+.flow__foot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--gutter) var(--s-6);
+  background: linear-gradient(to top, var(--c-bg) 70%, var(--c-bar-fade));
+}
+
+.flow__counter {
+  font-size: var(--t-small);
+  color: var(--c-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Chiffres cles --------------------------------------------------- */
+
+.highlight {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
+}
+
+.highlight__value {
+  min-width: 104px;
+  font-size: var(--t-title);
+  font-weight: 700;
+  color: var(--c-accent);
+  letter-spacing: -0.02em;
+}
+
+.highlight__label {
+  color: var(--c-ink-muted);
+}
+
+.numbered {
+  display: flex;
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
+}
+
+.numbered__index {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  font-size: var(--t-small);
+  font-weight: 700;
+}
+
+/* --- Formules -------------------------------------------------------- */
+
+.plan {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+  padding: var(--s-5);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-bg);
+  text-align: left;
+}
+
+.plan[aria-pressed='true'] {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+}
+
+.plan__price {
+  margin-left: auto;
+  font-size: var(--t-title);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* --- Navigation basse ------------------------------------------------ */
+
+.tabbar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-bar);
+  backdrop-filter: blur(12px);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Masquee sous 600 px : la barre du bas n'a que la place de ses onglets. */
+.tabbar__brand {
+  display: none;
+  align-items: center;
+  padding: 0 var(--s-3) 0 0;
+  margin-right: var(--s-2);
+  color: var(--c-accent);
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.tabbar__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-1);
+  padding: var(--s-3) 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--t-micro);
+  font-weight: 500;
+  color: var(--c-ink-faint);
+}
+
+.tabbar__item[aria-current='page'] {
+  color: var(--c-accent);
+}
+
+/* --- Divers ---------------------------------------------------------- */
+
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  font-weight: 700;
+  font-size: var(--t-small);
+  object-fit: cover;
+}
+
+.muted {
+  color: var(--c-ink-muted);
+}
+
+.faint {
+  color: var(--c-ink-faint);
+}
+
+.small {
+  font-size: var(--t-small);
+}
+
+.micro {
+  font-size: var(--t-micro);
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.empty {
+  padding: var(--s-8) var(--s-5);
+  text-align: center;
+  color: var(--c-ink-muted);
+}
+
+.empty__icon {
+  font-size: 2rem;
+  margin-bottom: var(--s-4);
+}
+
+.banner {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  font-size: var(--t-small);
+}
+
+.banner--accent {
+  background: var(--c-accent-soft);
+  color: var(--c-accent-strong);
+}
+.banner--warning {
+  background: var(--c-warning-soft);
+  color: var(--c-warning);
+}
+
+.skeleton {
+  border-radius: var(--r-md);
+  background: linear-gradient(
+    90deg,
+    var(--c-surface) 25%,
+    var(--c-border) 37%,
+    var(--c-surface) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.scroller {
+  display: flex;
+  gap: var(--s-4);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: var(--s-3);
+  margin-inline: calc(var(--gutter) * -1);
+  padding-inline: var(--gutter);
+  scrollbar-width: none;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.scroller > * {
+  flex: 0 0 82%;
+  scroll-snap-align: start;
+}
+
+/* --- Preuve sur l'accueil -------------------------------------------- */
+
+.prooflist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  color: var(--c-ink-muted);
+  font-size: var(--t-small);
+  max-width: var(--measure);
+}
+
+.prooflist li {
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+}
+
+/* La puce ne porte aucune information : elle est decorative et masquee
+   aux lecteurs d'ecran par `aria-hidden` via ::before. */
+.prooflist li::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 0.55em;
+  border-radius: var(--r-pill);
+  background: var(--c-accent);
+}
+
+.prooflist strong {
+  color: var(--c-ink);
+  font-weight: 600;
+}
+
+.block-link {
+  display: block;
+  text-decoration: none;
+}
+
+.centered {
+  text-align: center;
+}
+
+/* --- Accessibilite (WCAG 2.2 AA, §7 du design_skill) ----------------- */
+
+/*
+ * Un anneau de focus sur tout ce qui peut recevoir le clavier. Il manquait
+ * partout sauf sur les champs : au clavier, la page etait intraversable.
+ * `:focus-visible` plutot que `:focus` — pas d'anneau sur un clic souris.
+ */
+.btn:focus-visible,
+.card--tap:focus-visible,
+.iconbtn:focus-visible,
+.tag:focus-visible,
+.chip:focus-visible,
+.choice:focus-visible,
+.plan:focus-visible,
+.tabbar__item:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--r-md);
+}
+
+/* Le lien d'evitement : premier element tabulable de chaque page. */
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: 0;
+  z-index: 100;
+  padding: var(--s-3) var(--s-5);
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-120%);
+  transition: transform var(--motion-fast) ease-out;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* Visible pour un lecteur d'ecran, invisible a l'ecran. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Les cibles tactiles du pied de page restent atteignables au pouce. */
+.tabbar__item {
+  min-height: var(--tap);
+}
+
+/*
+ * Mouvement reduit. Le reglage systeme est une demande medicale (troubles
+ * vestibulaires) : on neutralise les transitions au lieu de les raccourcir.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Contraste renforce : on laisse le systeme epaissir les bordures. */
+@media (prefers-contrast: more) {
+  :root {
+    --c-border: var(--c-border-strong);
+  }
+}
+
+/* --- Etat hors ligne -------------------------------------------------- */
+
+.offline-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: var(--s-2) var(--gutter);
+  background: var(--c-warning-soft);
+  color: var(--c-warning);
+  font-size: var(--t-small);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* --- Illustrations --------------------------------------------------- */
+
+/*
+ * Les visuels sont dessines sur un fond blanc casse. On leur donne donc leur
+ * propre surface claire, identique dans les deux themes : sur un fond sombre,
+ * une illustration detouree au blanc flotterait comme une decoupe.
+ */
+.flow__illustration,
+.hero-illustration {
+  margin: 0 0 var(--s-5);
+  border-radius: var(--r-lg);
+  background: #f2f6fd;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/*
+ * Hauteur divisee par deux, et l'illustration entiere reste visible.
+ *
+ * `cover` recadrait au centre : sur les visuels en pied, cela coupait les
+ * tetes. Et les illustrations n'ont pas toutes le meme cadrage — 3:2, 2:3,
+ * carre — donc aucun `object-position` unique ne pouvait convenir.
+ *
+ * `contain` n'en coupe aucune : la hauteur est fixee, la largeur suit le
+ * rapport d'origine. Le fond de la vignette reprend celui des illustrations,
+ * si bien que le remplissage lateral ne se voit pas.
+ *
+ * `22vh` : au-dela, il ne reste plus assez de place pour le titre, le texte
+ * et l'action sur un ecran de 640 px de haut.
+ */
+.flow__illustration img,
+.hero-illustration img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: clamp(104px, 22vh, 200px);
+  object-fit: contain;
+}
+
+/* Sur l'accueil, le visuel accompagne la promesse sans la dominer : il reste
+   sous le titre et la preuve, jamais au-dessus. */
+.hero-illustration {
+  margin-block: var(--s-2) var(--s-4);
+}
+
+.hero-illustration img {
+  max-width: 100%;
+}
+
+/* --- Choix du profil -------------------------------------------------- */
+
+/*
+ * La question qui oriente tout le parcours. Un bouton par profil, empile,
+ * pleine largeur : plus haut qu'une etiquette, parce que la decision est
+ * plus lourde.
+ */
+.rolebtn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-1);
+  width: 100%;
+  min-height: 72px;
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-lg);
+  background: var(--c-bg);
+  text-align: left;
+  transition: border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease;
+}
+
+.rolebtn:hover {
+  border-color: var(--c-accent);
+}
+
+.rolebtn[aria-checked='true'] {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--c-accent);
+}
+
+.rolebtn__label {
+  font-size: var(--t-heading);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--c-ink);
+}
+
+.rolebtn[aria-checked='true'] .rolebtn__label {
+  color: var(--c-accent-strong);
+}
+
+.rolebtn__hint {
+  font-size: var(--t-small);
+  color: var(--c-ink-muted);
+  line-height: 1.4;
+}
+
+/* Paragraphe d'explication sous le titre d'une etape. */
+.flow__body-text {
+  max-width: var(--measure);
+  margin-top: calc(var(--s-5) * -1);
+  margin-bottom: var(--s-5);
+  color: var(--c-ink-muted);
+  max-width: var(--measure);
+}
+
+/* Pictogramme d'un chiffre cle. */
+.highlight__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+}
+
+/* Avec pictogramme, la valeur n'a plus besoin d'une colonne large. */
+.highlight:has(.highlight__icon) .highlight__value {
+  min-width: 0;
+  font-size: var(--t-body);
+}
+
+/* Carte resserree : une pile de profils doit tenir dans un ecran. */
+.card--compact {
+  padding: var(--s-4);
+}
+
+/* ---------------------------------------------------------------------------
+ * L'ecran d'action, aligne sur le mobile (24/09).
+ *
+ * On cherche d'abord, on ouvre un compte ensuite. Demander un numero de
+ * telephone a quelqu'un qui ne sait pas encore ce que contient le site,
+ * c'est reclamer avant d'avoir montre.
+ * ------------------------------------------------------------------------ */
+
+.hero {
+  background: linear-gradient(
+    135deg,
+    var(--c-hero-start),
+    var(--c-hero-end)
+  );
+  color: #fff;
+  padding: var(--s-6) var(--s-5) var(--s-8);
+  /* Deborde de la gouttiere de `.screen`, et non d'une valeur figee : avec
+     `--s-5` en dur, le degrade s'arretait a 16 px des bords des que la
+     gouttiere passait a 40 px, et deux bandes blanches encadraient le bleu. */
+  margin-inline: calc(-1 * var(--gutter));
+}
+
+.hero__title {
+  font-size: clamp(2rem, 7vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* Le mot accentue. Un seul par titre : deux se neutralisent. */
+.hero__accent {
+  color: var(--c-highlight);
+}
+
+.hero__lede {
+  color: var(--c-on-hero-muted);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  margin: var(--s-3) 0 0;
+}
+
+/* La boite de premiere action, qui chevauche l'en-tete : la page commence
+ * par ce qu'on peut faire. */
+.action-card {
+  background: var(--c-bg);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 36, 0.04),
+    0 4px 12px rgba(15, 23, 36, 0.08);
+  padding: var(--s-5);
+  margin-top: calc(-1 * var(--s-6));
+  position: relative;
+}
+
+/* La mise en garde des donnees de demonstration. Au-dessus de tout, lisible,
+ * et sans bouton pour la fermer : elle doit rester vraie tant que le serveur
+ * n'est pas branche. */
+.demo-note {
+  background: var(--c-warning-soft);
+  color: var(--c-ink);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+  padding: var(--s-2) var(--s-4);
+  text-align: center;
+}
+
+/* La salle d'un cours en direct.
+ *
+ * Fond sombre : une video se regarde mieux sur du noir, et c'est la convention
+ * de tous les lecteurs. La premiere video occupe la place — le professeur —, les
+ * suivantes tiennent dans un bandeau. Quinze vignettes de meme taille ne servent
+ * personne. */
+.room {
+  background: #0b0b10;
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-height: 220px;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.room__video {
+  background: #000;
+  border-radius: var(--r-md);
+  /* La premiere prend toute la largeur, les autres se partagent le reste. */
+  flex: 1 1 140px;
+  max-height: 60vh;
+  object-fit: contain;
+  width: 100%;
+}
+
+.room__video:first-child {
+  flex: 1 1 100%;
+}
+
+.room__preview {
+  background: #0b0b10;
+  border-radius: var(--r-md);
+  max-height: 220px;
+  object-fit: cover;
+  width: 100%;
+  /* L'image de soi est inversee : on se voit comme dans un miroir, sinon le
+     geste de se recoiffer part du mauvais cote. */
+  transform: scaleX(-1);
+}
+
+/* --- La presence d'un enfant en cours --------------------------------- */
+/*
+ * « Fatoumata suit Mathematiques — en direct depuis 23 min ».
+ *
+ * Dans l'ossature, sous la barre : un parent qui veut savoir si son enfant est
+ * en cours regarde la ou il est deja, il ne va pas chercher un ecran.
+ *
+ * Discret et non alarmant : c'est une bonne nouvelle, pas une alerte. D'ou le
+ * fond d'accent doux et non le rouge d'un avertissement — un bandeau rouge
+ * ferait croire a un probleme a chaque cours.
+ */
+.presence {
+  background: var(--c-accent-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--s-2) var(--gutter);
+}
+
+.presence__ligne {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  font-size: 13px;
+  gap: var(--s-2);
+  line-height: 1.4;
+  min-height: 28px;
+  text-decoration: none;
+}
+
+.presence__ligne:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+/* Le point qui respire : il dit « maintenant » sans le mot. La regle
+ * `prefers-reduced-motion` posee plus haut pour tout le document l'arrete — une
+ * pulsation permanente en haut de chaque page est exactement ce qu'elle existe
+ * pour eteindre. */
+.presence__point {
+  animation: presence-pouls 2.4s ease-in-out infinite;
+  background: var(--c-accent);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  height: 8px;
+  width: 8px;
+}
+
+@keyframes presence-pouls {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.presence__texte {
+  /* Une seule ligne, coupee plutot que repliee : deux lignes par enfant
+     repousseraient le contenu de la page. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presence__duree {
+  white-space: nowrap;
+}
+
+/* L'indicatif telephonique, colle au champ.
+ *
+ * Il fait partie du champ visuellement et n'en fait pas partie dans la valeur :
+ * ce qui part en base est le numero national, comme cote mobile. */
+.field__phone {
+  align-items: stretch;
+  display: flex;
+}
+
+.field__prefix {
+  align-items: center;
+  background: var(--c-bg-soft, var(--c-accent-soft));
+  border: 1px solid var(--c-border);
+  border-radius: 10px 0 0 10px;
+  border-right: 0;
+  color: var(--c-ink-soft, inherit);
+  display: flex;
+  font-variant-numeric: tabular-nums;
+  padding: 0 var(--s-3);
+  white-space: nowrap;
+}
+
+.field__phone .field__input {
+  border-radius: 0 10px 10px 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* --- Le point de controle d'un module --------------------------------- */
+/*
+ * Trois boutons, et ils doivent etre gros.
+ *
+ * On repond pendant un cours, en quelques secondes, souvent sur un telephone
+ * tenu d'une main. Trois boutons de la taille d'un mot feraient manquer la
+ * cible, et un eleve qui rate son choix ne recommence pas — il laisse tomber,
+ * et c'est precisement sa reponse qui comptait.
+ *
+ * Meme largeur pour les trois : une disposition qui donne plus de place a
+ * « Oui » pousse vers « Oui », ce qui viderait la question de son sens.
+ */
+.checkpoint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/*
+ * `flex: 1 1 7rem` plutot qu'une grille a trois colonnes et un seuil : les
+ * boutons se mettent cote a cote quand la place le permet et s'empilent sinon,
+ * sans requete de media. Le depot n'autorise que deux seuils et aucune
+ * `max-width` — le telephone est le cas par defaut, inconditionnel — et cette
+ * regle a attrape le seuil de 380 px que j'avais ajoute ici.
+ *
+ * La base en `rem` et non en `px` : elle suit la taille de police choisie par
+ * l'usager, et c'est la longueur du mot « Pas assez » qui decide, pas la largeur
+ * de l'ecran.
+ */
+.checkpoint > * {
+  flex: 1 1 7rem;
+  /* 48 px : la cible tactile minimale. On repond en quelques secondes, pendant
+     un cours, souvent d'une seule main. */
+  min-height: 48px;
+}
+
+/* --- La rediffusion --------------------------------------------------- */
+/*
+ * Le lecteur de Bunny, dans un cadre au format 16/9.
+ *
+ * `aspect-ratio` plutot que la vieille ruse du `padding-bottom` : la propriete
+ * est disponible partout depuis 2021, y compris sur le Chrome d'un Android
+ * d'entree de gamme.
+ */
+.replay {
+  background: #0b0b10;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.replay__cadre {
+  aspect-ratio: 16 / 9;
+  border: 0;
+  display: block;
+  width: 100%;
+}
+
+/* Le chiffre du temps de cours. Gros parce que c'est la reponse : le reste de
+ * la carte n'est que du detail autour de lui. */
+.chiffre {
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Une liste sans puces ni retrait, pour des lignes « nom / valeur ». */
+.liste-nue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Une carte entiere cliquable. Sur un telephone, viser un lien de la taille
+ * d'un mot fait manquer la cible ; la carte, non. */
+.card-link {
+  color: inherit;
+  display: block;
+  text-decoration: none;
+}
+
+.card-link:focus-visible {
+  border-radius: 14px;
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+/* La frontiere entre regarder et agir : le web montre, l'application agit.
+ * Teinte plutot que grise — ce n'est pas une action desactivee, c'est une
+ * action qui se fait ailleurs. */
+.gate {
+  background: var(--c-accent-soft);
+  border: 1px solid var(--c-accent-soft);
+  border-radius: 14px;
+  padding: var(--s-4);
+}
+
+.gate__title {
+  color: var(--c-accent-strong);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.action-card__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}
+
+.doors {
+  display: grid;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+
+.door {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  text-align: left;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: var(--s-3) var(--s-4);
+  cursor: pointer;
+  min-height: 48px;
+  /* Sert de bouton sur l'accueil et de lien dans les resultats de
+     recherche : le soulignement du lien n'a pas sa place sur une tuile. */
+  text-decoration: none;
+  color: inherit;
+}
+
+.door:hover {
+  border-color: var(--c-accent);
+}
+
+.door__title {
+  font-weight: 700;
+  color: var(--c-ink);
+}
+
+.door__sub {
+  font-size: var(--t-small);
+  color: var(--c-ink-muted);
+}
+
+/* Au-dela du telephone, la boite d'action reste centree et bornee : une
+ * ligne de saisie large de 1400 px ne se lit pas. */
+
+/* Un raccourci de recherche : l'etiquette devient cliquable. */
+.chip--action {
+  cursor: pointer;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg);
+  min-height: 36px;
+}
+
+.chip--action:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+
+/* Les titres passent en Poppins, comme sur mobile. Le corps reste sur Inter,
+ * dessinee pour les petites tailles. */
+h1,
+h2,
+.page-title,
+.hero__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+
+/* ======================================================================
+ * Points de rupture
+ * ======================================================================
+ *
+ * Deux seulement, et ils sont ici — tous ensemble. Les regles dispersees sont
+ * exactement ce qui avait produit trois seuils concurrents.
+ *
+ *   600 px  — la meme valeur que `_largeurPourDeuxColonnes` du lecteur de
+ *             cours Flutter. Un seul nombre pour « ca ne tient plus sur une
+ *             colonne », dans les deux clients.
+ *   1024 px — l'ordinateur. C'est la que le dessin change vraiment : la
+ *             tablette n'est pas un usage courant ici, elle recoit la
+ *             transition et rien de plus.
+ *
+ * **Toutes les requetes sont `min-width`.** Le telephone est le cas par
+ * defaut, inconditionnel : aucun travail sur grand ecran ne peut le casser,
+ * et c'est le seul appareil dont on est sur.
+ *
+ * **Aucune cible tactile ne rapetisse ici.** Une tablette de 800 px se touche
+ * avec un pouce. Ce qui depend du doigt depend du pointeur, pas de la
+ * largeur : voir la requete `(pointer: fine)` plus bas.
+ */
+
+/* --- A partir de 600 px : la navigation remonte ----------------------- */
+
+@media (min-width: 600px) {
+  :root {
+    --gutter: 40px;
+    --t-display: 2.5rem;
+  }
+
+  /* La barre d'onglets devient un en-tete. Meme composant, meme DOM, meme
+     liste de liens : seule la mise en page change. Dupliquer la navigation
+     en JSX aurait donne deux choses a tenir a jour, et l'une des deux aurait
+     fini par mentir. */
+  .tabbar {
+    order: -1;
+    position: sticky;
+    top: 0;
+    bottom: auto;
+    /* Au-dessus de `.appbar`, qui porte deja un z-index : sans cela le titre
+       de la page passerait devant la navigation au defilement. */
+    z-index: 20;
+    gap: var(--s-2);
+    padding: var(--s-3) var(--gutter);
+    border-top: 0;
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .tabbar__item {
+    flex: none;
+    flex-direction: row;
+    gap: var(--s-2);
+    padding: var(--s-2) var(--s-3);
+    border-radius: var(--r-md);
+    font-size: var(--t-small);
+  }
+
+  .tabbar__item:hover {
+    background: var(--c-surface);
+  }
+
+  .tabbar__item[aria-current='page'],
+  .tabbar__item:has([aria-current='page']) {
+    background: var(--c-accent-soft);
+  }
+
+  /* La marque n'apparait qu'ici : en bas d'un telephone, la barre n'a pas la
+     place, et un en-tete sans nom de produit se lit comme une page inachevee. */
+  .tabbar__brand {
+    display: flex;
+  }
+
+  /* Le dernier lien — le compte — part a droite, comme sur tout site ou l'on
+     se connecte. */
+  .tabbar__item:last-child {
+    margin-left: auto;
+  }
+
+  /* Le bas de page n'a plus de barre a eviter. */
+  .screen {
+    padding-bottom: var(--s-7);
+  }
+
+  /* Le titre de page cesse de coller en haut. Deux elements colles a `top: 0`
+     se superposent, et c'est le titre qui recouvrait la navigation. Sur un
+     ordinateur, c'est la navigation qui doit suivre le defilement — un titre
+     de page, non. */
+  .appbar {
+    position: static;
+    /* La gouttiere reste : `.appbar` est un frere de `.screen`, pas son
+       enfant. A zero, le titre se collait au bord du cadre et ne s'alignait
+       plus sur le contenu juste en dessous. */
+    background: transparent;
+    backdrop-filter: none;
+    border-bottom: 0;
+  }
+
+  /* Les listes de cartes s'etalent. La largeur gagnee sert a montrer plus de
+     cartes, jamais a etirer une carte : une fiche de 1 200 px de large ne se
+     lit pas mieux, elle se lit moins bien. */
+  .grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--s-4);
+    /* Sans cela, toutes les cartes d'une rangee prennent la hauteur de la
+       plus haute, et une carte courte se retrouve avec un grand vide. */
+    align-items: start;
+  }
+
+  .hero {
+    padding: var(--s-8) var(--s-6);
+  }
+
+  .doors {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* La boite de recherche cesse de prendre toute la largeur : un champ de
+     900 px de long pour y taper « maths » se lit comme une erreur de mise en
+     page. */
+  .action-card,
+  .doors {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 640px;
+  }
+}
+
+/* --- A partir de 1024 px : l'ordinateur ------------------------------- */
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 56px;
+  }
+
+  /* Le cadre cesse d'etre un telephone centre sur du blanc. 1 240 px est la
+     largeur ou trois cartes de 300 px tiennent avec leurs gouttieres ; au-dela,
+     une quatrieme colonne rendrait les cartes trop etroites pour leur contenu. */
+  .shell {
+    max-width: 1240px;
+  }
+
+  .screen {
+    padding-top: var(--s-6);
+  }
+
+  /* Une fiche se lit a gauche, on agit a droite. L'action reste visible
+     pendant qu'on parcourt le parcours d'un professeur ou le programme d'un
+     cours — c'est la raison d'etre d'une colonne laterale, et c'est la regle
+     que suit deja le lecteur de cours du telephone. */
+  .detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--s-7);
+    align-items: start;
+  }
+
+  /* Placement explicite des deux blocs. L'`aside` est premier dans le DOM —
+     c'est l'ordre qu'il faut sur un telephone, l'identite et l'action avant le
+     detail — et en placement automatique il tomberait dans la colonne large. */
+  .detail__main {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  /* Le titre d'un cours vit dans la colonne etroite : a 2,5 rem il s'y
+     casserait sur cinq lignes. Le nom complet reste affiche dans l'en-tete de
+     page juste au-dessus. */
+  .detail__aside .page-title {
+    font-size: var(--t-title);
+  }
+
+  .detail__aside {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    /* Sous l'en-tete devenu haut : sans ce decalage, la colonne se glisse
+       derriere la barre de navigation. */
+    top: calc(var(--tap) + var(--s-5));
+  }
+}
+
+/* --- L'accueil sur un ordinateur -------------------------------------- */
+/*
+ * Deux colonnes : la promesse a gauche, l'action a droite. C'est la forme
+ * qu'ont toutes les places de marche, et pour une raison qui n'est pas la
+ * mode : sur un ecran large, un titre centre puis un champ de recherche centre
+ * se lisent l'un apres l'autre, en deux temps, alors qu'ils disent la meme
+ * chose au meme moment.
+ */
+
+@media (min-width: 1024px) {
+  /* La promesse et l'action sont soeurs dans le DOM, pas imbriquees : c'est la
+     racine de la page qui les place cote a cote. Deplacer la carte a
+     l'interieur du degrade aurait touche l'accueil du telephone, qui
+     fonctionne — et le telephone est le marche reel. */
+  .landing {
+    align-items: center;
+    column-gap: var(--s-8);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  }
+
+  .landing > .hero {
+    grid-column: 1;
+    grid-row: 1;
+    /* Deborde a gauche seulement : le degrade touche le bord de l'ecran d'un
+       cote et s'arrete net de l'autre, la ou commence la colonne d'action. Le
+       coin arrondi dit que l'arret est voulu. */
+    border-radius: 0 var(--r-lg) var(--r-lg) 0;
+    margin-inline: calc(-1 * var(--gutter)) 0;
+    padding: var(--s-9) var(--s-8);
+  }
+
+  .landing > .action-card {
+    grid-column: 2;
+    grid-row: 1;
+    /* Plus de chevauchement : cote a cote, ce decalage desaligne les deux
+       colonnes au lieu de lier deux blocs empiles. */
+    margin-top: 0;
+    max-width: none;
+  }
+
+  /* Tout le reste passe sous les deux colonnes : les portes de profil, les
+     liens publics et l'invite de connexion concernent autant l'une que
+     l'autre. */
+  .landing > .doors,
+  .landing > nav,
+  .landing > p {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+
+  .hero__title {
+    font-size: 3rem;
+  }
+
+  .hero__lede {
+    max-width: 38ch;
+  }
+}
+
+/* --- Le parcours d'inscription ---------------------------------------- */
+/*
+ * Le plein ecran est garde : c'est la bonne forme pour une question a la fois,
+ * et l'un des rares endroits ou un ordinateur doit se comporter comme un
+ * telephone. Seule la colonne se borne — un champ de texte de 1 200 px donne
+ * l'impression qu'on attend un paragraphe la ou l'on attend un prenom.
+ */
+
+@media (min-width: 1024px) {
+  .flow {
+    max-width: none;
+  }
+
+  .flow__head,
+  .flow__body,
+  .flow__foot {
+    margin-inline: auto;
+    max-width: 760px;
+    width: 100%;
+  }
+
+  .flow__question {
+    font-size: 2.75rem;
+  }
+}
+
+/* --- Pointeur fin : souris ou pave tactile ---------------------------- */
+/*
+ * Ce qui depend du doigt depend du pointeur, pas de la largeur. Une tablette
+ * de 900 px reste tactile ; un ordinateur portable de 1 280 px ne l'est pas.
+ * C'est la seule requete autorisee a reduire une cible.
+ */
+
+@media (pointer: fine) {
+  .tabbar__item {
+    min-height: 36px;
+  }
+}

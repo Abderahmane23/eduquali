@@ -1,0 +1,42 @@
+{
+  "testId": "test_fran_lycee",
+  "title": "Francais — Lycee",
+  "durationMinutes": 15,
+  "passingScore": 70,
+  "rules": "Test individuel et chronometre. Une seule reponse par question.",
+  "questions": [
+    { "q": "Dans la phrase « Le professeur corrige les copies », le groupe « les copies » est :", "o": ["sujet", "complement d'objet direct", "complement d'objet indirect", "attribut du sujet"], "a": "B", "d": "Grammaire", "x": 1, "e": "Il repond a la question « corrige quoi ? » sans preposition." },
+    { "q": "Quel est le mode du verbe dans « qu'il vienne » ?", "o": ["indicatif", "subjonctif", "conditionnel", "imperatif"], "a": "B", "d": "Grammaire", "x": 2, "e": "Le subjonctif present exprime ici un souhait ou une injonction." },
+    { "q": "Dans « il a mange », le verbe est conjugue :", "o": ["au passe simple", "au passe compose", "a l'imparfait", "au plus-que-parfait"], "a": "B", "d": "Grammaire", "x": 1, "e": "Auxiliaire au present + participe passe = passe compose." },
+    { "q": "Le participe passe employe avec l'auxiliaire « etre » s'accorde avec :", "o": ["le complement d'objet direct", "le sujet", "l'auxiliaire", "il ne s'accorde jamais"], "a": "B", "d": "Grammaire", "x": 2, "e": "Avec etre, l'accord se fait avec le sujet." },
+    { "q": "Dans « la maison que j'ai vue », le pronom « que » est :", "o": ["pronom relatif", "pronom personnel", "conjonction", "adverbe"], "a": "A", "d": "Grammaire", "x": 2, "e": "Il introduit une proposition subordonnee relative." },
+    { "q": "Quelle proposition est une subordonnee circonstancielle de cause ?", "o": ["Il part quand il pleut", "Il part parce qu'il pleut", "Il part pour partir", "Il part sans pleuvoir"], "a": "B", "d": "Grammaire", "x": 2, "e": "« parce que » introduit la cause." },
+    { "q": "L'adjectif « beau » au feminin pluriel s'ecrit :", "o": ["beaux", "belles", "beles", "beaus"], "a": "B", "d": "Grammaire", "x": 1, "e": "Feminin « belle », pluriel « belles »." },
+    { "q": "Dans « Pierre semble fatigue », « fatigue » est :", "o": ["complement d'objet", "attribut du sujet", "epithete", "apposition"], "a": "B", "d": "Grammaire", "x": 2, "e": "Il est relie au sujet par le verbe d'etat « semble »." },
+
+    { "q": "La comparaison se distingue de la metaphore par :", "o": ["l'absence d'image", "la presence d'un outil de comparaison", "sa longueur", "son registre"], "a": "B", "d": "Figures de style", "x": 2, "e": "« comme », « tel que » signalent la comparaison." },
+    { "q": "« Un silence assourdissant » est :", "o": ["une metaphore", "un oxymore", "une hyperbole", "une litote"], "a": "B", "d": "Figures de style", "x": 2, "e": "L'oxymore associe deux termes contradictoires." },
+    { "q": "La personnification consiste a :", "o": ["exagerer une realite", "attribuer des traits humains a une chose", "attenuer une idee", "repeter un mot"], "a": "B", "d": "Figures de style", "x": 1, "e": "Elle prete des caracteristiques humaines a l'inanime." },
+    { "q": "« Je meurs de faim » est une :", "o": ["litote", "hyperbole", "metonymie", "anaphore"], "a": "B", "d": "Figures de style", "x": 2, "e": "L'hyperbole exagere volontairement." },
+    { "q": "L'anaphore consiste a repeter un mot :", "o": ["en fin de phrase", "en debut de plusieurs phrases ou vers", "au milieu du texte", "une seule fois"], "a": "B", "d": "Figures de style", "x": 2, "e": "Repetition en tete de segments successifs." },
+    { "q": "« Boire un verre » est un exemple de :", "o": ["metonymie", "oxymore", "litote", "antithese"], "a": "A", "d": "Figures de style", "x": 3, "e": "Le contenant designe le contenu." },
+    { "q": "L'antithese consiste a :", "o": ["opposer deux idees dans une meme phrase", "repeter un son", "attenuer un propos", "personnifier un objet"], "a": "A", "d": "Figures de style", "x": 2, "e": "Elle met en parallele des termes opposes." },
+
+    { "q": "Victor Hugo est un auteur majeur du :", "o": ["classicisme", "romantisme", "surrealisme", "naturalisme"], "a": "B", "d": "Litterature", "x": 1, "e": "Il est la figure centrale du romantisme francais." },
+    { "q": "« Les Miserables » a ete ecrit par :", "o": ["Emile Zola", "Victor Hugo", "Gustave Flaubert", "Honore de Balzac"], "a": "B", "d": "Litterature", "x": 1, "e": "Roman publie par Victor Hugo en 1862." },
+    { "q": "Le naturalisme est principalement associe a :", "o": ["Emile Zola", "Jean Racine", "Paul Verlaine", "Moliere"], "a": "A", "d": "Litterature", "x": 2, "e": "Zola en est le theoricien et le principal representant." },
+    { "q": "Moliere est surtout connu comme auteur :", "o": ["de tragedies", "de comedies", "de poemes epiques", "de romans"], "a": "B", "d": "Litterature", "x": 1, "e": "Il est le maitre de la comedie classique." },
+    { "q": "Un sonnet est un poeme de :", "o": ["12 vers", "14 vers", "16 vers", "10 vers"], "a": "B", "d": "Litterature", "x": 2, "e": "Deux quatrains suivis de deux tercets." },
+    { "q": "L'alexandrin est un vers de :", "o": ["8 syllabes", "10 syllabes", "12 syllabes", "14 syllabes"], "a": "C", "d": "Litterature", "x": 2, "e": "Le vers de douze syllabes est l'alexandrin." },
+    { "q": "Le siecle des Lumieres correspond au :", "o": ["XVIe siecle", "XVIIe siecle", "XVIIIe siecle", "XIXe siecle"], "a": "C", "d": "Litterature", "x": 2, "e": "Voltaire, Rousseau et Diderot marquent le XVIIIe siecle." },
+    { "q": "Le theatre classique repose sur la regle :", "o": ["des trois unites", "des cinq sens", "du vers libre", "du monologue unique"], "a": "A", "d": "Litterature", "x": 2, "e": "Unite de temps, de lieu et d'action." },
+
+    { "q": "Le registre pathetique cherche a susciter :", "o": ["le rire", "la pitie et l'emotion", "la peur", "l'admiration"], "a": "B", "d": "Analyse de texte", "x": 2, "e": "Il vise a emouvoir le lecteur." },
+    { "q": "Un texte argumentatif a pour but :", "o": ["de raconter une histoire", "de convaincre ou persuader", "de decrire un lieu", "d'expliquer une recette"], "a": "B", "d": "Analyse de texte", "x": 1, "e": "Il defend une these aupres d'un destinataire." },
+    { "q": "La focalisation interne signifie que le recit adopte :", "o": ["le point de vue d'un personnage", "un point de vue omniscient", "un regard exterieur neutre", "plusieurs narrateurs"], "a": "A", "d": "Analyse de texte", "x": 3, "e": "Le lecteur ne sait que ce que sait le personnage." },
+    { "q": "Le registre ironique repose sur :", "o": ["l'exageration seule", "un ecart entre ce qui est dit et ce qui est pense", "la description precise", "la repetition"], "a": "B", "d": "Analyse de texte", "x": 2, "e": "L'ironie dit le contraire de ce qu'elle signifie." },
+    { "q": "Dans un recit, l'incipit designe :", "o": ["le denouement", "le debut du texte", "le point culminant", "la morale"], "a": "B", "d": "Analyse de texte", "x": 2, "e": "L'incipit est l'ouverture de l'oeuvre." },
+    { "q": "Un champ lexical est :", "o": ["un ensemble de mots lies a un meme theme", "une figure de style", "un type de vers", "un genre litteraire"], "a": "A", "d": "Analyse de texte", "x": 1, "e": "Il regroupe les termes renvoyant a une meme notion." },
+    { "q": "Le narrateur omniscient se caracterise par :", "o": ["une connaissance limitee", "une connaissance totale des personnages", "l'absence de point de vue", "une narration a la deuxieme personne"], "a": "B", "d": "Analyse de texte", "x": 2, "e": "Il sait tout des personnages et de l'intrigue." }
+  ]
+}

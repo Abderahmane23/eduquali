@@ -1,0 +1,42 @@
+{
+  "testId": "test_chim_l1",
+  "title": "Chimie — L1",
+  "durationMinutes": 15,
+  "passingScore": 70,
+  "rules": "Test individuel et chronometre. Une seule reponse par question.",
+  "questions": [
+    { "q": "Le numero atomique d'un element correspond au nombre :", "o": ["de neutrons", "de protons", "de nucleons", "d'isotopes"], "a": "B", "d": "Structure de la matiere", "x": 1, "e": "Z est le nombre de protons du noyau." },
+    { "q": "Le nombre d'Avogadro vaut environ :", "o": ["6,02 x 10^23", "3 x 10^8", "1,6 x 10^-19", "9,8"], "a": "A", "d": "Structure de la matiere", "x": 2, "e": "Une mole contient environ 6,02 x 10^23 entites." },
+    { "q": "Les isotopes d'un element different par leur nombre :", "o": ["de protons", "d'electrons", "de neutrons", "de charges"], "a": "C", "d": "Structure de la matiere", "x": 2, "e": "Meme Z, mais nombre de neutrons different." },
+    { "q": "La masse molaire de l'eau H2O vaut environ :", "o": ["16 g/mol", "18 g/mol", "20 g/mol", "22 g/mol"], "a": "B", "d": "Structure de la matiere", "x": 2, "e": "2 x 1 + 16 = 18 g/mol." },
+    { "q": "Un atome neutre possede :", "o": ["plus de protons que d'electrons", "autant de protons que d'electrons", "plus d'electrons que de protons", "aucun electron"], "a": "B", "d": "Structure de la matiere", "x": 1, "e": "La neutralite impose l'egalite des charges positives et negatives." },
+    { "q": "La liaison covalente resulte :", "o": ["d'un transfert d'electrons", "d'une mise en commun d'electrons", "d'une attraction magnetique", "d'une reaction nucleaire"], "a": "B", "d": "Structure de la matiere", "x": 2, "e": "Les atomes partagent une ou plusieurs paires d'electrons." },
+    { "q": "Dans la classification periodique, les elements d'une meme colonne ont :", "o": ["le meme nombre de neutrons", "la meme masse", "le meme nombre d'electrons de valence", "le meme numero atomique"], "a": "C", "d": "Structure de la matiere", "x": 2, "e": "Une colonne regroupe les elements de meme configuration de valence." },
+    { "q": "L'element de symbole Na est :", "o": ["l'azote", "le sodium", "le nickel", "le neon"], "a": "B", "d": "Structure de la matiere", "x": 1, "e": "Na designe le sodium (natrium)." },
+
+    { "q": "Une solution de pH 3 est :", "o": ["acide", "neutre", "basique", "saturee"], "a": "A", "d": "Solutions et acides-bases", "x": 1, "e": "Un pH inferieur a 7 correspond a une solution acide." },
+    { "q": "Le pH d'une solution neutre a 25 degres Celsius vaut :", "o": ["0", "7", "14", "1"], "a": "B", "d": "Solutions et acides-bases", "x": 1, "e": "A 25 degres, la neutralite correspond a pH 7." },
+    { "q": "La concentration molaire s'exprime en :", "o": ["g/L", "mol/L", "mol", "L/mol"], "a": "B", "d": "Solutions et acides-bases", "x": 1, "e": "C = n/V, en moles par litre." },
+    { "q": "Selon Bronsted, un acide est une espece qui :", "o": ["cede un proton", "capte un proton", "cede un electron", "capte un electron"], "a": "A", "d": "Solutions et acides-bases", "x": 2, "e": "Un acide de Bronsted est un donneur de proton H+." },
+    { "q": "Quelle quantite de matiere represente 36 g d'eau ?", "o": ["1 mol", "2 mol", "18 mol", "0,5 mol"], "a": "B", "d": "Solutions et acides-bases", "x": 2, "e": "n = m/M = 36/18 = 2 mol." },
+    { "q": "Une dilution consiste a :", "o": ["augmenter la concentration", "diminuer la concentration en ajoutant du solvant", "evaporer le solvant", "ajouter du solute"], "a": "B", "d": "Solutions et acides-bases", "x": 1, "e": "L'ajout de solvant diminue la concentration." },
+    { "q": "Le produit ionique de l'eau Ke a 25 degres vaut :", "o": ["10^-7", "10^-14", "10^7", "10^14"], "a": "B", "d": "Solutions et acides-bases", "x": 3, "e": "Ke = [H3O+][OH-] = 10^-14 a 25 degres." },
+    { "q": "Une base selon Bronsted est une espece qui :", "o": ["cede un proton", "capte un proton", "libere des ions H+", "abaisse le pH"], "a": "B", "d": "Solutions et acides-bases", "x": 2, "e": "Une base est un accepteur de proton." },
+
+    { "q": "Equilibrer 2 H2 + O2 donne :", "o": ["H2O", "2 H2O", "H2O2", "2 H2O2"], "a": "B", "d": "Reactions chimiques", "x": 2, "e": "2 H2 + O2 -> 2 H2O respecte la conservation des atomes." },
+    { "q": "Dans une reaction chimique, la masse totale est :", "o": ["conservee", "toujours augmentee", "toujours diminuee", "variable"], "a": "A", "d": "Reactions chimiques", "x": 1, "e": "Loi de Lavoisier : conservation de la masse." },
+    { "q": "Une reaction exothermique :", "o": ["absorbe de la chaleur", "libere de la chaleur", "n'echange pas d'energie", "produit du courant"], "a": "B", "d": "Reactions chimiques", "x": 2, "e": "Une reaction exothermique cede de l'energie au milieu." },
+    { "q": "Une oxydation correspond a :", "o": ["un gain d'electrons", "une perte d'electrons", "un gain de protons", "une perte de neutrons"], "a": "B", "d": "Reactions chimiques", "x": 2, "e": "Oxydation = perte d'electrons ; reduction = gain." },
+    { "q": "Un catalyseur a pour effet :", "o": ["d'augmenter la vitesse de reaction sans etre consomme", "de deplacer l'equilibre", "d'augmenter le rendement final", "de modifier la nature des produits"], "a": "A", "d": "Reactions chimiques", "x": 2, "e": "Il abaisse l'energie d'activation sans etre consomme." },
+    { "q": "Le reactif limitant est celui qui :", "o": ["est en exces", "est entierement consomme en premier", "sert de solvant", "catalyse la reaction"], "a": "B", "d": "Reactions chimiques", "x": 2, "e": "Il fixe l'avancement maximal de la reaction." },
+    { "q": "La combustion complete du methane produit :", "o": ["CO et H2O", "CO2 et H2O", "C et H2", "CO2 uniquement"], "a": "B", "d": "Reactions chimiques", "x": 2, "e": "CH4 + 2 O2 -> CO2 + 2 H2O." },
+
+    { "q": "La formule brute du methane est :", "o": ["CH4", "C2H6", "CH3", "C2H4"], "a": "A", "d": "Chimie organique", "x": 1, "e": "Le methane est le premier des alcanes." },
+    { "q": "Les alcanes ont pour formule generale :", "o": ["CnH2n", "CnH2n+2", "CnH2n-2", "CnHn"], "a": "B", "d": "Chimie organique", "x": 2, "e": "Hydrocarbures satures : CnH(2n+2)." },
+    { "q": "Le groupe caracteristique des alcools est :", "o": ["-COOH", "-OH", "-CHO", "-NH2"], "a": "B", "d": "Chimie organique", "x": 2, "e": "Le groupe hydroxyle -OH caracterise les alcools." },
+    { "q": "Le groupe -COOH caracterise :", "o": ["les alcools", "les aldehydes", "les acides carboxyliques", "les amines"], "a": "C", "d": "Chimie organique", "x": 2, "e": "Groupe carboxyle des acides carboxyliques." },
+    { "q": "Les alcenes se distinguent des alcanes par la presence :", "o": ["d'une double liaison carbone-carbone", "d'un cycle", "d'un atome d'oxygene", "d'une triple liaison"], "a": "A", "d": "Chimie organique", "x": 2, "e": "Une insaturation C=C caracterise les alcenes." },
+    { "q": "Deux isomeres possedent :", "o": ["la meme formule brute mais des structures differentes", "des formules brutes differentes", "les memes proprietes", "le meme nombre d'atomes de carbone uniquement"], "a": "A", "d": "Chimie organique", "x": 2, "e": "Meme formule brute, arrangements differents." },
+    { "q": "L'ethanol a pour formule :", "o": ["CH3OH", "C2H5OH", "C3H7OH", "CH4O"], "a": "B", "d": "Chimie organique", "x": 2, "e": "L'ethanol comporte deux atomes de carbone." }
+  ]
+}

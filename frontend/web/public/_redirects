@@ -1,0 +1,16 @@
+# Repli d'application a page unique, pour Cloudflare Pages.
+#
+# Le site utilise `BrowserRouter` : ses adresses sont de vrais chemins
+# (`/offres`, `/discussions`, `/etablissements`) et non des fragments apres un
+# `#`. Or Pages sert des fichiers statiques : il n'existe pas de
+# `offres/index.html`, donc ouvrir ou **rafraichir** une de ces adresses
+# renvoyait 404.
+#
+# Cette ligne confie toute adresse inconnue a `index.html`, avec un code 200 —
+# et non 301 : le navigateur doit garder l'adresse demandee dans sa barre,
+# c'est elle que le routeur lit pour choisir l'ecran.
+#
+# Les fichiers qui existent vraiment passent avant : `/data/*.json`,
+# `/img/*`, les bundles. Pages n'applique une regle de reecriture qu'a une
+# requete qui ne correspond a aucun fichier.
+/*  /index.html  200

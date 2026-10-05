@@ -1,0 +1,13 @@
+# Secrets. `.env` porte la cle Gemini et la cle service_role Supabase :
+# committees une fois, elles sont a considerer comme divulguees.
+.env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+.vercel/
+*.tsbuildinfo
+
+# Cloudflare Workers.
+.wrangler/

@@ -1,0 +1,37 @@
+{
+  "name": "eduquali-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "API REST d'Eduquali : offres, candidatures, tests, inscriptions, assistant IA.",
+  "scripts": {
+    "test": "node --test --experimental-strip-types \"api/**/*.test.ts\"",
+    "test:watch": "node --test --watch --experimental-strip-types \"api/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "seed": "node supabase/generate-seed.mjs",
+    "check:gemini": "node scripts/check-gemini.mjs",
+    "check:schema": "node scripts/check-schema.mjs",
+    "check:sql": "node scripts/check-sql.mjs",
+    "check": "npm run typecheck && npm run check:schema && npm run check:sql && npm run schema:file && npm run check:schema-file && npm run check:db",
+    "deploy": "wrangler deploy --env production",
+    "schema:file": "node scripts/build-schema-file.mjs",
+    "seed:accounts": "node scripts/seed-demo-accounts.mjs",
+    "check:schema-file": "node scripts/check-schema-file.mjs",
+    "check:db": "node scripts/check-schema-db.mjs",
+    "check:supabase": "node --env-file=.env scripts/check-supabase.mjs",
+    "check:rls": "node --env-file=.env scripts/check-rls.mjs",
+    "secrets": "node scripts/put-secrets.mjs",
+    "secrets:prod": "node scripts/put-secrets.mjs production"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "hono": "^4.13.7",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@types/node": "^26.5.0",
+    "typescript": "^5.5.4",
+    "wrangler": "^4.42.0"
+  }
+}

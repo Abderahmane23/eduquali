@@ -1,0 +1,5564 @@
+{
+  "country": "GN",
+  "countryName": "République de Guinée",
+  "note": "Programme guineen. Le lycee couvre trois annees (11eme, 12eme, Terminale) et se partage en trois profils a partir de la 12eme. Les identifiants de matieres et de classes sont ceux du referentiel commun aux deux clients.",
+  "updated": "2026-10-03",
+  "disclaimer": "Compilation structurée à partir de sources guinéennes accessibles. Ce n’est pas une publication officielle du ministère : vérifiez auprès de votre établissement avant de vous en servir comme référence unique.",
+  "generatedBy": "shared/curriculum/build.mjs",
+  "sourceFiles": [
+    "programme_guineen_college_lycee.json",
+    "math_physique.txt",
+    "chimie.txt",
+    "anglais.txt",
+    "Français - lycée.txt",
+    "primaire-terminal.txt",
+    "manuel_scolaire.txt"
+  ],
+  "scope": {
+    "cycles": [
+      "COLLEGE",
+      "LYCEE"
+    ],
+    "college_levels": [
+      "7ème",
+      "8ème",
+      "9ème",
+      "10ème"
+    ],
+    "lycee_levels": [
+      "11ème",
+      "12ème",
+      "Terminale"
+    ],
+    "lycee_profiles": [
+      "SM",
+      "SE",
+      "SS"
+    ],
+    "language": "français"
+  },
+  "methodology": {
+    "description": "Compilation structurée à partir de programmes guinéens accessibles en ligne, de plans de progression récents et de textes relatifs aux examens. Les contenus explicitement retrouvés sont distingués des zones où le détail complet n'a pas pu être vérifié.",
+    "important_limit": "Il n'existe pas, dans les sources web consultées, une publication officielle unique et facilement exploitable contenant l'intégralité des chapitres et sous-chapitres de toutes les matières, pour chaque classe, dans un format homogène. Les entrées marquées 'partiel' ne doivent donc pas être interprétées comme une transcription intégrale officielle.",
+    "source_priority": [
+      "documents INRAP/MEPU-A ou ministère lorsqu'ils sont accessibles",
+      "plans de progression d'établissements guinéens reprenant le référentiel",
+      "documents pédagogiques guinéens",
+      "sources secondaires utilisées uniquement pour compléter ou recouper"
+    ]
+  },
+  "qualityFlags": [
+    "Les documents INRAP consultés pour le collège datent notamment d'octobre 2009 ; ils constituent des références programmatiques mais ne prouvent pas à eux seuls qu'aucune révision ultérieure n'a eu lieu.",
+    "Les plans 2025-2026 de mathématiques et de certaines matières montrent la progression réellement planifiée dans des établissements guinéens, mais ne remplacent pas nécessairement une édition ministérielle intégrale.",
+    "Le détail complet de toutes les matières et de toutes les classes n'a pas pu être vérifié dans les sources web accessibles ; les entrées concernées portent content_status='partiel'.",
+    "Les examens nationaux 2026 confirment les trois profils du baccalauréat général : Sciences expérimentales, Sciences mathématiques et Sciences sociales."
+  ],
+  "filieres": [
+    {
+      "id": "fil_math",
+      "name": "Sciences mathématiques",
+      "code": "SM",
+      "order": 1,
+      "note": "Mathématiques en matière majeure.",
+      "cycle": "LYCEE",
+      "levelIds": [
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "majorSubjectIds": [
+        "sub_math"
+      ],
+      "subjectIds": [
+        "sub_math",
+        "sub_phys",
+        "sub_chim",
+        "sub_fran",
+        "sub_angl",
+        "sub_hist",
+        "sub_geog",
+        "sub_philo",
+        "sub_eps"
+      ],
+      "levelNames": [
+        "12ème",
+        "Terminale"
+      ],
+      "majorSubjectNames": [
+        "Mathématiques"
+      ]
+    },
+    {
+      "id": "fil_exp",
+      "name": "Sciences expérimentales",
+      "code": "SE",
+      "order": 2,
+      "note": "Biologie (SVT) en matière majeure.",
+      "cycle": "LYCEE",
+      "levelIds": [
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "majorSubjectIds": [
+        "sub_biol"
+      ],
+      "subjectIds": [
+        "sub_biol",
+        "sub_chim",
+        "sub_phys",
+        "sub_math",
+        "sub_geol",
+        "sub_fran",
+        "sub_angl",
+        "sub_hist",
+        "sub_geog",
+        "sub_philo",
+        "sub_eps"
+      ],
+      "levelNames": [
+        "12ème",
+        "Terminale"
+      ],
+      "majorSubjectNames": [
+        "Biologie / SVT"
+      ]
+    },
+    {
+      "id": "fil_soc",
+      "name": "Sciences sociales",
+      "code": "SS",
+      "order": 3,
+      "note": "Histoire et géographie en matières majeures.",
+      "cycle": "LYCEE",
+      "levelIds": [
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "majorSubjectIds": [
+        "sub_hist",
+        "sub_geog"
+      ],
+      "subjectIds": [
+        "sub_hist",
+        "sub_geog",
+        "sub_econ",
+        "sub_ecm",
+        "sub_math",
+        "sub_fran",
+        "sub_angl",
+        "sub_philo",
+        "sub_eps"
+      ],
+      "levelNames": [
+        "12ème",
+        "Terminale"
+      ],
+      "majorSubjectNames": [
+        "Histoire",
+        "Géographie"
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "lvl_7",
+      "name": "7ème année",
+      "cycle": "COLLEGE",
+      "exam": null
+    },
+    {
+      "id": "lvl_8",
+      "name": "8ème année",
+      "cycle": "COLLEGE",
+      "exam": null
+    },
+    {
+      "id": "lvl_9",
+      "name": "9ème année",
+      "cycle": "COLLEGE",
+      "exam": null
+    },
+    {
+      "id": "lvl_10",
+      "name": "10ème année",
+      "cycle": "COLLEGE",
+      "exam": "BEPC"
+    },
+    {
+      "id": "lvl_11",
+      "name": "11ème année",
+      "cycle": "LYCEE",
+      "exam": null
+    },
+    {
+      "id": "lvl_12",
+      "name": "12ème année",
+      "cycle": "LYCEE",
+      "exam": "Baccalauréat — première partie / selon règlement national consulté"
+    },
+    {
+      "id": "lvl_terminale",
+      "name": "Terminale",
+      "cycle": "LYCEE",
+      "exam": "Baccalauréat unique"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "sub_fran",
+      "name": "Français",
+      "note": "Langue, expression, littérature et techniques d'expression.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 8,
+        "8ème": 8,
+        "9ème": 8,
+        "10ème": 8,
+        "11ème": {
+          "SM": 5,
+          "SE": 4,
+          "SS": 8
+        },
+        "12ème": {
+          "SM": 4,
+          "SE": 5,
+          "SS": 6
+        },
+        "Terminale": {
+          "SM": 4,
+          "SE": 4,
+          "SS": 6
+        }
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": true,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Thèmes de lecture et d'élocution",
+            "summary": null,
+            "subchapters": [
+              "L'école",
+              "La rentrée scolaire, mon école, la vie à l'école",
+              "Les jeux et sports",
+              "Jeux d'enfants, sports individuels/collectifs, compétitions",
+              "La famille",
+              "Vie en famille, parents, famille nucléaire/élargie, joies et peines",
+              "Le travail des jeunes",
+              "Satisfaction du travail bien fait, apprentissage d'un métier",
+              "Les fêtes",
+              "Religieuses, familiales, scolaires, nationales, internationales",
+              "Les paysages naturels",
+              "Savane, forêt, montagne, cours d'eau, mer",
+              "Les animaux",
+              "Domestiques, sauvages, espèces protégées",
+              "Les loisirs",
+              "Pêche, chasse, lecture",
+              "Le courrier",
+              "Poste, lettre, télégramme, courriels, SMS",
+              "Les voyages",
+              "Moyens de locomotion, départs, arrivées, paysages",
+              "Protection de l'environnement",
+              "Lutte contre feux de brousse, pollution",
+              "Œuvres de référence : Contes d'Amadou Koumba (Birago DIOP), L'enfant noir (CAMARA Laye), L'indigo, Le manguier"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 2,
+            "title": "Grammaire",
+            "summary": null,
+            "subchapters": [
+              "Chapitre 1 : Généralités",
+              "Situation de communication (langage oral, écrit, sonore, gestuel, visuel)",
+              "La ponctuation",
+              "Phonétique",
+              "Chapitre 2 : La phrase simple - Types et formes",
+              "Formes affirmatives et négatives",
+              "Types de phrases : déclarative, interrogative, impérative, exclamative",
+              "Chapitre 3 : Les constituants de la phrase simple - Le Groupe Nominal (GN)",
+              "Décomposition du GN, pivot",
+              "Déterminants (définis, indéfinis)",
+              "Le nom : classification, forme, genre, nombre",
+              "L'adjectif qualificatif : place et forme",
+              "Complément déterminatif, apposition",
+              "Chapitre 4 : Le Groupe Verbal (GV)",
+              "Définition et rôle",
+              "Variation en fonction du sujet et des temps",
+              "Verbes d'état et verbes d'action",
+              "Compléments essentiels (COD, COI)",
+              "Compléments non essentiels (COS, CC)",
+              "L'attribut",
+              "L'adverbe",
+              "Chapitre 5 : De la phrase simple à la phrase complexe",
+              "Coordination, juxtaposition, subordination",
+              "La proposition subordonnée relative"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 3,
+            "title": "Conjugaison",
+            "summary": null,
+            "subchapters": [
+              "Objectifs",
+              "Distinguer radical et désinence",
+              "Identifier et conjuguer tous les verbes aux divers temps de l'indicatif",
+              "Employer le temps qui convient (imparfait/passé simple dans un récit, présent de narration)",
+              "Utiliser correctement les auxiliaires",
+              "Contenu",
+              "Morphologie du verbe",
+              "Les temps et les modes",
+              "L'indicatif et les auxiliaires (être, avoir)",
+              "Valeurs des temps de l'indicatif"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 4,
+            "title": "Vocabulaire",
+            "summary": null,
+            "subchapters": [
+              "Objectifs",
+              "Identifier radical, préfixe, suffixe",
+              "Donner les mots de la même famille",
+              "Repérer le champ lexical dominant",
+              "Établir le champ sémantique d'un mot courant",
+              "Employer les principaux connecteurs temporels",
+              "Contenu",
+              "Les mots radicaux et la dérivation",
+              "Les familles de mots (du radical aux dérivés)",
+              "Formation des verbes, adjectifs, noms, adverbes",
+              "Sens propre et sens figuré",
+              "Expressions et locutions figées, proverbes",
+              "Utilisation du dictionnaire",
+              "Notions de stylistique : personnification, comparaison"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 5,
+            "title": "Orthographe",
+            "summary": null,
+            "subchapters": [
+              "Accords dans le groupe nominal",
+              "Accord sujet-verbe",
+              "Homophones grammaticaux (son/sont, ces/ses, mais/mes...)",
+              "Pluriels des noms (-aux, -eux, -oux)",
+              "Ponctuation"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 6,
+            "title": "Expression écrite",
+            "summary": null,
+            "subchapters": [
+              "Types de textes",
+              "Le texte narratif (le récit)",
+              "La description et le portrait",
+              "La lettre simple",
+              "Le compte rendu",
+              "Techniques",
+              "Organisation des idées",
+              "Paragraphes",
+              "Utilisation des connecteurs temporels et logiques"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 7,
+            "title": "Lecture",
+            "summary": null,
+            "subchapters": [
+              "Perception globale du texte",
+              "Analyse détaillée",
+              "Synthèse",
+              "Lecture suivie : découverte d'une œuvre complète ou d'extraits significatifs",
+              "Lecture silencieuse : compréhension générale et approfondie (QCM, textes lacunaires, puzzles...)"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Thèmes de lecture et d'élocution",
+            "summary": null,
+            "subchapters": [
+              "Les besoins fondamentaux",
+              "Alimentation, logement, habillement, instruction",
+              "Le temps",
+              "Saisons (sèche, hivernage), effets du climat",
+              "Le jour et la nuit",
+              "Aube, jour, coucher du soleil, nuit, lune, obscurité",
+              "Les jeux et sports",
+              "Collectifs, individuels, activités ludiques, jeux traditionnels",
+              "Le travail des enfants",
+              "Activités à la maison, à l'école, pendant les vacances",
+              "Les communications",
+              "Téléphone, fax, internet, TIC",
+              "Les voyages",
+              "Départ, voyage, arrivée, accueil, découverte",
+              "À la découverte d'autres horizons",
+              "Autre monde, autres hommes, autres cultures",
+              "Les âges de la vie",
+              "Marques de la jeunesse, marques de la vieillesse",
+              "Œuvres de référence : Climbié (Bernard DADIE), Lieutenant de Kouta (Mansa Makan DIABATE), L'indigo, Le manguier"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 2,
+            "title": "Grammaire",
+            "summary": null,
+            "subchapters": [
+              "Chapitre 1 : Étude du verbe et de la subordination",
+              "Phonétique, prononciation, orthographe",
+              "Constituants de la phrase simple",
+              "Fonctions du nom et de l'adjectif qualificatif",
+              "Chapitre 2 : Le Groupe Nominal",
+              "Déterminants définis et indéfinis",
+              "Degrés de signification de l'adjectif (comparatif, superlatif)",
+              "Substituts du nom : pronoms personnels (sujet, complément), autres pronoms",
+              "Chapitre 3 : Le Verbe",
+              "Verbes transitifs et intransitifs",
+              "Verbes pronominaux",
+              "Voix passive et voix active",
+              "Verbes impersonnels",
+              "Modes du verbe : indicatif, subjonctif, conditionnel, impératif, participe, infinitif",
+              "Chapitre 4 : La Subordination",
+              "De la phrase simple à la phrase complexe",
+              "Proposition subordonnée relative (pronoms relatifs : forme et fonction)",
+              "Proposition subordonnée complétive introduite par « que »",
+              "Proposition subordonnée interrogative",
+              "Proposition subordonnée infinitive",
+              "Proposition subordonnée participiale",
+              "Mots variables et invariables"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 3,
+            "title": "Conjugaison",
+            "summary": null,
+            "subchapters": [
+              "Objectifs",
+              "Conjuguer à l'impératif présent, subjonctif présent, conditionnel présent",
+              "Identifier mode et temps des formes verbales rencontrées",
+              "Lier chronologiquement des actions (antériorité, postériorité)",
+              "Conjuguer aux temps composés",
+              "Contenu",
+              "Subjonctif et conditionnel",
+              "Mode impératif",
+              "Auxiliaires et semi-auxiliaires",
+              "Temps composés (passé composé, plus-que-parfait, passé antérieur, futur antérieur)"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 4,
+            "title": "Vocabulaire",
+            "summary": null,
+            "subchapters": [
+              "Objectifs",
+              "Utiliser différents dictionnaires",
+              "Identifier le vocabulaire de la vie affective, des arts et des techniques",
+              "Reconnaître les figures de style : métaphore, comparaison, personnification",
+              "Contenu",
+              "Étude des champs lexicaux",
+              "Familles de mots",
+              "Suffixes (verbal, nominal, adverbial)",
+              "Préfixes (formes courantes)",
+              "Synonymes et antonymes",
+              "Niveaux de langue : choix du lexique",
+              "Stylistique : personnification, comparaison, métaphore"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Thèmes de lecture et d'élocution",
+            "summary": null,
+            "subchapters": [
+              "La vie en société",
+              "Conditions de vie, compréhension mutuelle, solidarité, travail collectif, tolérance, respect d'autrui",
+              "Les métiers",
+              "Travail manuel/intellectuel, complémentarité, choix d'un métier, conscience professionnelle, discipline",
+              "Les loisirs",
+              "Individuels ou collectifs, théâtre, musique, danses traditionnelles, cinéma",
+              "Les moyens d'information",
+              "Lettre, journal, radio, télévision, vidéo, cinéma, internet, téléphone",
+              "Les mouvements de population",
+              "Migrations, immigration, exode rural, tourisme, commerce",
+              "La sécheresse",
+              "Désertification, reboisement (fête de l'arbre)",
+              "Œuvres de référence : À l'écoute du monde (4ème année), Indigo – Français 4ème, Le manguier 4ème"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 2,
+            "title": "Grammaire",
+            "summary": null,
+            "subchapters": [
+              "Chapitre 1 : Révisions générales",
+              "Le groupe nominal : pronom, pronominalisation, déterminants",
+              "Les groupes fonctionnels",
+              "Chapitre 2 : Le Verbe",
+              "Auxiliaires et périphrases verbales",
+              "Opposition temps/aspects",
+              "Valeurs temps/aspects : l'indicatif",
+              "Temps simples et composés (présent, passé composé/surcomposé)",
+              "Temps simples et composés (passé simple, imparfait, plus-que-parfait, passé antérieur)",
+              "Le subjonctif : formes et emplois",
+              "Le participe, l'infinitif",
+              "Chapitre 3 : La Phrase simple",
+              "Différents types de phrases",
+              "Différentes formes : phrase sans verbe, phrase négative",
+              "Mise en relief, phrase emphatique",
+              "Chapitre 4 : La Phrase complexe",
+              "Coordination : mots coordonnés (conjonctions, adverbes)",
+              "Subordination : mots subordonnants",
+              "Proposition subordonnée de temps",
+              "Proposition subordonnée de cause",
+              "Proposition subordonnée de conséquence",
+              "Proposition subordonnée de but",
+              "Proposition subordonnée de condition",
+              "Proposition subordonnée de comparaison",
+              "Subordonnées participiales et infinitives",
+              "Discours direct, indirect, indirect libre"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 3,
+            "title": "Conjugaison",
+            "summary": null,
+            "subchapters": [
+              "Objectifs",
+              "Conjuguer tous les verbes à tous les temps et tous les modes",
+              "Utiliser à bon escient indicatif ou subjonctif dans des phrases complexes",
+              "Déterminer la valeur modale des modes",
+              "Traduire la chronologie des faits (concordance des temps)",
+              "Contenu",
+              "Révision des prérequis",
+              "Concordance des temps",
+              "Valeur et emplois des temps",
+              "Verbes irréguliers",
+              "Formes rares",
+              "Infinitif et participe"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 4,
+            "title": "Vocabulaire",
+            "summary": null,
+            "subchapters": [
+              "Objectifs",
+              "Chercher l'acception d'un mot dans son contexte (polysémie)",
+              "Donner des homonymes et les employer correctement",
+              "Employer conjonctions de coordination et de subordination",
+              "Exploiter les champs lexicaux de la vie affective et intellectuelle",
+              "Contenu",
+              "Utilisation des différents dictionnaires",
+              "Initiation au vocabulaire journalistique (titres, types de phrase, types de journaux)",
+              "Initiation au vocabulaire spécialisé (judiciaire, militaire, paramilitaire)",
+              "Stylistique : la métaphore",
+              "Supports : langage publicitaire, journaux, publicités, textes littéraires"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Thèmes de lecture et d'élocution",
+            "summary": null,
+            "subchapters": [
+              "Les âges de la vie",
+              "Enfance, adolescence, âge adulte, vieillesse, conflits de génération",
+              "La famille",
+              "Cérémonies familiales, mariage, naissance, baptême, décès, héritage",
+              "L'éducation",
+              "Éducation traditionnelle, éducation moderne",
+              "Le folklore",
+              "Instruments de musique, chants et danses",
+              "Les traditions orales",
+              "Proverbes, devinettes, fables, contes, légendes, mythes",
+              "Tradition et modernisme",
+              "Pratiques traditionnelles (habillement, alimentation), pratiques modernes, mirages de la ville",
+              "Œuvres de référence : Le Manguier 10ème, Indigo français 3ème, L'enfant noir (CAMARA Laye), Triballiques (Henri LOPES), Le vieux nègre et la médaille (Ferdinand OYONO)"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 2,
+            "title": "Grammaire",
+            "summary": null,
+            "subchapters": [
+              "La phrase complexe (tous types de subordonnées)",
+              "La concordance des temps (indicatif, subjonctif)",
+              "Les transformations grammaticales (voix passive/active, discours rapporté)",
+              "Les classes grammaticales et leurs fonctions",
+              "L'analyse logique et grammaticale complète"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 3,
+            "title": "Conjugaison",
+            "summary": null,
+            "subchapters": [
+              "Objectifs",
+              "Conjuguer à tous les temps et modes les verbes irréguliers (par paires : craindre/peindre, répondre/perdre, fuir/croire, ouvrir/cueillir, mentir/sentir, coudre/résoudre, rire/conclure...)",
+              "Justifier l'emploi des modes utilisés dans un texte",
+              "Employer à bon escient le mode requis par le sens ou les contraintes syntaxiques",
+              "Conjuguer aux temps composés",
+              "Contenu",
+              "Concordance des temps (révision approfondie)",
+              "Valeur et emplois des temps",
+              "Verbes irréguliers (liste complète)",
+              "Formes rares",
+              "Infinitif et participe (emplois variés)"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          },
+          {
+            "order": 4,
+            "title": "Vocabulaire",
+            "summary": null,
+            "subchapters": [
+              "Objectifs",
+              "Découvrir et employer les premiers éléments du lexique littéraire (métaphore, métonymie...)",
+              "Élaborer le champ sémantique d'un mot",
+              "Exploiter les champs lexicaux de la vie sociale, des relations logiques",
+              "Grouper des mots par familles étymologiques ou analogiques",
+              "Rapprocher et opposer des mots (homonymes, paronymes, synonymes, antonymes)",
+              "Reconnaître les aspects appréciatifs et dépréciatifs (ton)",
+              "Percevoir connotation, dénotation, polysémie",
+              "Contenu",
+              "Révision générale des notions de 7ème à 9ème",
+              "Utilisation des différents dictionnaires",
+              "Vocabulaire journalistique et spécialisé",
+              "Stylistique littéraire"
+            ],
+            "outcome": null,
+            "source": "Français - lycée.txt"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Introduction à l'étude de la littérature",
+            "summary": "Entrée dans l'étude littéraire et distinction des principales formes.",
+            "subchapters": [
+              "Littérature orale",
+              "Littérature écrite",
+              "Notions de genres littéraires"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Techniques d'expression",
+            "summary": "Développement des capacités de synthèse, d'analyse et d'expression organisée.",
+            "subchapters": [
+              "Résumé de texte",
+              "Explication de texte",
+              "Commentaire composé",
+              "Dissertation / devoir d'idées",
+              "Exposé, rapport, compte-rendu, procès-verbal"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Langue",
+            "summary": "Réinvestissement de la grammaire, orthographe, conjugaison et vocabulaire selon les besoins des élèves.",
+            "subchapters": [
+              "Constituants de la phrase simple",
+              "Fonctions grammaticales",
+              "Accord des participes passés",
+              "Synonymes, paronymes, antonymes",
+              "Familles étymologiques",
+              "Nuances du lexique",
+              "Expressions idiomatiques et proverbiales"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 4,
+            "title": "Courants et culture littéraires",
+            "summary": "Première approche des grands courants et des littératures étudiées.",
+            "subchapters": [
+              "Humanisme",
+              "Classicisme",
+              "Romantisme",
+              "Littérature africaine",
+              "Littérature française"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Littérature et civilisation",
+            "summary": "Approfondissement de la culture littéraire et de son contexte historique et civilisationnel.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Techniques d'expression",
+            "summary": "Maîtrise progressive du résumé, de l'explication, du commentaire et de la dissertation.",
+            "subchapters": [
+              "Résumé",
+              "Explication de texte",
+              "Commentaire composé",
+              "Dissertation"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Étude de la langue",
+            "summary": "Consolidation ciblée des compétences linguistiques.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Littérature",
+            "summary": "Étude d'œuvres et de courants littéraires, avec une place importante donnée aux littératures africaines et étrangères selon le profil.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Techniques d'expression et préparation à l'examen",
+            "summary": "Mobilisation des méthodes de résumé, commentaire, explication et dissertation.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_fr_college",
+        "src_fr_lycee"
+      ]
+    },
+    {
+      "id": "sub_math",
+      "name": "Mathématiques",
+      "note": "Mathématiques fondamentales et approfondies selon le profil.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 6,
+        "8ème": 6,
+        "9ème": 6,
+        "10ème": 6,
+        "11ème": {
+          "SM": 8,
+          "SE": 4,
+          "SS": 4
+        },
+        "12ème": {
+          "SM": 8,
+          "SE": 4,
+          "SS": 4
+        },
+        "Terminale": {
+          "SM": 8,
+          "SE": 4,
+          "SS": 4
+        }
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": true,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Arithmétique",
+            "summary": null,
+            "subchapters": [
+              "Nombres entiers naturels",
+              "multiples et diviseurs",
+              "critères de divisibilité par 2, 3, 5, 9, 10, 100 et 1 000"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 2,
+            "title": "Fractions",
+            "summary": null,
+            "subchapters": [
+              "Écritures fractionnaires",
+              "simplification",
+              "écriture fractionnaire d’un nombre décimal",
+              "addition et soustraction de fractions de même dénominateur",
+              "produit d’un entier naturel par une fraction"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 3,
+            "title": "Nombres décimaux",
+            "summary": null,
+            "subchapters": [
+              "Addition, soustraction, multiplication, division",
+              "comparaison",
+              "ordre de grandeur",
+              "valeur approchée"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 4,
+            "title": "Nombres relatifs",
+            "summary": null,
+            "subchapters": [
+              "Introduction des décimaux relatifs",
+              "ensembles D et Z",
+              "opposé d’un nombre",
+              "somme d’entiers relatifs"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 5,
+            "title": "Calcul littéral",
+            "summary": null,
+            "subchapters": [
+              "Priorités opératoires",
+              "parenthèses",
+              "propriétés de l’addition et de la multiplication",
+              "premières expressions littérales liées aux périmètres, aires et volumes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 6,
+            "title": "Équations et inéquations",
+            "summary": null,
+            "subchapters": [
+              "Équations simples de type a+x=b ou ax=b",
+              "recherche de nombres vérifiant des inégalités simples"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 7,
+            "title": "Proportionnalité",
+            "summary": null,
+            "subchapters": [
+              "Tableaux de proportionnalité",
+              "coefficient de proportionnalité",
+              "pourcentage",
+              "échelle"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 8,
+            "title": "Statistiques",
+            "summary": null,
+            "subchapters": [
+              "Lecture et interprétation de graphiques simples"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 9,
+            "title": "Droites et segments",
+            "summary": null,
+            "subchapters": [
+              "Droite, demi-droite, alignement",
+              "droites sécantes, perpendiculaires et parallèles",
+              "segment",
+              "longueur",
+              "milieu",
+              "médiatrice"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 10,
+            "title": "Angles",
+            "summary": null,
+            "subchapters": [
+              "Vocabulaire",
+              "mesure en degrés",
+              "angles adjacents, complémentaires et supplémentaires",
+              "bissectrice"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 11,
+            "title": "Triangles",
+            "summary": null,
+            "subchapters": [
+              "Vocabulaire",
+              "triangles particuliers",
+              "hauteur, médiatrice, bissectrice",
+              "périmètre et aire"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 12,
+            "title": "Cercles",
+            "summary": null,
+            "subchapters": [
+              "Centre, rayon, diamètre, corde",
+              "périmètre du cercle",
+              "aire du disque"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 13,
+            "title": "Quadrilatères",
+            "summary": null,
+            "subchapters": [
+              "Parallélogramme",
+              "propriétés des côtés et diagonales",
+              "losange, rectangle et carré",
+              "périmètres et aires"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 14,
+            "title": "Solides",
+            "summary": null,
+            "subchapters": [
+              "Cube, pavé droit et cylindre",
+              "vocabulaire",
+              "patrons",
+              "aires latérales et totales",
+              "volumes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 15,
+            "title": "Symétries",
+            "summary": null,
+            "subchapters": [
+              "Symétrie axiale",
+              "symétrie centrale",
+              "construction de symétriques de points, segments, droites et angles",
+              "axe et centre de symétrie"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 16,
+            "title": "Repérage",
+            "summary": null,
+            "subchapters": [
+              "Demi-droite graduée",
+              "droite graduée",
+              "origine, unité et abscisse",
+              "placement et lecture de points"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Arithmétique",
+            "summary": null,
+            "subchapters": [
+              "Division euclidienne",
+              "nombres premiers",
+              "décomposition en facteurs premiers",
+              "recherche de multiples et de diviseurs",
+              "PPCM et PGCD"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 2,
+            "title": "Fractions",
+            "summary": null,
+            "subchapters": [
+              "Fractions irréductibles",
+              "simplification",
+              "comparaison à l’unité",
+              "encadrement entre deux décimaux",
+              "somme et différence de fractions de dénominateurs différents",
+              "produit de fractions"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 3,
+            "title": "Nombres relatifs",
+            "summary": null,
+            "subchapters": [
+              "Addition, soustraction, multiplication et comparaison de nombres décimaux relatifs"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 4,
+            "title": "Calcul littéral",
+            "summary": null,
+            "subchapters": [
+              "Valeur numérique d’une expression",
+              "développement de \\(a(x+y)\\)",
+              "réduction de termes semblables",
+              "factorisation de ax+bx"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 5,
+            "title": "Équations et inéquations",
+            "summary": null,
+            "subchapters": [
+              "Équations de type ax+b=0 dans Q",
+              "inéquations simples de premier degré à une inconnue"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 6,
+            "title": "Proportionnalité",
+            "summary": null,
+            "subchapters": [
+              "Coefficients de proportionnalité",
+              "vitesse",
+              "masse volumique",
+              "débit",
+              "représentation graphique d’un tableau de proportionnalité"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 7,
+            "title": "Pourcentages et échelles",
+            "summary": null,
+            "subchapters": [
+              "Calcul de pourcentages",
+              "agrandissement et réduction à l’échelle"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 8,
+            "title": "Statistiques",
+            "summary": null,
+            "subchapters": [
+              "Collecte et organisation des données",
+              "effectifs",
+              "fréquences",
+              "moyenne",
+              "diagrammes à bandes et diagrammes circulaires"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 9,
+            "title": "Distance",
+            "summary": null,
+            "subchapters": [
+              "Distance de deux points",
+              "inégalité triangulaire",
+              "médiatrice",
+              "caractérisation d’un segment",
+              "régionnement du plan"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 10,
+            "title": "Angles",
+            "summary": null,
+            "subchapters": [
+              "Angles opposés par le sommet",
+              "angles formés par deux parallèles coupées par une sécante",
+              "angles alternes-internes et correspondants"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 11,
+            "title": "Triangles",
+            "summary": null,
+            "subchapters": [
+              "Somme des angles",
+              "triangles isocèles et équilatéraux",
+              "médiatrices",
+              "cercle circonscrit",
+              "triangles superposables"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 12,
+            "title": "Cercles",
+            "summary": null,
+            "subchapters": [
+              "Cercle circonscrit à un triangle rectangle",
+              "intérieur, extérieur et frontière d’un cercle"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 13,
+            "title": "Quadrilatères et polygones",
+            "summary": null,
+            "subchapters": [
+              "Caractérisation du parallélogramme, du losange, du rectangle et du carré",
+              "trapèze",
+              "polygones réguliers",
+              "triangle équilatéral, hexagone, carré et octogone"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 14,
+            "title": "Solides",
+            "summary": null,
+            "subchapters": [
+              "Prisme droit",
+              "vocabulaire",
+              "patron",
+              "construction",
+              "aire latérale, aire totale et volume"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 15,
+            "title": "Symétries",
+            "summary": null,
+            "subchapters": [
+              "Symétriques de points, droites, segments, triangles et cercles par rapport à un axe ou un centre",
+              "propriétés de conservation"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 16,
+            "title": "Repérage",
+            "summary": null,
+            "subchapters": [
+              "Quadrillage",
+              "nœuds et mailles",
+              "couples de coordonnées",
+              "coordonnées d’un point dans le plan"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Arithmétique",
+            "summary": null,
+            "subchapters": [
+              "Utilisation du PPCM et du PGCD dans la résolution de problèmes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 2,
+            "title": "Nombres décimaux",
+            "summary": null,
+            "subchapters": [
+              "Écriture scientifique a \\times 10^n, avec a\\in Z et n\\in Z",
+              "multiplication de nombres écrits sous cette forme"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 3,
+            "title": "Nombres rationnels",
+            "summary": null,
+            "subchapters": [
+              "Ensemble Q",
+              "fraction irréductible",
+              "comparaison",
+              "somme, différence, produit et inverse d’un rationnel non nul"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 4,
+            "title": "Puissances",
+            "summary": null,
+            "subchapters": [
+              "Puissances à exposant entier naturel d’un nombre rationnel non nul",
+              "propriétés",
+              "calculs simples",
+              "encadrements et approximations décimales"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 5,
+            "title": "Calcul algébrique",
+            "summary": null,
+            "subchapters": [
+              "Développement",
+              "réduction",
+              "factorisation",
+              "produits remarquables : \\((a+b)^2\\), \\((a-b)^2\\), \\((a+b)(a-b)\\)"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 6,
+            "title": "Équations",
+            "summary": null,
+            "subchapters": [
+              "Équations du premier degré à une inconnue dans R"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 7,
+            "title": "Inéquations",
+            "summary": null,
+            "subchapters": [
+              "Inéquations du premier degré à une inconnue",
+              "représentation des solutions"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 8,
+            "title": "Systèmes",
+            "summary": null,
+            "subchapters": [
+              "Équations et systèmes de deux équations du premier degré dans R \\times R",
+              "inéquations et systèmes d’inéquations"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 9,
+            "title": "Proportionnalité",
+            "summary": null,
+            "subchapters": [
+              "Coefficients de proportionnalité",
+              "propriété \\frac{a}{b}=\\frac{c}{d}\\iff ad=bc lorsque les dénominateurs sont non nuls",
+              "représentation graphique"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 10,
+            "title": "Statistiques",
+            "summary": null,
+            "subchapters": [
+              "Données qualitatives et quantitatives",
+              "effectifs",
+              "fréquences",
+              "moyenne",
+              "diagrammes à bandes et circulaires",
+              "regroupement en classes",
+              "histogrammes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 11,
+            "title": "Géométrie plane",
+            "summary": null,
+            "subchapters": [
+              "Distance d’un point à une droite",
+              "distance entre deux droites",
+              "bissectrice",
+              "triangle et droite des milieux",
+              "propriétés directe et réciproque"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 12,
+            "title": "Pythagore",
+            "summary": null,
+            "subchapters": [
+              "Théorème direct",
+              "réciproque",
+              "calcul de longueurs dans le triangle rectangle"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 13,
+            "title": "Cercle",
+            "summary": null,
+            "subchapters": [
+              "Positions relatives d’une droite et d’un cercle",
+              "tangente",
+              "tangentes issues d’un point"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 14,
+            "title": "Vecteurs",
+            "summary": null,
+            "subchapters": [
+              "Définition par la translation",
+              "égalité de vecteurs",
+              "représentant d’origine donnée",
+              "somme",
+              "relation de Chasles",
+              "vecteur nul",
+              "vecteur opposé",
+              "milieu"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 15,
+            "title": "Repérage",
+            "summary": null,
+            "subchapters": [
+              "Repère orthogonal et orthonormal",
+              "coordonnées d’un point",
+              "distance entre deux points",
+              "norme d’un vecteur",
+              "condition d’orthogonalité"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 16,
+            "title": "Espace",
+            "summary": null,
+            "subchapters": [
+              "Plans et droites de l’espace",
+              "positions relatives",
+              "perspective cavalière",
+              "représentation de solides"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Nombres réels",
+            "summary": null,
+            "subchapters": [
+              "Introduction de R",
+              "comparaison",
+              "intervalles",
+              "encadrement de somme, différence, produit et quotient"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 2,
+            "title": "Radicaux",
+            "summary": null,
+            "subchapters": [
+              "Définition de la racine carrée",
+              "propriétés",
+              "comparaison",
+              "opérations sur les radicaux"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 3,
+            "title": "Puissances",
+            "summary": null,
+            "subchapters": [
+              "Puissances à exposant entier relatif d’un nombre réel",
+              "propriétés"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 4,
+            "title": "Calcul numérique",
+            "summary": null,
+            "subchapters": [
+              "Approximations décimales",
+              "usage raisonné des tables numériques et de la calculatrice"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 5,
+            "title": "Monômes",
+            "summary": null,
+            "subchapters": [
+              "Degré",
+              "coefficient",
+              "opérations sur les monômes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 6,
+            "title": "Polynômes",
+            "summary": null,
+            "subchapters": [
+              "Notion de polynôme",
+              "degré",
+              "addition et multiplication de polynômes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 7,
+            "title": "Équations",
+            "summary": null,
+            "subchapters": [
+              "Équations du premier degré dans R",
+              "systèmes de deux équations du premier degré dans R \\times R"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 8,
+            "title": "Inéquations",
+            "summary": null,
+            "subchapters": [
+              "Inéquations et systèmes d’inéquations du premier degré dans R \\times R",
+              "interprétation graphique"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 9,
+            "title": "Applications linéaires",
+            "summary": null,
+            "subchapters": [
+              "Définition",
+              "propriétés de linéarité",
+              "bijection",
+              "sens de variation",
+              "représentation graphique"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 10,
+            "title": "Applications affines",
+            "summary": null,
+            "subchapters": [
+              "Définition",
+              "sens de variation",
+              "représentation graphique",
+              "applications concrètes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 11,
+            "title": "Statistiques",
+            "summary": null,
+            "subchapters": [
+              "Regroupement en classes d’amplitudes égales",
+              "histogramme",
+              "étendue"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 12,
+            "title": "Angles inscrits",
+            "summary": null,
+            "subchapters": [
+              "Angle inscrit",
+              "angle au centre",
+              "arcs interceptés",
+              "propriétés et relations entre angles"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 13,
+            "title": "Trigonométrie",
+            "summary": null,
+            "subchapters": [
+              "Sinus, cosinus et tangente d’un angle aigu",
+              "calcul dans le triangle rectangle",
+              "utilisation de tables et de calculatrice",
+              "angles remarquables de 30°, 45° et 60°"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 14,
+            "title": "Polygones réguliers",
+            "summary": null,
+            "subchapters": [
+              "Triangle équilatéral, carré, pentagone, hexagone et octogone",
+              "lien avec la rotation"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 15,
+            "title": "Solides",
+            "summary": null,
+            "subchapters": [
+              "Pyramide et cône de révolution",
+              "vocabulaire",
+              "patron",
+              "aires et volumes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 16,
+            "title": "Sections de solides",
+            "summary": null,
+            "subchapters": [
+              "Section d’une pyramide ou d’un cône par un plan parallèle à la base",
+              "tronc de pyramide et tronc de cône",
+              "réduction et agrandissement"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 17,
+            "title": "Coordonnées de vecteurs",
+            "summary": null,
+            "subchapters": [
+              "Coordonnées d’une somme",
+              "coordonnées d’un produit par un réel",
+              "colinéarité",
+              "orthogonalité",
+              "norme"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 18,
+            "title": "Droites",
+            "summary": null,
+            "subchapters": [
+              "Vecteur directeur",
+              "équation de droite",
+              "coefficient directeur",
+              "parallélisme et orthogonalité de deux droites"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 19,
+            "title": "Transformations",
+            "summary": null,
+            "subchapters": [
+              "Symétrie orthogonale",
+              "translation",
+              "composée de translations",
+              "rotation abordée expérimentalement",
+              "homothétie possible en complément facultatif"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Mathématiques de seconde",
+            "summary": "Socle commun de lycée avant la spécialisation des profils.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Équations, inéquations, systèmes linéaires",
+            "summary": "Résolution d'équations et d'inéquations, notamment du second degré.",
+            "subchapters": [
+              "Équations du second degré",
+              "Racines d'un polynôme du second degré",
+              "Résolution d'une équation du second degré",
+              "Somme et produit des solutions",
+              "Inéquations du second degré",
+              "Signe d'un polynôme du second degré",
+              "Interprétation graphique",
+              "Équations et inéquations se ramenant au second degré"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Autres domaines du programme de 12ème SM",
+            "summary": "La source de planification confirme une progression détaillée ; la transcription complète des chapitres suivants doit être vérifiée dans le document intégral.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Nombres complexes",
+            "summary": "Étude du corps des nombres complexes et de ses applications géométriques.",
+            "subchapters": [
+              "Module et argument",
+              "Représentation géométrique",
+              "Exponentielle complexe e^(iθ)",
+              "Applications trigonométriques",
+              "Racines n-ièmes",
+              "Similitudes",
+              "Équation du second degré"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Arithmétique",
+            "summary": "Structure des entiers et outils de divisibilité.",
+            "subchapters": [
+              "Numération décimale et binaire",
+              "Anneau Z",
+              "Sous-groupes de Z",
+              "Division euclidienne dans N et Z",
+              "Congruences",
+              "Anneau Z/nZ",
+              "Nombres premiers",
+              "Corps Z/pZ",
+              "Décomposition en facteurs premiers",
+              "PGCD et PPCM"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Analyse",
+            "summary": "Étude approfondie des fonctions et calcul différentiel et intégral.",
+            "subchapters": [
+              "Limites",
+              "Continuité",
+              "Dérivation",
+              "Intégration"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 4,
+            "title": "Autres thèmes de Terminale SM",
+            "summary": "La planification 2025-2026 confirme d'autres chapitres ; leur transcription exhaustive nécessite le document source complet.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_math_7",
+        "src_math_12",
+        "src_math_term"
+      ]
+    },
+    {
+      "id": "sub_phys",
+      "name": "Physique",
+      "note": "Sciences physiques ; dominante en SM et SE au lycée.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 3,
+        "8ème": 3,
+        "9ème": 3,
+        "10ème": 3,
+        "11ème": {
+          "SM": 5,
+          "SE": 5,
+          "SS": 4
+        },
+        "12ème": {
+          "SM": 5,
+          "SE": 5,
+          "SS": 4
+        },
+        "Terminale": {
+          "SM": 5,
+          "SE": 5,
+          "SS": 4
+        }
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": true,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Propriétés physiques de la matière",
+            "summary": null,
+            "subchapters": [
+              "États de la matière",
+              "solides, liquides et gaz",
+              "critères de reconnaissance",
+              "surface libre des liquides",
+              "existence, compressibilité et expansibilité de l’air"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 2,
+            "title": "Mesure de la masse",
+            "summary": null,
+            "subchapters": [
+              "Masse d’un corps",
+              "balances",
+              "balance Roberval",
+              "pesée de solides et liquides",
+              "unités et sous-unités de masse",
+              "conversions"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 3,
+            "title": "Mesure du poids",
+            "summary": null,
+            "subchapters": [
+              "Caractéristiques du poids : direction et sens",
+              "verticalité",
+              "peson et dynamomètre",
+              "différence masse/poids",
+              "relation P=m\\times g, avec g=10\\ \\text{N/kg}"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 4,
+            "title": "Mesure du volume",
+            "summary": null,
+            "subchapters": [
+              "Volume des solides, liquides et gaz",
+              "volume d’un solide régulier",
+              "éprouvette graduée",
+              "seringue",
+              "déplacement de liquide",
+              "lecture du ménisque",
+              "unités et conversions"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 5,
+            "title": "Température et chaleur",
+            "summary": null,
+            "subchapters": [
+              "Thermomètres",
+              "température",
+              "échelle Celsius",
+              "thermomètre médical",
+              "distinction entre température et chaleur"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 6,
+            "title": "Changements d’état",
+            "summary": null,
+            "subchapters": [
+              "Fusion",
+              "solidification",
+              "vaporisation",
+              "ébullition",
+              "évaporation",
+              "condensation",
+              "conservation de la masse",
+              "non-conservation possible du volume",
+              "cycle de l’eau"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 7,
+            "title": "Circuit électrique simple",
+            "summary": null,
+            "subchapters": [
+              "Pile, lampe, fils conducteurs, interrupteur",
+              "circuit ouvert et fermé",
+              "lampe torche",
+              "tension nominale d’une lampe et d’un générateur"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 8,
+            "title": "Conducteurs et isolants",
+            "summary": null,
+            "subchapters": [
+              "Métaux, plastiques, bois, caoutchouc, eau pure, eau salée",
+              "rôle de la gaine électrique",
+              "conducteurs et isolants de l’environnement"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 9,
+            "title": "Schématisation des circuits",
+            "summary": null,
+            "subchapters": [
+              "Symboles normalisés",
+              "différence entre dessin et schéma",
+              "schéma d’une pile, d’une lampe, d’un interrupteur, d’un commutateur et d’une prise secteur"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 10,
+            "title": "Associations de piles",
+            "summary": null,
+            "subchapters": [
+              "Bornes positive et négative",
+              "montage en série",
+              "montage en opposition",
+              "tension d’une association",
+              "adaptation d’une lampe à un générateur"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 11,
+            "title": "Associations de lampes",
+            "summary": null,
+            "subchapters": [
+              "Montage en série",
+              "montage en dérivation",
+              "conséquences d’une lampe grillée",
+              "court-circuit",
+              "exemples domestiques et guirlandes"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 12,
+            "title": "Sécurité électrique",
+            "summary": null,
+            "subchapters": [
+              "Test lampe-pile",
+              "recherche de panne",
+              "dangers d’électrocution",
+              "dangers d’incendie",
+              "fusibles",
+              "disjoncteurs",
+              "remplacement d’un fusible identique"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 13,
+            "title": "Aimants",
+            "summary": null,
+            "subchapters": [
+              "Corps ferreux et nickel",
+              "pôles Nord et Sud",
+              "attraction et répulsion",
+              "boussole",
+              "orientation Nord-Sud",
+              "aimantation temporaire du fer et permanente de l’acier"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "État gazeux",
+            "summary": null,
+            "subchapters": [
+              "Compressibilité et expansibilité des gaz",
+              "pression atmosphérique",
+              "mesure et comparaison de pressions",
+              "masse de l’air et de gaz usuels",
+              "pas de calcul formel reliant pression, force et surface"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 2,
+            "title": "Masse volumique",
+            "summary": null,
+            "subchapters": [
+              "Masse volumique des solides, liquides et gaz",
+              "unités",
+              "détermination expérimentale avec balance et récipient gradué",
+              "calcul de masse, volume ou masse volumique"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 3,
+            "title": "Calorimétrie",
+            "summary": null,
+            "subchapters": [
+              "Échanges de chaleur entre masses d’eau à températures différentes",
+              "température d’équilibre",
+              "invariance de la température lors de la fusion et de l’ébullition d’un corps pur",
+              "principe de la bouteille thermos"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 4,
+            "title": "Dilatation",
+            "summary": null,
+            "subchapters": [
+              "Dilatation des solides, liquides et gaz",
+              "étude qualitative",
+              "joints de dilatation des rails et ponts",
+              "thermomètre à liquide",
+              "bilame",
+              "vase d’expansion"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 5,
+            "title": "Transmission de chaleur",
+            "summary": null,
+            "subchapters": [
+              "Conduction dans les solides",
+              "convection dans les liquides et les gaz",
+              "rayonnement",
+              "isolation thermique",
+              "applications : casseroles, maisons, glacières, thermos et foyers améliorés"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 6,
+            "title": "Électricité",
+            "summary": null,
+            "subchapters": [
+              "Mesure de l’intensité et de la tension",
+              "circuits en série et en dérivation",
+              "unicité de l’intensité dans un circuit sans dérivation",
+              "additivité des tensions",
+              "unicité de la tension et additivité des intensités dans les circuits avec dérivation"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 7,
+            "title": "Électromagnétisme",
+            "summary": null,
+            "subchapters": [
+              "Étude signalée dans les plans de progression récents : effets magnétiques du courant et applications usuelles",
+              "la liste exhaustive des sous-leçons nécessite toutefois une vérification directe du fascicule complet"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Acoustique",
+            "summary": null,
+            "subchapters": [
+              "Production et propagation du son",
+              "sources sonores",
+              "phénomènes acoustiques",
+              "durée indiquée dans le programme : 2 heures pour l’introduction à l’acoustique"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 2,
+            "title": "Optique",
+            "summary": null,
+            "subchapters": [
+              "Étude de la lumière",
+              "propagation rectiligne",
+              "ombre et pénombre",
+              "réflexion et réfraction",
+              "miroirs et lentilles selon le niveau de développement du chapitre"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 3,
+            "title": "Mécanique",
+            "summary": null,
+            "subchapters": [
+              "Forces et effets des forces",
+              "poids",
+              "équilibre",
+              "mouvement",
+              "relation entre masse et poids reprise dans une approche plus expérimentale"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 4,
+            "title": "Énergie mécanique",
+            "summary": null,
+            "subchapters": [
+              "Travail, puissance et énergie mécanique",
+              "applications aux machines et activités de la vie courante"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 5,
+            "title": "Technologie",
+            "summary": null,
+            "subchapters": [
+              "Approche des dispositifs mécaniques et techniques à partir d’objets de l’environnement"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Optique",
+            "summary": null,
+            "subchapters": [
+              "Réflexion et réfraction de la lumière sur des surfaces planes",
+              "durée repérée : 3 heures pour cette leçon",
+              "applications pratiques de la propagation et du changement de direction de la lumière"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 2,
+            "title": "Optique géométrique",
+            "summary": null,
+            "subchapters": [
+              "Miroirs, lentilles, formation d’images et instruments simples : à vérifier dans le fascicule original complet avant transcription exhaustive"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 3,
+            "title": "Mécanique",
+            "summary": null,
+            "subchapters": [
+              "Travail, puissance et énergie mécaniques",
+              "durée repérée : 9 heures",
+              "calculs et interprétation de situations mécaniques"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 4,
+            "title": "Mécanique et technologie",
+            "summary": null,
+            "subchapters": [
+              "Ensemble « mécanique et technologie » identifié à 27 heures dans le programme",
+              "étude fonctionnelle de systèmes ou mécanismes techniques usuels"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          },
+          {
+            "order": 5,
+            "title": "Démarche expérimentale",
+            "summary": null,
+            "subchapters": [
+              "Mesures, exploitation des résultats, schémas, identification de grandeurs physiques, unités et résolution de problèmes contextualisés"
+            ],
+            "outcome": null,
+            "source": "math_physique.txt"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Grandeurs mesurables",
+            "summary": "Définition des grandeurs physiques et analyse dimensionnelle.",
+            "subchapters": [
+              "Notion de grandeurs physiques",
+              "Équations aux dimensions"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Mécanique",
+            "summary": "Étude du mouvement et des interactions mécaniques.",
+            "subchapters": [
+              "Le mouvement",
+              "Caractère relatif du mouvement",
+              "Étude du mouvement d'un point mobile"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Calorimétrie / gaz",
+            "summary": "Étude thermique et transformations des gaz.",
+            "subchapters": [
+              "Transformations à température constante",
+              "Transformations à pression constante",
+              "Transformations à volume constant"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 4,
+            "title": "Thermodynamique",
+            "summary": "Relations entre chaleur et travail et fonctionnement des machines thermiques.",
+            "subchapters": [
+              "Équivalence de la chaleur et du travail",
+              "Premier principe de la thermodynamique",
+              "Machines thermiques"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 5,
+            "title": "Électrostatique, électricité et électronique",
+            "summary": "Charges, circuits électriques et composants électroniques.",
+            "subchapters": [
+              "Phénomènes électrostatiques",
+              "Champ électrostatique",
+              "Différence de potentiel",
+              "Courant électrique",
+              "Intensité d'un courant continu",
+              "Tension dans un circuit",
+              "Dipôles passifs",
+              "Dipôles actifs",
+              "Diode à semi-conducteur",
+              "Transistor",
+              "Applications"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Physique du lycée",
+            "summary": "Poursuite et approfondissement de la mécanique, de l'électricité et des autres domaines du programme de lycée.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Physique Terminale",
+            "summary": "Approfondissement des sciences physiques en vue du baccalauréat ; détail complet à vérifier dans le programme intégral.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_phys_college",
+        "src_phys_11"
+      ]
+    },
+    {
+      "id": "sub_chim",
+      "name": "Chimie",
+      "note": "Chimie générale et organique selon les niveaux et profils.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 2,
+        "8ème": 2,
+        "9ème": 2,
+        "10ème": 2,
+        "11ème": {
+          "SM": 4,
+          "SE": 4,
+          "SS": 4
+        },
+        "12ème": {
+          "SM": 4,
+          "SE": 4,
+          "SS": 4
+        },
+        "Terminale": {
+          "SM": 4,
+          "SE": 4,
+          "SS": 4
+        }
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": true,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Introduction à la chimie",
+            "summary": null,
+            "subchapters": [
+              "Rôle de la chimie dans la vie courante",
+              "produits chimiques de l’environnement"
+            ],
+            "outcome": "Distinguer la place de la chimie dans le savon, les métaux, les plastiques, les engrais, les médicaments et les produits de consommation",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 2,
+            "title": "Transformations physiques",
+            "summary": null,
+            "subchapters": [
+              "États physiques",
+              "fusion",
+              "solidification",
+              "vaporisation",
+              "liquéfaction ou condensation",
+              "sublimation"
+            ],
+            "outcome": "Comprendre qu’une transformation physique change l’état d’un corps sans modifier sa nature chimique",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 3,
+            "title": "Transformations chimiques",
+            "summary": null,
+            "subchapters": [
+              "Différence entre transformation physique et chimique"
+            ],
+            "outcome": "Reconnaître qu’une combustion fait disparaître certains corps et apparaître de nouvelles substances",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 4,
+            "title": "Composition de l’air",
+            "summary": null,
+            "subchapters": [
+              "Constituants essentiels de l’air",
+              "dioxygène",
+              "diazote",
+              "proportions volumiques principales"
+            ],
+            "outcome": "Identifier les deux gaz principaux de l’air et leur rôle",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 5,
+            "title": "Combustions dans l’air",
+            "summary": null,
+            "subchapters": [
+              "Flammes",
+              "types de flammes",
+              "conditions de combustion",
+              "rôle du dioxygène"
+            ],
+            "outcome": "Observer et comparer la combustion d’une bougie, d’une lampe à pétrole, d’un briquet ou d’un réchaud",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 6,
+            "title": "Butane",
+            "summary": null,
+            "subchapters": [
+              "Gaz combustible",
+              "briquet à gaz",
+              "bouteille de gaz",
+              "risques liés aux fuites"
+            ],
+            "outcome": "Identifier le butane comme combustible et appliquer les règles de sécurité",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 7,
+            "title": "Combustion du soufre",
+            "summary": null,
+            "subchapters": [
+              "Combustion du soufre",
+              "produits formés",
+              "caractère chimique de la réaction"
+            ],
+            "outcome": "Montrer qu’une combustion produit de nouveaux corps",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 8,
+            "title": "Combustion du fer",
+            "summary": null,
+            "subchapters": [
+              "Combustion de la paille de fer ou de la limaille de fer",
+              "incandescence",
+              "oxydation"
+            ],
+            "outcome": "Interpréter la combustion du fer comme une réaction chimique",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 9,
+            "title": "Appareils utilisant des combustibles",
+            "summary": null,
+            "subchapters": [
+              "Réchaud à bois",
+              "charbon de bois",
+              "gaz",
+              "pétrole",
+              "foyers améliorés"
+            ],
+            "outcome": "Expliquer le fonctionnement général d’appareils de cuisson ou de chauffage",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 10,
+            "title": "Aspects pratiques des combustions",
+            "summary": null,
+            "subchapters": [
+              "Choix, emploi et rendement pratique des combustibles"
+            ],
+            "outcome": "Employer un combustible de façon rationnelle",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 11,
+            "title": "Dangers des combustions usuelles",
+            "summary": null,
+            "subchapters": [
+              "Incendie",
+              "brûlure",
+              "gaz toxiques",
+              "intoxication",
+              "prévention"
+            ],
+            "outcome": "Adopter des comportements de sécurité dans l’usage du bois, charbon, pétrole, gaz et briquets",
+            "source": "chimie.txt"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Étude de l’eau",
+            "summary": null,
+            "subchapters": [
+              "Eaux naturelles",
+              "eau douce",
+              "eau salée",
+              "sources d’eau",
+              "cycle de l’eau"
+            ],
+            "outcome": "Identifier les différentes formes et sources d’eau dans la nature",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 2,
+            "title": "Eau limpide et eau potable",
+            "summary": null,
+            "subchapters": [
+              "Eau claire, eau trouble, eau potable, eau polluée"
+            ],
+            "outcome": "Distinguer une eau limpide d’une eau potable et comprendre les exigences de potabilité",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 3,
+            "title": "Eau et dissolution",
+            "summary": null,
+            "subchapters": [
+              "Solvant",
+              "soluté",
+              "solution homogène",
+              "dissolution d’un solide dans l’eau"
+            ],
+            "outcome": "Préparer et identifier une solution aqueuse simple",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 4,
+            "title": "Solubilité",
+            "summary": null,
+            "subchapters": [
+              "Solubilité",
+              "solution saturée",
+              "influence de la quantité de soluté"
+            ],
+            "outcome": "Définir la solubilité et reconnaître une solution saturée",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 5,
+            "title": "Concentration massique",
+            "summary": null,
+            "subchapters": [
+              "Masse de soluté",
+              "volume de solution",
+              "concentration massique"
+            ],
+            "outcome": "Calculer une concentration massique simple",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 6,
+            "title": "Mélanges liquide-liquide",
+            "summary": null,
+            "subchapters": [
+              "Eau et alcool",
+              "eau et huile",
+              "liquides miscibles et non miscibles"
+            ],
+            "outcome": "Distinguer miscibilité, non-miscibilité et émulsion",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 7,
+            "title": "Dissolution des gaz",
+            "summary": null,
+            "subchapters": [
+              "Gaz dissous dans l’eau",
+              "boissons gazeuses",
+              "dégagement de dioxyde de carbone"
+            ],
+            "outcome": "Montrer que l’eau peut dissoudre des gaz",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 8,
+            "title": "Mélanges et corps purs",
+            "summary": null,
+            "subchapters": [
+              "Mélanges homogènes et hétérogènes",
+              "corps pur simple",
+              "corps pur composé"
+            ],
+            "outcome": "Distinguer un mélange d’un corps pur et classer les substances",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 9,
+            "title": "Séparation des constituants",
+            "summary": null,
+            "subchapters": [
+              "Décantation",
+              "filtration",
+              "évaporation",
+              "distillation",
+              "aimantation"
+            ],
+            "outcome": "Choisir une technique de séparation adaptée",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 10,
+            "title": "Atomes",
+            "summary": null,
+            "subchapters": [
+              "Symbole chimique",
+              "éléments chimiques",
+              "tableau périodique simplifié"
+            ],
+            "outcome": "Représenter les atomes par leurs symboles",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 11,
+            "title": "Molécules",
+            "summary": null,
+            "subchapters": [
+              "Formules moléculaires",
+              "modèles moléculaires",
+              "molécules simples"
+            ],
+            "outcome": "Comprendre qu’une molécule est un assemblage d’atomes",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 12,
+            "title": "Réactions chimiques",
+            "summary": null,
+            "subchapters": [
+              "Réactifs",
+              "produits",
+              "équation-bilan en mots"
+            ],
+            "outcome": "Décrire une réaction chimique par une équation en langage courant",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 13,
+            "title": "Conservation des atomes",
+            "summary": null,
+            "subchapters": [
+              "Conservation des atomes lors d’une réaction"
+            ],
+            "outcome": "Écrire et équilibrer progressivement des équations chimiques simples",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 14,
+            "title": "Acide chlorhydrique et calcaire",
+            "summary": null,
+            "subchapters": [
+              "Action de l’acide chlorhydrique sur le calcaire",
+              "dégagement gazeux"
+            ],
+            "outcome": "Identifier une réaction où l’air n’intervient pas",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 15,
+            "title": "Cycle des réactions du soufre",
+            "summary": null,
+            "subchapters": [
+              "Combustion du soufre",
+              "transformations successives"
+            ],
+            "outcome": "Relier des réactions chimiques entre elles",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 16,
+            "title": "Allumettes",
+            "summary": null,
+            "subchapters": [
+              "Composition et fonctionnement simplifié",
+              "réaction de combustion"
+            ],
+            "outcome": "Comprendre la réaction chimique mise en jeu lors de l’allumage",
+            "source": "chimie.txt"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Système périodique des éléments",
+            "summary": null,
+            "subchapters": [
+              "Numéro atomique",
+              "périodes",
+              "groupes",
+              "familles chimiques",
+              "métaux et non-métaux"
+            ],
+            "outcome": "Lire une classification périodique simple et relier la position d’un élément à certaines de ses propriétés",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 2,
+            "title": "Courant électrique dans les métaux",
+            "summary": null,
+            "subchapters": [
+              "Conducteurs et isolants",
+              "électrons",
+              "sens conventionnel du courant"
+            ],
+            "outcome": "Comprendre que les électrons assurent le passage du courant dans les métaux",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 3,
+            "title": "Ions métalliques",
+            "summary": null,
+            "subchapters": [
+              "Ions",
+              "cations",
+              "anions",
+              "métal sous forme atomique ou ionique"
+            ],
+            "outcome": "Distinguer le métal et l’ion métallique correspondant",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 4,
+            "title": "Transformation électrochimique du cuivre",
+            "summary": null,
+            "subchapters": [
+              "Cuivre métal",
+              "ion cuivre",
+              "électrode",
+              "transformation électrochimique"
+            ],
+            "outcome": "Mettre en évidence le passage du cuivre métallique à l’ion cuivre, et inversement",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 5,
+            "title": "Courant électrique dans les électrolytes",
+            "summary": null,
+            "subchapters": [
+              "Électrolytes",
+              "solutions ioniques",
+              "migration des ions"
+            ],
+            "outcome": "Comprendre que le courant dans un électrolyte est transporté par les ions",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 6,
+            "title": "Transformations du cuivre et de l’ion cuivre",
+            "summary": null,
+            "subchapters": [
+              "Reconnaissance de l’ion cuivre",
+              "transformations chimiques du cuivre"
+            ],
+            "outcome": "Utiliser des réactions simples pour passer du cuivre à l’ion cuivre et inversement",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 7,
+            "title": "Métaux et alliages",
+            "summary": null,
+            "subchapters": [
+              "Propriétés des métaux",
+              "alliages",
+              "avantages des alliages"
+            ],
+            "outcome": "Citer les propriétés et utilisations du fer, cuivre, aluminium, zinc et autres métaux usuels",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 8,
+            "title": "Corrosion des métaux",
+            "summary": null,
+            "subchapters": [
+              "Corrosion",
+              "rouille",
+              "humidité",
+              "salinité",
+              "corrosion de l’aluminium, cuivre et zinc"
+            ],
+            "outcome": "Identifier les causes de corrosion et les moyens de protection",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 9,
+            "title": "Protection des métaux",
+            "summary": null,
+            "subchapters": [
+              "Peinture",
+              "vernis",
+              "plastique",
+              "galvanisation",
+              "alliages"
+            ],
+            "outcome": "Proposer des moyens de protéger les métaux ferreux",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 10,
+            "title": "Aluminium",
+            "summary": null,
+            "subchapters": [
+              "Bauxite",
+              "alumine",
+              "procédé Bayer",
+              "propriétés",
+              "usages"
+            ],
+            "outcome": "Expliquer l’importance de l’aluminium et de la bauxite en Guinée",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 11,
+            "title": "Corps moléculaires",
+            "summary": null,
+            "subchapters": [
+              "Propriétés et structure moléculaire des gaz",
+              "masse molaire",
+              "pression atmosphérique"
+            ],
+            "outcome": "Décrire qualitativement les gaz et leur structure moléculaire",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 12,
+            "title": "Électrolyse de l’eau",
+            "summary": null,
+            "subchapters": [
+              "Décomposition de l’eau par électrolyse"
+            ],
+            "outcome": "Réaliser ou interpréter l’électrolyse de l’eau",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 13,
+            "title": "Synthèse de l’eau",
+            "summary": null,
+            "subchapters": [
+              "Réaction entre le dihydrogène et le dioxygène"
+            ],
+            "outcome": "Écrire l’équation-bilan de la synthèse de l’eau",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 14,
+            "title": "Chimie quantitative",
+            "summary": null,
+            "subchapters": [
+              "Mole",
+              "masse molaire",
+              "volume molaire",
+              "densité d’un gaz par rapport à l’air"
+            ],
+            "outcome": "Résoudre des problèmes chimiques simples à partir d’équations-bilans",
+            "source": "chimie.txt"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Oxydoréduction par transfert d’oxygène",
+            "summary": null,
+            "subchapters": [
+              "Oxydation",
+              "réduction",
+              "combustion du carbone, soufre et fer",
+              "oxydes métalliques"
+            ],
+            "outcome": "Comprendre qu’une oxydation correspond à une fixation d’oxygène et une réduction à une perte d’oxygène",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 2,
+            "title": "Réduction des oxydes",
+            "summary": null,
+            "subchapters": [
+              "Réduction de l’oxyde ferrique par l’aluminium",
+              "réduction de l’oxyde de cuivre par le carbone"
+            ],
+            "outcome": "Écrire et équilibrer des équations simples d’oxydoréduction",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 3,
+            "title": "Importance industrielle de la réduction",
+            "summary": null,
+            "subchapters": [
+              "Haut fourneau",
+              "minerais",
+              "production de métaux"
+            ],
+            "outcome": "Comprendre le principe de réduction d’un oxyde métallique pour produire un métal",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 4,
+            "title": "Oxydoréduction par transfert d’électrons",
+            "summary": null,
+            "subchapters": [
+              "Perte et gain d’électrons",
+              "oxydant",
+              "réducteur"
+            ],
+            "outcome": "Comprendre l’interprétation électronique simplifiée des réactions redox",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 5,
+            "title": "Pile électrochimique",
+            "summary": null,
+            "subchapters": [
+              "Générateur électrochimique",
+              "énergie chimique et énergie électrique",
+              "usure d’une pile"
+            ],
+            "outcome": "Expliquer qu’une pile fonctionne grâce à une réaction d’oxydoréduction",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 6,
+            "title": "Pile cuivre-zinc",
+            "summary": null,
+            "subchapters": [
+              "Électrodes",
+              "circulation des électrons",
+              "réaction chimique"
+            ],
+            "outcome": "Étudier un exemple de pile électrochimique",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 7,
+            "title": "Pile Daniell",
+            "summary": null,
+            "subchapters": [
+              "Demi-piles",
+              "électrolyte",
+              "transformation chimique spontanée"
+            ],
+            "outcome": "Identifier les constituants et le fonctionnement simplifié d’une pile Daniell",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 8,
+            "title": "Pile saline, alcaline et lithium",
+            "summary": null,
+            "subchapters": [
+              "Types de piles",
+              "caractéristiques et usages"
+            ],
+            "outcome": "Comparer quelques générateurs électrochimiques usuels",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 9,
+            "title": "Solutions aqueuses",
+            "summary": null,
+            "subchapters": [
+              "Solutions acides, basiques et neutres"
+            ],
+            "outcome": "Classer une solution aqueuse suivant son caractère acide, basique ou neutre",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 10,
+            "title": "Acidité et basicité",
+            "summary": null,
+            "subchapters": [
+              "Indicateurs colorés",
+              "bleu de bromothymol",
+              "papier pH",
+              "échelle de pH"
+            ],
+            "outcome": "Lire une valeur de pH et identifier le caractère d’une solution",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 11,
+            "title": "Conductibilité des solutions",
+            "summary": null,
+            "subchapters": [
+              "Ions en solution",
+              "électrolytes"
+            ],
+            "outcome": "Relier la conduction électrique à la présence d’ions",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 12,
+            "title": "Ions en solution aqueuse",
+            "summary": null,
+            "subchapters": [
+              "Cations et anions",
+              "électroneutralité",
+              "dissociation d’un électrolyte"
+            ],
+            "outcome": "Écrire et interpréter des formules ioniques simples",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 13,
+            "title": "Caractérisation des ions",
+            "summary": null,
+            "subchapters": [
+              "Ions cuivre Cu^{2+}, fer(II) Fe^{2+}, fer(III) Fe^{3+}, zinc Zn^{2+}, chlorure Cl^{-}, sulfate SO_4^{2-}, carbonate CO_3^{2-}"
+            ],
+            "outcome": "Reconnaître certains ions par des tests chimiques",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 14,
+            "title": "Chimie organique",
+            "summary": null,
+            "subchapters": [
+              "Composés du carbone",
+              "tétravalence du carbone",
+              "nomenclature élémentaire"
+            ],
+            "outcome": "Comprendre que la chimie organique étudie principalement les composés du carbone",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 15,
+            "title": "Alcanes",
+            "summary": null,
+            "subchapters": [
+              "Méthane",
+              "formule générale",
+              "chaînes carbonées",
+              "nomenclature",
+              "propriétés chimiques"
+            ],
+            "outcome": "Reconnaître les alcanes et citer leurs usages",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 16,
+            "title": "Alcènes",
+            "summary": null,
+            "subchapters": [
+              "Éthylène",
+              "double liaison",
+              "propriétés et réactions"
+            ],
+            "outcome": "Identifier les alcènes",
+            "source": "chimie.txt"
+          },
+          {
+            "order": 17,
+            "title": "Alcynes",
+            "summary": null,
+            "subchapters": [
+              "Acétylène",
+              "triple liaison",
+              "propriétés chimiques"
+            ],
+            "outcome": "Identifier les alcynes et leurs caractéristiques principales",
+            "source": "chimie.txt"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Mélanges et corps purs",
+            "summary": "États de la matière, changements d'état, séparation des mélanges et critères de pureté.",
+            "subchapters": [
+              "Différents états de la matière",
+              "Changements d'état",
+              "Mélanges homogènes et hétérogènes",
+              "Décantation",
+              "Filtration",
+              "Évaporation",
+              "Distillation",
+              "Congélation",
+              "Triage",
+              "Constantes physiques et critères de pureté",
+              "Corps purs simples et composés"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Atomes, éléments et classification périodique",
+            "summary": "Construction des notions d'élément et d'atome et introduction au tableau périodique.",
+            "subchapters": [
+              "Notion d'élément",
+              "Élément cuivre",
+              "Élément carbone",
+              "Classification périodique"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Transformations chimiques",
+            "summary": "Étude des réactions et de leur représentation.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Chimie du lycée",
+            "summary": "Approfondissement de la structure et des transformations de la matière.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Industrie de l'acide sulfurique",
+            "summary": "Étude de la fabrication industrielle de l'acide sulfurique et de ses usages.",
+            "subchapters": [
+              "Fabrication de l'anhydride sulfureux",
+              "Grillage des sulfures",
+              "Combustion du soufre",
+              "Principe du procédé",
+              "Description et fonctionnement de l'atelier sulfurique",
+              "Four à soufre",
+              "Caisses de contact",
+              "Absorption",
+              "Propriétés et usages de l'acide sulfurique",
+              "Raffinage des pétroles",
+              "Fabrication d'explosifs, films, colorants, fibres, plastiques et engrais"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Autres thèmes de chimie Terminale",
+            "summary": "La source consultée confirme d'autres contenus de chimie Terminale ; transcription complète à vérifier.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_phys_college",
+        "src_chim_11"
+      ]
+    },
+    {
+      "id": "sub_biol",
+      "name": "Biologie / SVT",
+      "note": "Biologie, sciences de la vie et écologie ; majeure en SE.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 2,
+        "8ème": 2,
+        "9ème": 2,
+        "10ème": 2,
+        "11ème": {
+          "SM": 1,
+          "SE": 4,
+          "SS": 2
+        },
+        "12ème": {
+          "SM": 1,
+          "SE": 4,
+          "SS": 2
+        },
+        "Terminale": {
+          "SM": 1,
+          "SE": 4,
+          "SS": 2
+        }
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Sciences de la vie",
+            "summary": "Découverte du vivant et observation des organismes.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Sciences de la vie",
+            "summary": "Approfondissement des fonctions et de la diversité du vivant.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Biologie",
+            "summary": "Étude du vivant et de l'environnement.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Biologie",
+            "summary": "Consolidation des notions et préparation au BEPC.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Nutrition des plantes vertes",
+            "summary": "Fonctionnement nutritionnel des plantes et production de matière organique.",
+            "subchapters": [
+              "La plante et l'eau : mécanisme d'absorption",
+              "Besoins en sels minéraux",
+              "Mécanisme d'absorption des sels minéraux",
+              "Transit de la sève brute",
+              "Transpiration",
+              "Utilisation des substances absorbées",
+              "Production de matière organique : photosynthèse"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Reproduction chez les spermaphytes",
+            "summary": "Reproduction sexuée des plantes à fleurs, de la fleur à la graine.",
+            "subchapters": [
+              "Organes protecteurs",
+              "Organes reproducteurs",
+              "Structure de la fleur",
+              "Structure de l'anthère",
+              "Formation des grains de pollen",
+              "Structure de l'ovaire",
+              "Formation du sac embryonnaire",
+              "Pollinisation",
+              "Germination du grain de pollen",
+              "Double fécondation",
+              "Formation de la graine et du fruit",
+              "Germination de la graine"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Diversité du monde vivant",
+            "summary": "Critères et unités de classification du vivant.",
+            "subchapters": [
+              "Critères et unités systématiques"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 4,
+            "title": "Écologie",
+            "summary": "Fonctionnement des écosystèmes, relations entre êtres vivants et actions humaines.",
+            "subchapters": [
+              "Facteurs biotiques",
+              "Relations interspécifiques",
+              "Parasitisme",
+              "Symbiose",
+              "Commensalisme",
+              "Relations intraspécifiques",
+              "Vie en groupe",
+              "Vie en société",
+              "Interdépendance des êtres vivants",
+              "Relations trophiques",
+              "Chaînes alimentaires",
+              "Flux d'énergie",
+              "Cycle du carbone",
+              "Cycle de l'azote",
+              "Fragilité des équilibres naturels",
+              "Déboisement",
+              "Feux de brousse",
+              "Désertification",
+              "Reboisement",
+              "Protection de la biosphère"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Étude de la cellule",
+            "summary": "Structure comparée de la cellule et constituants physico-chimiques de la matière vivante.",
+            "subchapters": [
+              "Cellule animale",
+              "Cellule végétale",
+              "Ultrastructure",
+              "Eau",
+              "Sels minéraux",
+              "Glucides",
+              "Protides",
+              "Lipides",
+              "États physiques"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Besoins alimentaires de l'homme",
+            "summary": "Besoins énergétiques et qualitatifs et notion de ration alimentaire.",
+            "subchapters": [
+              "Besoins énergétiques",
+              "Besoins alimentaires qualitatifs",
+              "Rations alimentaires"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Digestion des aliments",
+            "summary": "Transformation des aliments et devenir des produits de la digestion.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 4,
+            "title": "Production d'énergie",
+            "summary": "Production d'énergie par respiration et fermentation.",
+            "subchapters": [
+              "Respiration",
+              "Fermentations"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 5,
+            "title": "Maladies parasitaires dues aux protozoaires",
+            "summary": "Étude de plusieurs parasitoses humaines.",
+            "subchapters": [
+              "Amibiase et amibe dysentérique",
+              "Paludisme et Plasmodium",
+              "Maladie du sommeil et Trypanosome"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 6,
+            "title": "Maladies parasitaires dues aux vers",
+            "summary": "Étude de plusieurs helminthiases humaines.",
+            "subchapters": [
+              "Téniase et Ténia",
+              "Ascaridiase et Ascaris",
+              "Onchocercose et Onchocerque"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Information génétique et synthèse des protéines",
+            "summary": "Nature et expression de l'information génétique.",
+            "subchapters": [
+              "Nature de l'information génétique",
+              "Expression de l'information génétique"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Transmission de l'information génétique",
+            "summary": "Divisions cellulaires et transmission des caractères héréditaires.",
+            "subchapters": [
+              "Divisions cellulaires",
+              "Monohybridisme",
+              "Dihybridisme",
+              "Transmission de deux gènes liés",
+              "Estimation de la distance entre les gènes",
+              "Transmission d'un gène lié au sexe"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Physiologie humaine",
+            "summary": "Étude de grandes fonctions et de la réponse immunitaire.",
+            "subchapters": [
+              "Réponse immunitaire à médiation humorale",
+              "Réponse immunitaire à médiation cellulaire",
+              "Coopération cellulaire"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 4,
+            "title": "Dysfonctionnement du système immunitaire",
+            "summary": "Étude du mécanisme d'infection par le VIH et de ses conséquences.",
+            "subchapters": [
+              "Adsorption du VIH au lymphocyte T4",
+              "Injection de l'ARN viral et de la transcriptase inverse",
+              "Transformation de l'ARN proviral en ADN proviral",
+              "Intégration à l'ADN cellulaire",
+              "Multiplication du VIH",
+              "Latence et séropositivité",
+              "Dégradation du système immunitaire et SIDA"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_bio_lycee"
+      ]
+    },
+    {
+      "id": "sub_hist",
+      "name": "Histoire",
+      "note": "Histoire générale, africaine et guinéenne selon le niveau.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 2,
+        "8ème": 2,
+        "9ème": 2,
+        "10ème": 2,
+        "11ème": {
+          "SM": 1,
+          "SE": 1,
+          "SS": 1
+        },
+        "12ème": {
+          "SM": 1,
+          "SE": 1,
+          "SS": 1
+        },
+        "Terminale": {
+          "SM": 1,
+          "SE": 1,
+          "SS": 1
+        }
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Notion d'histoire et sources",
+            "summary": "Comprendre la succession dans le temps et les sources historiques.",
+            "subchapters": [
+              "Succession dans le temps",
+              "Sources historiques"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Préhistoire",
+            "summary": "Découverte des grandes étapes de la préhistoire.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Civilisations anciennes d'Afrique",
+            "summary": "Étude de civilisations d'Afrique du Nord-Est et du Nord-Ouest.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 4,
+            "title": "Civilisations d'Asie occidentale",
+            "summary": "Étude notamment de la Mésopotamie.",
+            "subchapters": [
+              "Mésopotamie"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 5,
+            "title": "Monde gréco-romain",
+            "summary": "Introduction aux civilisations grecque et romaine.",
+            "subchapters": [
+              "Grèce",
+              "Rome"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Histoire médiévale et africaine",
+            "summary": "Progression historique du niveau 8ème ; détail intégral non retrouvé dans les sources consultées.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Histoire moderne",
+            "summary": "Progression historique du niveau 9ème ; détail intégral non retrouvé dans les sources consultées.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Histoire contemporaine",
+            "summary": "Révolution, colonisation et histoire de la Guinée figurent dans les ressources de préparation au BEPC consultées.",
+            "subchapters": [
+              "Révolution française",
+              "Colonisation",
+              "Histoire de la Guinée"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "L'objet de l'histoire et la problématique de l'histoire africaine",
+            "summary": "Introduction à la démarche historique et à l'histoire africaine.",
+            "subchapters": [
+              "L'objet de l'histoire",
+              "Démarche historique",
+              "Histoire et formation du citoyen"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Afrique et monde moderne",
+            "summary": "Les éléments de programme du lycée abordent l'histoire africaine et les transformations du monde moderne.",
+            "subchapters": [
+              "Civilisations africaines",
+              "Industrialisation en Europe",
+              "Impérialisme"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Guerres mondiales et transformations du monde",
+            "summary": "Approfondissement des grandes ruptures du XXe siècle.",
+            "subchapters": [
+              "Première Guerre mondiale",
+              "Transformations politiques et sociales",
+              "Décolonisation"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Monde contemporain",
+            "summary": "Relations internationales et grands enjeux historiques contemporains.",
+            "subchapters": [
+              "Décolonisation",
+              "Relations internationales contemporaines",
+              "Guerre froide et monde contemporain"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_histoire_college",
+        "src_hist_lycee"
+      ]
+    },
+    {
+      "id": "sub_geog",
+      "name": "Géographie",
+      "note": "Étude de l'espace, des milieux, des populations et des activités.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 2,
+        "8ème": 2,
+        "9ème": 2,
+        "10ème": 2,
+        "11ème": {
+          "SM": 1,
+          "SE": 1,
+          "SS": 1
+        },
+        "12ème": {
+          "SM": 1,
+          "SE": 1,
+          "SS": 1
+        },
+        "Terminale": {
+          "SM": 1,
+          "SE": 1,
+          "SS": 1
+        }
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "La Terre et l'espace géographique",
+            "summary": "Caractéristiques générales de la Terre et repérage géographique.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Milieux et continents",
+            "summary": "Étude des grands milieux et des réalités humaines et physiques des continents.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Populations et activités",
+            "summary": "Étude des populations et des activités économiques.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Espaces et développement",
+            "summary": "Étude des grands espaces, des activités et des réalités de développement ; préparation au BEPC.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Géographie du lycée",
+            "summary": "Étude des espaces, populations et activités à des échelles nationale, africaine et mondiale.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Géographie économique et humaine",
+            "summary": "Approfondissement des dynamiques territoriales et économiques.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Géographie contemporaine",
+            "summary": "Étude des grands espaces et dynamiques contemporaines ; particulièrement importante en SS.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_geo_college"
+      ]
+    },
+    {
+      "id": "sub_angl",
+      "name": "Anglais",
+      "note": "Langue vivante structurée par unités MOBEL.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 2,
+        "8ème": 2,
+        "9ème": 2,
+        "10ème": 2,
+        "11ème": 3,
+        "12ème": 3,
+        "Terminale": 3
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": true,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Unité 1 — Greetings",
+            "summary": null,
+            "subchapters": [
+              "Salutations formelles et informelles",
+              "moments de la journée",
+              "titres Mr., Mrs., Miss, Sir",
+              "questions-réponses avec How are you?",
+              "présent de be"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 2,
+            "title": "Unité 2 — Introductions",
+            "summary": null,
+            "subchapters": [
+              "Se présenter et présenter une autre personne",
+              "pronoms personnels",
+              "adjectifs possessifs my, your, his, her",
+              "What is your name?"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 3,
+            "title": "Unité 3 — The alphabet",
+            "summary": null,
+            "subchapters": [
+              "Alphabet anglais",
+              "lettres majuscules/minuscules",
+              "épellation",
+              "consignes de classe",
+              "articles a/an",
+              "questions what, where, how"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 4,
+            "title": "Unité 4 — Identifying numbers",
+            "summary": null,
+            "subchapters": [
+              "Nombres cardinaux de 1 à 100",
+              "lecture et écriture des nombres",
+              "impératifs",
+              "pronoms compléments me, you, him, her"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 5,
+            "title": "Unité 5 — The alphabet spelling",
+            "summary": null,
+            "subchapters": [
+              "Révision de l’alphabet",
+              "épeler des noms et mots",
+              "Can you spell it?",
+              "noms de pays, villes et écoles"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 6,
+            "title": "Unité 6 — Consolidation: greetings, alphabet and numbers",
+            "summary": null,
+            "subchapters": [
+              "Révision des unités 1 à 5",
+              "présentations",
+              "nombres",
+              "additions et vocabulaire mathématique élémentaire"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 7,
+            "title": "Unité 7 — Telling time",
+            "summary": null,
+            "subchapters": [
+              "Heure : o’clock, half past, quarter past, quarter to",
+              "emploi de at, before, after",
+              "routines simples : When do you get up?"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 8,
+            "title": "Unité 8 — Days of the week",
+            "summary": null,
+            "subchapters": [
+              "Jours, mois, années",
+              "ordinaux",
+              "date",
+              "today, yesterday, tomorrow",
+              "présent et passé de be"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 9,
+            "title": "Unité 9 — The names of common objects",
+            "summary": null,
+            "subchapters": [
+              "Objets usuels",
+              "this/that",
+              "articles",
+              "possession avec have/has",
+              "identification : What is this?"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 10,
+            "title": "Unité 10 — Distinguishing objects by size and shape",
+            "summary": null,
+            "subchapters": [
+              "Taille et forme",
+              "adjectifs tels que long, short, tall, small, big",
+              "article défini the",
+              "prépositions simples"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 11,
+            "title": "Unité 11 — Moving things",
+            "summary": null,
+            "subchapters": [
+              "Exécution de consignes avec take, put, give",
+              "positions : in, on, under, behind, between, in front of",
+              "couleurs"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 12,
+            "title": "Unité 12 — Identifying shapes",
+            "summary": null,
+            "subchapters": [
+              "Figures géométriques : square, rectangle, triangle, circle, line, arrow",
+              "consignes de dessin",
+              "another",
+              "a/an"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 13,
+            "title": "Unité 13 — Describing objects",
+            "summary": null,
+            "subchapters": [
+              "Description courte d’un objet",
+              "matière, usage, couleur, coût, forme et taille",
+              "It is made of…, This is used for…"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 14,
+            "title": "Unité 14 — Written form of words",
+            "summary": null,
+            "subchapters": [
+              "Association mot-image",
+              "copie et reconnaissance de mots",
+              "production de phrases simples avec This is a…"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 15,
+            "title": "Unité 15 — Locating people and things in relation to others",
+            "summary": null,
+            "subchapters": [
+              "Localisation précise d’objets et de personnes",
+              "repères gauche/droite",
+              "next to, behind, in front of, near, between"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 16,
+            "title": "Unité 16 — Consolidation",
+            "summary": null,
+            "subchapters": [
+              "Réinvestissement des prépositions, de la description d’objets et de la localisation",
+              "présent simple et présent progressif"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 17,
+            "title": "Unité 17 — Identifying and moving classroom objects",
+            "summary": null,
+            "subchapters": [
+              "Objets de classe : desk, duster, ruler, map, cupboard, dictionary",
+              "consignes d’action",
+              "localisation dans la salle"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 18,
+            "title": "Unité 18 — Parts of the body",
+            "summary": null,
+            "subchapters": [
+              "Parties du corps",
+              "actions : touch, raise, lift, close, open",
+              "impératifs et présent progressif"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 19,
+            "title": "Unité 19 — Telling about family and things",
+            "summary": null,
+            "subchapters": [
+              "Membres de la famille",
+              "possession",
+              "adjectifs possessifs",
+              "have got",
+              "questions sur les liens familiaux"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 20,
+            "title": "Unité 20 — People and jobs",
+            "summary": null,
+            "subchapters": [
+              "Métiers et activités : agriculteur, médecin, chauffeur, enseignant, pêcheur, commerçant, etc",
+              "lieu et nature du travail",
+              "want to be"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 21,
+            "title": "Unité 21 — Identifying and moving common objects",
+            "summary": null,
+            "subchapters": [
+              "Réemploi des objets courants et scolaires",
+              "consignes complexes avec take, put back, pick up",
+              "quantificateurs some, any, all, several"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 22,
+            "title": "Unité 22 — Finding, putting in, taking out",
+            "summary": null,
+            "subchapters": [
+              "Actions et consignes : find, put in, take out",
+              "questions fermées au présent et au passé simple",
+              "réponse affirmative ou négative"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 23,
+            "title": "Unité 23 — Positions and giving directions",
+            "summary": null,
+            "subchapters": [
+              "Position sur une image ou dans l’espace",
+              "coins et centre",
+              "directions",
+              "top left corner, bottom right corner, in the middle"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 24,
+            "title": "Unité 24 — Consolidation",
+            "summary": null,
+            "subchapters": [
+              "Révision de la localisation, des prépositions, des ordres et de la description spatiale",
+              "identification de nom, verbe, pronom, adjectif, adverbe et préposition"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 25,
+            "title": "Unité 25 — Giving and taking using ordinal numbers",
+            "summary": null,
+            "subchapters": [
+              "Ordinaux et place dans un groupe",
+              "donner et recevoir un objet",
+              "positions : premier, dernier, milieu"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 26,
+            "title": "Unité 26 — Following written instructions",
+            "summary": null,
+            "subchapters": [
+              "Lecture puis réalisation de consignes écrites",
+              "dessin guidé par des prépositions et adjectifs"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 27,
+            "title": "Unité 27 — Identifying written descriptions",
+            "summary": null,
+            "subchapters": [
+              "Compréhension de descriptions écrites",
+              "distinction entre what et which",
+              "choix limité",
+              "adjectifs comme favourite et best"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 28,
+            "title": "Unité 28 — Locations: the class seating chart",
+            "summary": null,
+            "subchapters": [
+              "Placement des élèves",
+              "rangées, groupes, bureaux",
+              "production et compréhension de consignes écrites/orales"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 29,
+            "title": "Unité 29 — Adjectives describing feelings",
+            "summary": null,
+            "subchapters": [
+              "États et sentiments : happy, sad, angry, afraid, tired, hot, cold, hungry, thirsty",
+              "affirmations, négations et questions"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 30,
+            "title": "Unité 30 — Personal information",
+            "summary": null,
+            "subchapters": [
+              "Âge, taille, adresse, domicile",
+              "rédaction de courts paragraphes sur soi-même et sur une autre personne"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Unité 1 — More personal information",
+            "summary": null,
+            "subchapters": [
+              "Informations personnelles approfondies : distance, durée, nombre",
+              "How far? How long? How many?",
+              "possessifs et génitif"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 2,
+            "title": "Unité 2 — My favorite things",
+            "summary": null,
+            "subchapters": [
+              "Goûts, préférences et aversions",
+              "loisirs, sport, nourriture, musique",
+              "présent simple",
+              "futur avec going to"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 3,
+            "title": "Unité 3 — Consolidation: question words",
+            "summary": null,
+            "subchapters": [
+              "Révision des mots interrogatifs et de la construction des questions",
+              "présent et passé dans des échanges personnels"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 4,
+            "title": "Unité 4 — Describing people: clothing",
+            "summary": null,
+            "subchapters": [
+              "Vêtements, accessoires, couleurs",
+              "description de ce qu’une personne porte",
+              "présent simple et présent progressif"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 5,
+            "title": "Unité 5 — Comparing people and things",
+            "summary": null,
+            "subchapters": [
+              "Comparatif et superlatif des adjectifs courts",
+              "comparaison de personnes, animaux et objets"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 6,
+            "title": "Unité 6 — Consolidation: describing clothing",
+            "summary": null,
+            "subchapters": [
+              "Révision de la description vestimentaire",
+              "opposition entre action en cours et caractéristique stable"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 7,
+            "title": "Unité 7 — Physical characteristics",
+            "summary": null,
+            "subchapters": [
+              "Taille, corpulence, teint, cheveux, yeux et traits physiques",
+              "be, have et wear"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 8,
+            "title": "Unité 8 — Question tags",
+            "summary": null,
+            "subchapters": [
+              "Questions-tag : You are short, aren’t you?",
+              "réponses affirmatives et négatives",
+              "vérification d’information"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 9,
+            "title": "Unité 9 — Describing people: more physical characteristics",
+            "summary": null,
+            "subchapters": [
+              "Description plus précise : barbe, moustache, lunettes, tresses, calvitie, cheveux gris, etc"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 10,
+            "title": "Unité 10 — Consolidation",
+            "summary": null,
+            "subchapters": [
+              "Deviner et identifier une personne à partir d’indices physiques et de préférences"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 11,
+            "title": "Unité 11 — What do we have in common?",
+            "summary": null,
+            "subchapters": [
+              "Ce que des personnes ont en commun",
+              "emploi de both",
+              "présent simple et présent progressif affirmatif/négatif"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 12,
+            "title": "Unité 12 — What is a family?",
+            "summary": null,
+            "subchapters": [
+              "Famille nucléaire et élargie",
+              "liens de parenté",
+              "composition du foyer",
+              "adjectifs et possession"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 13,
+            "title": "Unité 13 — Telling about your family",
+            "summary": null,
+            "subchapters": [
+              "Arbre généalogique simple",
+              "description de sa famille",
+              "relations, âge, état civil, personnes vivantes ou décédées"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 14,
+            "title": "Unité 14 — Extended family",
+            "summary": null,
+            "subchapters": [
+              "Famille élargie : cousins, neveux, nièces, beaux-frères, belles-sœurs, petits-enfants",
+              "présent et passé simple"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 15,
+            "title": "Unité 15 — Consolidation: describing family members",
+            "summary": null,
+            "subchapters": [
+              "Révision de la famille et des descriptions physiques",
+              "rédaction d’un paragraphe descriptif"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 16,
+            "title": "Unité 16 — Colour, size and shape",
+            "summary": null,
+            "subchapters": [
+              "Couleurs, formes, dimensions",
+              "description d’objets",
+              "articles et adjectifs"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 17,
+            "title": "Unité 17 — Measurements",
+            "summary": null,
+            "subchapters": [
+              "Longueur, hauteur, largeur, poids et distance",
+              "unités : mètre, centimètre, kilogramme, kilomètre"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 18,
+            "title": "Unité 18 — Asking questions about measurements",
+            "summary": null,
+            "subchapters": [
+              "Questions sur l’âge, le poids, la hauteur, la distance et la longueur",
+              "réponses chiffrées"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 19,
+            "title": "Unité 19 — What things are made of: materials",
+            "summary": null,
+            "subchapters": [
+              "Matériaux : bois, métal, plastique, verre, tissu, papier, etc",
+              "structure be made of"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 20,
+            "title": "Unité 20 — Food and household items: market vocabulary",
+            "summary": null,
+            "subchapters": [
+              "Aliments et produits domestiques",
+              "noms comptables/non comptables",
+              "some, any, many, much"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 21,
+            "title": "Unité 21 — Going shopping",
+            "summary": null,
+            "subchapters": [
+              "Prix, monnaie, achats, marchandage",
+              "How much?",
+              "lexique du marché",
+              "produits bon marché ou chers"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 22,
+            "title": "Unité 22 — Things you would like to do",
+            "summary": null,
+            "subchapters": [
+              "Désirs, projets et choix",
+              "modaux would like to et should",
+              "achats souhaités et activités envisagées"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 23,
+            "title": "Unité 23 — Describing your house and compound",
+            "summary": null,
+            "subchapters": [
+              "Pièces, mobilier, cour, installations domestiques",
+              "maison réelle ou idéale",
+              "vocabulaire de l’habitat"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Communication orale",
+            "summary": null,
+            "subchapters": [
+              "Exprimer accord, désaccord, opinion, demande d’explication, conseil et projet"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 2,
+            "title": "Compréhension orale",
+            "summary": null,
+            "subchapters": [
+              "Instructions et échanges plus longs",
+              "informations spécifiques",
+              "prononciation et intonation"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 3,
+            "title": "Grammaire",
+            "summary": null,
+            "subchapters": [
+              "Consolidation des temps, comparatifs, modaux, questions, pronoms et connecteurs"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 4,
+            "title": "Lexique",
+            "summary": null,
+            "subchapters": [
+              "Santé, alimentation, transport, environnement, loisirs, école, vie sociale"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 5,
+            "title": "Lecture",
+            "summary": null,
+            "subchapters": [
+              "Identification du thème, des personnages, des informations et du type de texte"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 6,
+            "title": "Expression écrite",
+            "summary": null,
+            "subchapters": [
+              "Paragraphe, description, récit bref, dialogue, lettre et formulaire"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 7,
+            "title": "Méthodes",
+            "summary": null,
+            "subchapters": [
+              "Dictionnaire, champs lexicaux, familles de mots, relecture"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Communication orale",
+            "summary": null,
+            "subchapters": [
+              "Défendre un point de vue, participer à une discussion, rendre compte et présenter un sujet"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 2,
+            "title": "Compréhension orale",
+            "summary": null,
+            "subchapters": [
+              "Messages plus complexes",
+              "reformulation",
+              "prise de notes et transfert d’informations"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 3,
+            "title": "Grammaire",
+            "summary": null,
+            "subchapters": [
+              "Concordance des temps, discours direct/indirect, voix active/passive, subordonnées et conditionnel"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 4,
+            "title": "Lexique",
+            "summary": null,
+            "subchapters": [
+              "Développement, citoyenneté, environnement, emploi, orientation, société et communication"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 5,
+            "title": "Lecture",
+            "summary": null,
+            "subchapters": [
+              "Résumé, opinion argumentée, reformulation, analyse d’indices textuels"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 6,
+            "title": "Expression écrite",
+            "summary": null,
+            "subchapters": [
+              "Récit, lettre, compte rendu, description, dialogue, texte informatif et production plus autonome"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          },
+          {
+            "order": 7,
+            "title": "Méthodes",
+            "summary": null,
+            "subchapters": [
+              "Autoévaluation, correction, prise de notes, organisation du travail collectif et individuel"
+            ],
+            "outcome": null,
+            "source": "anglais.txt"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "MOBEL 5",
+            "summary": "Niveau associé à MOBEL 5 dans le programme national redistribué.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "MOBEL 6",
+            "summary": "Niveau associé à MOBEL 6 dans le programme national redistribué.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "MOBEL 7",
+            "summary": "Niveau associé à MOBEL 7 dans le programme national redistribué.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_anglais"
+      ]
+    },
+    {
+      "id": "sub_econ",
+      "name": "Économie",
+      "note": "Économie, particulièrement présente au lycée et en SS.",
+      "levelIds": [
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SS",
+        "SM",
+        "SE"
+      ],
+      "weeklyHours": {
+        "11ème": 2,
+        "12ème": 2,
+        "Terminale": 2
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Introduction à l'économie",
+            "summary": "Notions économiques fondamentales.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Économie",
+            "summary": "Approfondissement des notions économiques.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Économie",
+            "summary": "Préparation aux notions et exercices du baccalauréat, notamment en SS.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_structure"
+      ]
+    },
+    {
+      "id": "sub_philo",
+      "name": "Philosophie",
+      "note": "Initiation philosophique en 11ème puis approfondissement au lycée.",
+      "levelIds": [
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "11ème": 2,
+        "12ème": {
+          "SM": 1,
+          "SE": 1,
+          "SS": 2
+        },
+        "Terminale": {
+          "SM": 1,
+          "SE": 2,
+          "SS": 2
+        }
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Initiation à la philosophie",
+            "summary": "Définition, objet, statut et méthodes de la philosophie.",
+            "subchapters": [
+              "Définition, objet et statut",
+              "Méthode intuitive",
+              "Méthode rationnelle",
+              "Question fondamentale",
+              "Idéalisme",
+              "Matérialisme"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Branches de la philosophie",
+            "summary": "Présentation des principales branches philosophiques.",
+            "subchapters": [
+              "Métaphysique",
+              "Logique",
+              "Éthique ou morale",
+              "Esthétique",
+              "Psychologie"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Fondements de l'existence sociale",
+            "summary": "Première étude philosophique de la vie sociale.",
+            "subchapters": [
+              "Sphère sociale",
+              "Famille",
+              "Clan",
+              "Tribu",
+              "Ethnie",
+              "Caste",
+              "École",
+              "Nation",
+              "État"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Philosophie",
+            "summary": "Approfondissement des problèmes philosophiques selon la progression du lycée.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Science et technique",
+            "summary": "Définition, rapport entre savant et technicien et problèmes de la vérité scientifique.",
+            "subchapters": [
+              "Définition de science et technique",
+              "Savant et technicien",
+              "Vérité scientifique"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Philosophie morale et politique",
+            "summary": "Réflexion sur l'État, le droit, la morale et la vie politique.",
+            "subchapters": [
+              "État",
+              "Droit",
+              "Morale",
+              "Morale utilitaire",
+              "Morale du sentiment",
+              "Morale rationnelle",
+              "Droits de l'homme et des peuples",
+              "Liberté",
+              "Démocratie",
+              "Bonne gouvernance"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 3,
+            "title": "Épistémologie et esthétique",
+            "summary": "Étude de la connaissance, de l'art et de la vérité.",
+            "subchapters": [
+              "Classification des sciences",
+              "Méthodes des sciences de la nature",
+              "Vérité scientifique",
+              "Science : avantages et inconvénients",
+              "Art",
+              "Art africain"
+            ],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_philo"
+      ]
+    },
+    {
+      "id": "sub_geol",
+      "name": "Géologie",
+      "note": "Géologie principalement présente dans le profil Sciences expérimentales.",
+      "levelIds": [
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SE"
+      ],
+      "weeklyHours": {
+        "11ème": 0,
+        "12ème": 0,
+        "Terminale": 2
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Géologie",
+            "summary": "Introduction aux sciences de la Terre selon le référentiel du profil SE.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Géologie",
+            "summary": "Approfondissement des sciences de la Terre.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Géologie",
+            "summary": "Géologie évaluée dans le cadre de la Bio-Géologie en SE.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_structure"
+      ]
+    },
+    {
+      "id": "sub_ecm",
+      "name": "Éducation civique et morale",
+      "note": "Éducation civique et morale du collège ; non listée comme matière générale du lycée dans le plan d'étude consulté.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 1,
+        "8ème": 1,
+        "9ème": 1,
+        "10ème": 1
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Éducation civique et morale",
+            "summary": "Formation civique et morale.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Éducation civique et morale",
+            "summary": "Formation civique et morale.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Éducation civique et morale",
+            "summary": "Formation civique et morale.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Éducation civique et morale",
+            "summary": "Formation civique et morale et préparation au cycle suivant.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_structure"
+      ]
+    },
+    {
+      "id": "sub_eps",
+      "name": "EPS",
+      "note": "Éducation physique et sportive.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {},
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Éducation physique et sportive",
+            "summary": "Pratiques physiques et sportives selon la programmation de l'établissement et du référentiel national.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Activités physiques",
+            "summary": "Programmation pratique d'EPS ; détail des séquences variable selon établissement.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Éducation physique et sportive",
+            "summary": "Pratiques physiques et sportives selon la programmation de l'établissement et du référentiel national.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Activités physiques",
+            "summary": "Programmation pratique d'EPS ; détail des séquences variable selon établissement.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Éducation physique et sportive",
+            "summary": "Pratiques physiques et sportives selon la programmation de l'établissement et du référentiel national.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Activités physiques",
+            "summary": "Programmation pratique d'EPS ; détail des séquences variable selon établissement.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Éducation physique et sportive",
+            "summary": "Pratiques physiques et sportives selon la programmation de l'établissement et du référentiel national.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Activités physiques",
+            "summary": "Programmation pratique d'EPS ; détail des séquences variable selon établissement.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Éducation physique et sportive",
+            "summary": "Pratiques physiques et sportives selon la programmation de l'établissement et du référentiel national.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Activités physiques",
+            "summary": "Programmation pratique d'EPS ; détail des séquences variable selon établissement.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Éducation physique et sportive",
+            "summary": "Pratiques physiques et sportives selon la programmation de l'établissement et du référentiel national.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Activités physiques",
+            "summary": "Programmation pratique d'EPS ; détail des séquences variable selon établissement.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Éducation physique et sportive",
+            "summary": "Pratiques physiques et sportives selon la programmation de l'établissement et du référentiel national.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          },
+          {
+            "order": 2,
+            "title": "Activités physiques",
+            "summary": "Programmation pratique d'EPS ; détail des séquences variable selon établissement.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_structure"
+      ]
+    },
+    {
+      "id": "sub_arab",
+      "name": "Arabe",
+      "note": "Langue arabe / enseignement associé au plan d'étude national consulté.",
+      "levelIds": [
+        "lvl_7",
+        "lvl_8",
+        "lvl_9",
+        "lvl_10",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "weeklyHours": {
+        "7ème": 2,
+        "8ème": 2,
+        "9ème": 2,
+        "10ème": 2,
+        "11ème": 3,
+        "12ème": 3,
+        "Terminale": 3
+      },
+      "contentStatus": "partiel",
+      "enrichedFromText": false,
+      "chaptersByLevel": {
+        "lvl_7": [
+          {
+            "order": 1,
+            "title": "Arabe",
+            "summary": "Enseignement de l'arabe selon le plan d'étude consulté ; détail des chapitres non retrouvé.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_8": [
+          {
+            "order": 1,
+            "title": "Arabe",
+            "summary": "Enseignement de l'arabe selon le plan d'étude consulté ; détail des chapitres non retrouvé.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_9": [
+          {
+            "order": 1,
+            "title": "Arabe",
+            "summary": "Enseignement de l'arabe selon le plan d'étude consulté ; détail des chapitres non retrouvé.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_10": [
+          {
+            "order": 1,
+            "title": "Arabe",
+            "summary": "Enseignement de l'arabe selon le plan d'étude consulté ; détail des chapitres non retrouvé.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_11": [
+          {
+            "order": 1,
+            "title": "Arabe",
+            "summary": "Enseignement de l'arabe selon le plan d'étude consulté ; détail des chapitres non retrouvé.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_12": [
+          {
+            "order": 1,
+            "title": "Arabe",
+            "summary": "Enseignement de l'arabe selon le plan d'étude consulté ; détail des chapitres non retrouvé.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ],
+        "lvl_terminale": [
+          {
+            "order": 1,
+            "title": "Arabe",
+            "summary": "Enseignement de l'arabe selon le plan d'étude consulté ; détail des chapitres non retrouvé.",
+            "subchapters": [],
+            "outcome": null,
+            "source": "programme_guineen_college_lycee.json"
+          }
+        ]
+      },
+      "sourceIds": [
+        "src_structure"
+      ]
+    }
+  ],
+  "exams": [
+    {
+      "id": "exam_bepc",
+      "name": "BEPC",
+      "stage": "fin du premier cycle secondaire",
+      "level": "10ème année",
+      "description": "Brevet d'études du premier cycle.",
+      "2026_note": "Le BEPC fait partie des examens nationaux de fin de cycle ; le calendrier précis dépend de la session officielle.",
+      "sources": [
+        "https://mepua.gov.gn/file/2023/02/Arrete-portant-reglements-generaux-des-examens-scoalires-en-Rep-1.pdf"
+      ]
+    },
+    {
+      "id": "exam_bac",
+      "name": "Baccalauréat unique",
+      "stage": "fin du secondaire",
+      "levels": [
+        "12ème",
+        "Terminale"
+      ],
+      "profiles": [
+        "SM",
+        "SE",
+        "SS"
+      ],
+      "description": "Examen national de fin de l'enseignement secondaire général. La session 2026 a concerné les trois profils.",
+      "2026_session": "Les premières épreuves de la session 2026 ont été lancées le 29 juin 2026.",
+      "sources": [
+        "https://primature.gov.gn/baccalaureat-unique-2026-le-premier-ministre-lance-officiellement-les-premieres-epreuves-a-maferinyah/",
+        "https://gouvernement.gov.gn/baccalaureat-unique-session-2026-une-evaluation-placee-sous-le-signe-de-zero-tolerance-contre-la-fraude/"
+      ]
+    }
+  ],
+  "examCoefficients": [
+    {
+      "exam": "CEP",
+      "subject": "Calcul écrit",
+      "coefficient": 2
+    },
+    {
+      "exam": "CEP",
+      "subject": "Dictée et questions",
+      "coefficient": 2
+    },
+    {
+      "exam": "CEP",
+      "subject": "Expression écrite",
+      "coefficient": 2
+    },
+    {
+      "exam": "CEP",
+      "subject": "Expression Orale",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Lecture",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Géométrie",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Mesure",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Numération",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Opération",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Problème",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "ECM",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Géographie",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Histoire",
+      "coefficient": 1
+    },
+    {
+      "exam": "CEP",
+      "subject": "Sciences d'observation",
+      "coefficient": 1
+    }
+  ],
+  "primarySubjects": [
+    {
+      "name": "Français",
+      "components": [
+        "Lecture",
+        "Dictée",
+        "Expression écrite/orale",
+        "Copie",
+        "Récitation"
+      ]
+    },
+    {
+      "name": "Mathématiques",
+      "components": [
+        "Numération",
+        "Calcul écrit",
+        "Opérations",
+        "Géométrie",
+        "Mesure",
+        "Problèmes"
+      ]
+    },
+    {
+      "name": "Histoire-Géographie",
+      "components": []
+    },
+    {
+      "name": "Sciences d'observation",
+      "components": []
+    },
+    {
+      "name": "Éducation Civique et Morale",
+      "components": [
+        "ECM"
+      ]
+    },
+    {
+      "name": "Éducation physique et sportive",
+      "components": [
+        "EPS"
+      ]
+    },
+    {
+      "name": "Dessin, Écriture, Chant",
+      "components": []
+    }
+  ],
+  "textbooks": [
+    {
+      "subject": "Français",
+      "title": "Le Manguier",
+      "levels": "7e à 10e année",
+      "status": "Manuel de référence couramment utilisé"
+    },
+    {
+      "subject": "Français",
+      "title": "Indigo Français",
+      "levels": "7e à 10e année",
+      "status": "Manuel complémentaire ou de référence selon l’établissement"
+    },
+    {
+      "subject": "Français",
+      "title": "À l’écoute du monde",
+      "levels": "Surtout 9e année",
+      "status": "Support de lecture et de langue"
+    },
+    {
+      "subject": "Français",
+      "title": "Grammaire française – IPAM",
+      "levels": "Collège",
+      "status": "Ouvrage de grammaire et d’exercices complémentaire"
+    },
+    {
+      "subject": "Mathématiques",
+      "title": "Collection CIAM — Mathématiques 6e, 5e, 4e, 3e",
+      "levels": "7e à 10e année",
+      "status": "Référence traditionnelle correspondant aux quatre années du collège"
+    },
+    {
+      "subject": "Anglais",
+      "title": "MOBEL Student’s Book 1, 2, 3 et 4",
+      "levels": "7e à 10e année",
+      "status": "Collection directement liée au programme d’anglais du collège"
+    },
+    {
+      "subject": "Anglais",
+      "title": "MOBEL Teacher’s Guide 1, 2, 3 et 4",
+      "levels": "Enseignants de 7e à 10e",
+      "status": "Guide pédagogique associé aux MOBEL"
+    },
+    {
+      "subject": "Physique",
+      "title": "Sciences physiques 7e, 8e, 9e et 10e années",
+      "levels": "7e à 10e année",
+      "status": "Manuels ou fascicules construits à partir des programmes INRAP/CESPCG"
+    },
+    {
+      "subject": "Chimie",
+      "title": "Chimie 7e, 8e, 9e et 10e années",
+      "levels": "7e à 10e année",
+      "status": "Manuels ou fascicules fondés sur les programmes de chimie du collège"
+    },
+    {
+      "subject": "Biologie",
+      "title": "Biologie 7e, 8e, 9e et 10e années",
+      "levels": "7e à 10e année",
+      "status": "Manuels de l’élève et guides de l’enseignant par niveau"
+    },
+    {
+      "subject": "Histoire-géographie",
+      "title": "Manuels d’histoire et de géographie de collège acquis/diffusés dans le cadre des programmes nationaux",
+      "levels": "7e à 10e année",
+      "status": "La référence exacte varie selon l’édition disponible et l’établissement"
+    },
+    {
+      "subject": "ECM",
+      "title": "Manuels ou fascicules d’Éducation civique et morale",
+      "levels": "7e à 10e année",
+      "status": "Ressources liées aux programmes nationaux, mais catalogue public unifié non retrouvé"
+    },
+    {
+      "subject": "Arabe",
+      "title": "Manuels de langue arabe et de culture islamique",
+      "levels": "7e à 10e année",
+      "status": "Utilisés dans les filières concernées ; titres à vérifier localement"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_structure",
+      "type": "web",
+      "title": "Arrêté portant règlements généraux des examens scolaires en République de Guinée",
+      "url": "https://mepua.gov.gn/file/2023/02/Arrete-portant-reglements-generaux-des-examens-scoalires-en-Rep-1.pdf",
+      "use": "structure des examens et séries du baccalauréat"
+    },
+    {
+      "id": "src_fr_college",
+      "type": "web",
+      "title": "Programmes de Français au Collège en Guinée",
+      "url": "https://fr.scribd.com/document/655654503/PROGRAMMES-FRANCAIS-COLLEGE",
+      "use": "français collège"
+    },
+    {
+      "id": "src_fr_lycee",
+      "type": "web",
+      "title": "Programmes de Français au Lycée en Guinée",
+      "url": "https://fr.scribd.com/document/919828247/Programme-de-Francais-Au-Lycee",
+      "use": "français lycée"
+    },
+    {
+      "id": "src_histoire_college",
+      "type": "web",
+      "title": "Programmes d'Histoire au Collège en Guinée — INRAP, octobre 2009",
+      "url": "https://fr.scribd.com/document/725568560/Histoire-College-prog-finalise",
+      "use": "histoire collège"
+    },
+    {
+      "id": "src_geo_college",
+      "type": "web",
+      "title": "Programmes de Géographie au Collège en Guinée — INRAP, octobre 2009",
+      "url": "https://fr.scribd.com/document/836267738/Ge-ogr-Colle-ge",
+      "use": "géographie collège"
+    },
+    {
+      "id": "src_phys_college",
+      "type": "web",
+      "title": "Programmes de Physique au Collège en Guinée — INRAP, octobre 2009",
+      "url": "https://fr.scribd.com/document/931751268/Phys-coll",
+      "use": "physique/chimie collège"
+    },
+    {
+      "id": "src_anglais",
+      "type": "web",
+      "title": "Programme d'Anglais au Collège en Guinée",
+      "url": "https://fr.scribd.com/document/792022854/proganglaiscollege",
+      "use": "progression MOBEL 1 à MOBEL 7"
+    },
+    {
+      "id": "src_math_7",
+      "type": "web",
+      "title": "Plan de progression annuelle des mathématiques — 7ème année, 2025-2026",
+      "url": "https://fr.scribd.com/document/940211161/Plan-de-progression-7-eme-A-Maths-2025-2026-1",
+      "use": "mathématiques 7ème"
+    },
+    {
+      "id": "src_math_12",
+      "type": "web",
+      "title": "Répartition annuelle mathématiques — 12ème SM, 2025-2026",
+      "url": "https://fr.scribd.com/document/930868507/12e-SM-PLANIFICATION-2025-2026",
+      "use": "mathématiques 12ème SM"
+    },
+    {
+      "id": "src_math_term",
+      "type": "web",
+      "title": "Répartition annuelle mathématiques — Terminale SM, 2025-2026",
+      "url": "https://de.scribd.com/document/931745428/Tsm-Planification-2025-2026",
+      "use": "mathématiques Terminale SM"
+    },
+    {
+      "id": "src_phys_11",
+      "type": "web",
+      "title": "Programme de physique 11ème année SE/SM",
+      "url": "https://fr.scribd.com/document/935394760/PHYS-11-Enregistre-Auto",
+      "use": "physique 11ème SM/SE"
+    },
+    {
+      "id": "src_chim_11",
+      "type": "web",
+      "title": "Programme de chimie 11ème SE/SM",
+      "url": "https://fr.scribd.com/document/691135693/Chimie-Lycee-2009",
+      "use": "chimie 11ème"
+    },
+    {
+      "id": "src_bio_lycee",
+      "type": "web",
+      "title": "Programmes de Biologie au Lycée en Guinée",
+      "url": "https://fr.scribd.com/document/953817096/Programme-Bio-Lycee",
+      "use": "biologie 11ème/12ème/Terminale"
+    },
+    {
+      "id": "src_hist_lycee",
+      "type": "web",
+      "title": "Programmes d'Histoire au Lycée en Guinée",
+      "url": "https://fr.scribd.com/document/885446375/CONTENUS-PROGRAMMES-D-HISTOIRE-LYCEE2",
+      "use": "histoire lycée"
+    },
+    {
+      "id": "src_philo",
+      "type": "web",
+      "title": "Éléments de contenus devant alimenter les programmes de philosophie au lycée",
+      "url": "https://fr.scribd.com/document/925181449/CONTENUS-PROGRAMMES-DE-PHILOSOPHIE-LYCEE2",
+      "use": "philosophie 11ème et lycée"
+    },
+    {
+      "id": "src_exam_2026",
+      "type": "web",
+      "title": "Baccalauréat unique 2026 — lancement officiel",
+      "url": "https://primature.gov.gn/baccalaureat-unique-2026-le-premier-ministre-lance-officiellement-les-premieres-epreuves-a-maferinyah/",
+      "use": "session 2026"
+    }
+  ]
+}

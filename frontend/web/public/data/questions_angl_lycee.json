@@ -1,0 +1,42 @@
+{
+  "testId": "test_angl_lycee",
+  "title": "Anglais — Lycee",
+  "durationMinutes": 15,
+  "passingScore": 70,
+  "rules": "Test individuel et chronometre. Une seule reponse par question.",
+  "questions": [
+    { "q": "Choose the correct form: She ___ to school every day.", "o": ["go", "goes", "going", "gone"], "a": "B", "d": "Grammar", "x": 1, "e": "Third person singular in the present simple takes -s." },
+    { "q": "Choose the correct past form: They ___ the film last night.", "o": ["watch", "watches", "watched", "watching"], "a": "C", "d": "Grammar", "x": 1, "e": "Past simple of a regular verb: watched." },
+    { "q": "Which sentence is in the present perfect?", "o": ["I saw him yesterday", "I have seen him", "I was seeing him", "I will see him"], "a": "B", "d": "Grammar", "x": 2, "e": "have/has + past participle forms the present perfect." },
+    { "q": "Complete: If it ___ tomorrow, we will stay at home.", "o": ["rain", "rains", "rained", "will rain"], "a": "B", "d": "Grammar", "x": 2, "e": "First conditional: if + present simple, will + base form." },
+    { "q": "Choose the correct comparative: This book is ___ than that one.", "o": ["more interesting", "most interesting", "interestinger", "as interesting"], "a": "A", "d": "Grammar", "x": 2, "e": "Long adjectives form the comparative with 'more'." },
+    { "q": "Complete: She has been teaching ___ 2015.", "o": ["for", "since", "during", "from"], "a": "B", "d": "Grammar", "x": 2, "e": "'Since' introduces a starting point in time." },
+    { "q": "Choose the passive form of 'The teacher corrects the exercises'.", "o": ["The exercises correct the teacher", "The exercises are corrected by the teacher", "The exercises were correcting", "The teacher is corrected"], "a": "B", "d": "Grammar", "x": 2, "e": "Passive: be + past participle + by + agent." },
+    { "q": "Complete: I wish I ___ more time.", "o": ["have", "had", "will have", "having"], "a": "B", "d": "Grammar", "x": 3, "e": "After 'I wish', the past simple expresses an unreal present." },
+    { "q": "Choose the correct reported speech: He said, 'I am tired.'", "o": ["He said he is tired", "He said he was tired", "He said he will be tired", "He said he tired"], "a": "B", "d": "Grammar", "x": 3, "e": "The present shifts to the past in reported speech." },
+    { "q": "Choose the correct question tag: You are a teacher, ___ ?", "o": ["are you", "aren't you", "don't you", "isn't it"], "a": "B", "d": "Grammar", "x": 2, "e": "A positive statement takes a negative tag." },
+
+    { "q": "What is the opposite of 'difficult'?", "o": ["hard", "easy", "heavy", "strong"], "a": "B", "d": "Vocabulary", "x": 1, "e": "'Easy' is the antonym of 'difficult'." },
+    { "q": "A person who teaches at a university is usually called a :", "o": ["pupil", "lecturer", "trainee", "principal"], "a": "B", "d": "Vocabulary", "x": 2, "e": "'Lecturer' designates a university teacher." },
+    { "q": "The word 'syllabus' refers to :", "o": ["a classroom", "a course programme", "an exam paper", "a school holiday"], "a": "B", "d": "Vocabulary", "x": 2, "e": "A syllabus outlines the content of a course." },
+    { "q": "Choose the correct word: The students ___ the exam next week.", "o": ["will sit", "sit down", "will seat", "are sat"], "a": "A", "d": "Vocabulary", "x": 2, "e": "'To sit an exam' is the standard collocation." },
+    { "q": "What does 'to assess' mean?", "o": ["to punish", "to evaluate", "to register", "to postpone"], "a": "B", "d": "Vocabulary", "x": 2, "e": "'Assess' means to evaluate or judge." },
+    { "q": "The head of a secondary school in British English is the :", "o": ["headmaster", "dean", "chancellor", "tutor"], "a": "A", "d": "Vocabulary", "x": 2, "e": "'Headmaster' or 'head teacher' leads a school." },
+    { "q": "Choose the synonym of 'improve':", "o": ["worsen", "enhance", "reduce", "delay"], "a": "B", "d": "Vocabulary", "x": 2, "e": "'Enhance' means to make better." },
+    { "q": "A 'deadline' is :", "o": ["a final date", "a punishment", "a lesson plan", "a school subject"], "a": "A", "d": "Vocabulary", "x": 1, "e": "A deadline is the latest acceptable time." },
+
+    { "q": "Which sentence is correctly punctuated?", "o": ["Where are you going", "Where are you going?", "Where are you going.", "where are you going?"], "a": "B", "d": "Written expression", "x": 1, "e": "A direct question ends with a question mark and starts with a capital." },
+    { "q": "Choose the correctly spelled word:", "o": ["recieve", "receive", "receve", "reciive"], "a": "B", "d": "Written expression", "x": 2, "e": "'i' before 'e' except after 'c'." },
+    { "q": "Which linking word expresses contrast?", "o": ["moreover", "however", "therefore", "besides"], "a": "B", "d": "Written expression", "x": 2, "e": "'However' introduces an opposing idea." },
+    { "q": "Which linking word expresses consequence?", "o": ["although", "therefore", "whereas", "despite"], "a": "B", "d": "Written expression", "x": 2, "e": "'Therefore' introduces a result." },
+    { "q": "Choose the correct sentence:", "o": ["He don't like maths", "He doesn't likes maths", "He doesn't like maths", "He not like maths"], "a": "C", "d": "Written expression", "x": 1, "e": "Third person negative: doesn't + base form." },
+    { "q": "A formal letter usually ends with :", "o": ["See you", "Yours sincerely", "Bye", "Cheers"], "a": "B", "d": "Written expression", "x": 2, "e": "'Yours sincerely' closes a formal letter to a named person." },
+    { "q": "Which word is a preposition?", "o": ["quickly", "between", "happy", "run"], "a": "B", "d": "Written expression", "x": 1, "e": "'Between' introduces a relation of place or time." },
+
+    { "q": "In English teaching, 'CEFR' levels range from :", "o": ["A1 to C2", "1 to 10", "Beginner to Master", "L1 to L3"], "a": "A", "d": "Teaching English", "x": 2, "e": "The Common European Framework goes from A1 to C2." },
+    { "q": "A 'listening comprehension' activity mainly develops :", "o": ["writing", "oral understanding", "grammar drills", "handwriting"], "a": "B", "d": "Teaching English", "x": 1, "e": "It trains the ability to understand spoken English." },
+    { "q": "Pair work in class is mainly used to :", "o": ["reduce speaking time", "increase learner interaction", "avoid corrections", "replace assessment"], "a": "B", "d": "Teaching English", "x": 2, "e": "It maximises the time each learner speaks." },
+    { "q": "Formative assessment is designed to :", "o": ["rank students at the end of the year", "guide learning during the course", "select candidates", "replace the syllabus"], "a": "B", "d": "Teaching English", "x": 3, "e": "It provides feedback while learning is still in progress." },
+    { "q": "The main aim of a communicative approach is to :", "o": ["memorise grammar rules", "use the language in real situations", "translate texts only", "practise handwriting"], "a": "B", "d": "Teaching English", "x": 2, "e": "It prioritises meaningful communication over rule learning." }
+  ]
+}

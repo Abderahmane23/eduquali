@@ -1,0 +1,203 @@
+{
+  "id": "parent_onboarding",
+  "version": 2,
+  "audience": "PARENT",
+  "locale": "fr",
+  "currency": "GNF",
+  "sections": [
+    {
+      "id": "about_you",
+      "label": "Vous",
+      "steps": [
+        {
+          "id": "identity",
+          "type": "form",
+          "title": "Comment vous appelez-vous ?",
+          "body": "C’est vous qui ouvrez le compte et qui répondez pour votre enfant.",
+          "fields": [
+            {
+              "id": "first_name",
+              "type": "text",
+              "label": "Prénom",
+              "required": true,
+              "autofocus": true
+            },
+            {
+              "id": "last_name",
+              "type": "text",
+              "label": "Nom",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "child_school",
+          "type": "form",
+          "title": "Où va votre enfant à l’école ?",
+          "body": "Le quartier décide des professeurs qui peuvent venir.",
+          "fields": [
+            {
+              "id": "child_institution",
+              "type": "combo",
+              "label": "Nom de l’école",
+              "optionsSource": "institutions",
+              "allowCustom": true,
+              "required": false,
+              "hint": "Laissez vide si vous en cherchez une."
+            },
+            {
+              "id": "region",
+              "type": "dropdown",
+              "label": "Région",
+              "required": true,
+              "optionsSource": "regions"
+            },
+            {
+              "id": "city",
+              "type": "dropdown",
+              "label": "Commune ou préfecture",
+              "required": true,
+              "optionsSource": "prefectures",
+              "optionsFilter": {
+                "field": "region"
+              }
+            },
+            {
+              "id": "district",
+              "type": "text",
+              "label": "Quartier",
+              "required": true
+            }
+          ]
+        },
+        {
+          "id": "credentials",
+          "type": "form",
+          "title": "Votre numéro et votre mot de passe",
+          "body": "Il protege votre compte. C'est le meme compte sur le site et dans l'application : vous vous connecterez avec ce numero et ce mot de passe des deux cotes.",
+          "fields": [
+            {
+              "id": "phone",
+              "type": "phone",
+              "label": "Téléphone",
+              "required": true
+            },
+            {
+              "id": "password",
+              "type": "password",
+              "label": "Mot de passe",
+              "hint": "Huit caracteres au minimum.",
+              "minLength": 8,
+              "required": true,
+              "autofocus": true
+            }
+          ]
+        },
+        {
+          "id": "child_identity",
+          "type": "form",
+          "title": "Comment s’appelle votre enfant ?",
+          "body": "Son prénom suffit. Il portera votre nom de famille, et vous pourrez ajouter d’autres enfants depuis votre profil.",
+          "fields": [
+            {
+              "id": "child_first_name",
+              "type": "text",
+              "label": "Prénom de l’enfant",
+              "required": true,
+              "autofocus": true
+            }
+          ],
+          "image": {
+            "name": "teenager",
+            "alt": "Un adolescent avec son sac, entouré de symboles d’études"
+          }
+        },
+        {
+          "id": "child_level_stage",
+          "type": "single_choice",
+          "title": "Où en est votre enfant ?",
+          "fieldId": "child_level_stage",
+          "required": true,
+          "optionsSource": "stages"
+        },
+        {
+          "id": "child_level_class",
+          "type": "single_choice",
+          "title": "En quelle classe ?",
+          "fieldId": "child_level_id",
+          "required": true,
+          "optionsSource": "levels",
+          "optionsFilter": {
+            "field": "child_level_stage"
+          },
+          "showIf": {
+            "field": "child_level_stage",
+            "equals": [
+              "COLLEGE",
+              "LYCEE",
+              "SUPERIEUR"
+            ]
+          }
+        },
+        {
+          "id": "child_filiere",
+          "type": "single_choice",
+          "title": "Quel profil suit-il ?",
+          "body": "À partir de la 12ème année, le lycée se partage en trois profils. C’est lui qui décide des matières.",
+          "fieldId": "child_filiere_id",
+          "required": true,
+          "optionsSource": "filieres",
+          "showIf": {
+            "field": "child_level_id",
+            "equals": [
+              "lvl_12",
+              "lvl_terminale"
+            ]
+          }
+        },
+        {
+          "id": "child_subjects",
+          "type": "multi_choice",
+          "title": "Dans quelles matières a-t-il besoin d’aide ?",
+          "fieldId": "child_subject_ids",
+          "optional": true,
+          "optionsSource": "subjects",
+          "optionsFilter": {
+            "fields": [
+              "child_level_stage",
+              "child_level_id",
+              "child_filiere_id"
+            ]
+          },
+          "body": "Seules les matières de sa classe sont proposées.",
+          "searchable": true,
+          "searchHint": "Tapez une matière…"
+        },
+        {
+          "id": "subscription",
+          "type": "plan_select",
+          "title": "Commencer fort !",
+          "fieldId": "subscription",
+          "plans": [
+            {
+              "value": "PRO",
+              "name": "Pro",
+              "price": 100000,
+              "highlight": "L’assistant IA entraîné sur le programme guinéen : créez des exercices, corrigez-les et obtenez un programme de révision.",
+              "recommended": true
+            },
+            {
+              "value": "MASTER",
+              "name": "Master",
+              "price": 200000,
+              "highlight": "Tout Pro, plus la messagerie directe avec tous les professeurs."
+            }
+          ],
+          "declineLabel": "Commencer sans abonnement",
+          "declineValue": "FREE",
+          "cta": "Souscrire"
+        }
+      ]
+    }
+  ]
+}

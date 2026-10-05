@@ -1,0 +1,152 @@
+Voici une version structurée du **programme d’anglais au collège guinéen**, fondée sur le *Programme d’anglais au collège* de l’INRAP, Conakry, octobre 2009. Le document organise les apprentissages par unités, chacune articulant une compétence, des objectifs, un champ lexical et des structures syntaxiques. Il a été conçu dans la continuité des manuels MOBEL et vise une progression pratique de la communication orale et écrite. [fr.scribd](https://fr.scribd.com/document/990886025/Brochure-Anglais-Colle-ge-Amadou-Oury)
+
+**Important :** le texte source accessible permet de vérifier intégralement les 30 unités de 7e année et une large partie des unités de 8e année. Pour les 9e et 10e années, les sources accessibles confirment le cadre MOBEL et les objectifs de progression, mais ne donnent pas une transcription complète et vérifiable de toutes les unités ; je distingue donc clairement les contenus confirmés de ceux qui restent à documenter. Le Cadre d’orientation curriculaire de 2023 indique par ailleurs que les programmes du collège et du lycée rénovés en 2009 sont en cours de révision curriculaire. [ibe.unesco](https://www.ibe.unesco.org/sites/default/files/medias/fichiers/2023/10/COC%20R%C3%A9publique%20de%20Guin%C3%A9e%20Version%2028%2009%2023%20V3_0.pdf)
+
+## Organisation générale
+
+Le programme de 2009 présente l’anglais comme une langue de communication, d’ouverture régionale et internationale, ainsi qu’un outil lié aux études, à l’emploi et aux technologies. Il prévoit un enseignement progressif qui commence par les situations les plus immédiates — saluer, se présenter, désigner des objets, se repérer — puis va vers la description, l’échange d’informations, l’expression d’opinions et la production écrite. [fr.scribd](https://fr.scribd.com/document/990886025/Brochure-Anglais-Colle-ge-Amadou-Oury)
+
+| Classe guinéenne | Manuel/niveau associé | Niveau de progression |
+|---|---:|---|
+| 7e année | MOBEL 1 | Initiation et communication élémentaire |
+| 8e année | MOBEL 2 | Consolidation : personne, famille, environnement et vie courante |
+| 9e année | MOBEL 3 | Développement de l’interaction et de la production structurée |
+| 10e année | MOBEL 4 | Consolidation du collège et préparation au BEPC |
+
+Le document précise qu’une unité est normalement étudiée en une ou deux heures, selon sa difficulté. Les activités ne sont donc pas simplement des chapitres de grammaire : elles associent vocabulaire, écoute, expression orale, lecture, écriture et manipulation de structures. [fr.scribd](https://fr.scribd.com/document/990886025/Brochure-Anglais-Colle-ge-Amadou-Oury)
+
+## 7e année — MOBEL 1
+
+La 7e année constitue l’entrée dans l’apprentissage formel de l’anglais. Elle comprend **30 unités** vérifiées dans le programme. L’essentiel consiste à développer des automatismes oraux : saluer, répondre, demander une information, suivre une consigne, nommer, décrire et localiser. [fr.scribd](https://fr.scribd.com/document/881322082/Anglais-College)
+
+| Unité | Titre de l’unité | Compétences et sous-chapitres principaux |
+|---:|---|---|
+| 1 | Greetings | Salutations formelles et informelles ; moments de la journée ; titres *Mr., Mrs., Miss, Sir* ; questions-réponses avec *How are you?* ; présent de *be* |
+| 2 | Introductions | Se présenter et présenter une autre personne ; pronoms personnels ; adjectifs possessifs *my, your, his, her* ; *What is your name?* |
+| 3 | The alphabet | Alphabet anglais ; lettres majuscules/minuscules ; épellation ; consignes de classe ; articles *a/an* ; questions *what, where, how* |
+| 4 | Identifying numbers | Nombres cardinaux de 1 à 100 ; lecture et écriture des nombres ; impératifs ; pronoms compléments *me, you, him, her* |
+| 5 | The alphabet spelling | Révision de l’alphabet ; épeler des noms et mots ; *Can you spell it?* ; noms de pays, villes et écoles |
+| 6 | Consolidation: greetings, alphabet and numbers | Révision des unités 1 à 5 ; présentations ; nombres ; additions et vocabulaire mathématique élémentaire |
+| 7 | Telling time | Heure : *o’clock, half past, quarter past, quarter to* ; emploi de *at, before, after* ; routines simples : *When do you get up?* |
+| 8 | Days of the week | Jours, mois, années ; ordinaux ; date ; *today, yesterday, tomorrow* ; présent et passé de *be* |
+| 9 | The names of common objects | Objets usuels ; *this/that* ; articles ; possession avec *have/has* ; identification : *What is this?* |
+| 10 | Distinguishing objects by size and shape | Taille et forme ; adjectifs tels que *long, short, tall, small, big* ; article défini *the* ; prépositions simples |
+| 11 | Moving things | Exécution de consignes avec *take, put, give* ; positions : *in, on, under, behind, between, in front of* ; couleurs |
+| 12 | Identifying shapes | Figures géométriques : *square, rectangle, triangle, circle, line, arrow* ; consignes de dessin ; *another* ; *a/an* |
+| 13 | Describing objects | Description courte d’un objet ; matière, usage, couleur, coût, forme et taille ; *It is made of…*, *This is used for…* |
+| 14 | Written form of words | Association mot-image ; copie et reconnaissance de mots ; production de phrases simples avec *This is a…* |
+| 15 | Locating people and things in relation to others | Localisation précise d’objets et de personnes ; repères gauche/droite ; *next to, behind, in front of, near, between* |
+| 16 | Consolidation | Réinvestissement des prépositions, de la description d’objets et de la localisation ; présent simple et présent progressif |
+| 17 | Identifying and moving classroom objects | Objets de classe : *desk, duster, ruler, map, cupboard, dictionary* ; consignes d’action ; localisation dans la salle |
+| 18 | Parts of the body | Parties du corps ; actions : *touch, raise, lift, close, open* ; impératifs et présent progressif |
+| 19 | Telling about family and things | Membres de la famille ; possession ; adjectifs possessifs ; *have got* ; questions sur les liens familiaux |
+| 20 | People and jobs | Métiers et activités : agriculteur, médecin, chauffeur, enseignant, pêcheur, commerçant, etc. ; lieu et nature du travail ; *want to be* |
+| 21 | Identifying and moving common objects | Réemploi des objets courants et scolaires ; consignes complexes avec *take, put back, pick up* ; quantificateurs *some, any, all, several* |
+| 22 | Finding, putting in, taking out | Actions et consignes : *find, put in, take out* ; questions fermées au présent et au passé simple ; réponse affirmative ou négative |
+| 23 | Positions and giving directions | Position sur une image ou dans l’espace ; coins et centre ; directions ; *top left corner, bottom right corner, in the middle* |
+| 24 | Consolidation | Révision de la localisation, des prépositions, des ordres et de la description spatiale ; identification de nom, verbe, pronom, adjectif, adverbe et préposition |
+| 25 | Giving and taking using ordinal numbers | Ordinaux et place dans un groupe ; donner et recevoir un objet ; positions : premier, dernier, milieu |
+| 26 | Following written instructions | Lecture puis réalisation de consignes écrites ; dessin guidé par des prépositions et adjectifs |
+| 27 | Identifying written descriptions | Compréhension de descriptions écrites ; distinction entre *what* et *which* ; choix limité ; adjectifs comme *favourite* et *best* |
+| 28 | Locations: the class seating chart | Placement des élèves ; rangées, groupes, bureaux ; production et compréhension de consignes écrites/orales |
+| 29 | Adjectives describing feelings | États et sentiments : *happy, sad, angry, afraid, tired, hot, cold, hungry, thirsty* ; affirmations, négations et questions |
+| 30 | Personal information | Âge, taille, adresse, domicile ; rédaction de courts paragraphes sur soi-même et sur une autre personne |
+
+Les structures prioritaires de 7e année sont donc :
+
+- Présent simple de *be*, *have*, *do* et de verbes très fréquents
+- Présent progressif dans des descriptions d’actions en cours
+- Questions avec *what, who, where, when, how, which*
+- Réponses courtes affirmatives et négatives
+- Impératifs et consignes de classe
+- Pronoms personnels sujets et compléments
+- Adjectifs possessifs et démonstratifs
+- Articles *a, an, the*
+- Prépositions de lieu et de mouvement
+- Nombres cardinaux et ordinaux
+- Adjectifs descriptifs, comparatifs simples et vocabulaire de la vie quotidienne. [fr.scribd](https://fr.scribd.com/document/881322082/Anglais-College)
+
+## 8e année — MOBEL 2
+
+La 8e année élargit le travail sur l’identité, la famille et la description pour introduire les comparaisons, les mesures, les achats, la maison, l’expression des goûts et des projets. Les unités ci-dessous sont explicitement visibles dans la source consultée. [fr.scribd](https://fr.scribd.com/document/881322082/Anglais-College)
+
+| Unité | Titre de l’unité | Compétences et sous-chapitres principaux |
+|---:|---|---|
+| 1 | More personal information | Informations personnelles approfondies : distance, durée, nombre ; *How far? How long? How many?* ; possessifs et génitif |
+| 2 | My favorite things | Goûts, préférences et aversions ; loisirs, sport, nourriture, musique ; présent simple ; futur avec *going to* |
+| 3 | Consolidation: question words | Révision des mots interrogatifs et de la construction des questions ; présent et passé dans des échanges personnels |
+| 4 | Describing people: clothing | Vêtements, accessoires, couleurs ; description de ce qu’une personne porte ; présent simple et présent progressif |
+| 5 | Comparing people and things | Comparatif et superlatif des adjectifs courts ; comparaison de personnes, animaux et objets |
+| 6 | Consolidation: describing clothing | Révision de la description vestimentaire ; opposition entre action en cours et caractéristique stable |
+| 7 | Physical characteristics | Taille, corpulence, teint, cheveux, yeux et traits physiques ; *be*, *have* et *wear* |
+| 8 | Question tags | Questions-tag : *You are short, aren’t you?* ; réponses affirmatives et négatives ; vérification d’information |
+| 9 | Describing people: more physical characteristics | Description plus précise : barbe, moustache, lunettes, tresses, calvitie, cheveux gris, etc. |
+| 10 | Consolidation | Deviner et identifier une personne à partir d’indices physiques et de préférences |
+| 11 | What do we have in common? | Ce que des personnes ont en commun ; emploi de *both* ; présent simple et présent progressif affirmatif/négatif |
+| 12 | What is a family? | Famille nucléaire et élargie ; liens de parenté ; composition du foyer ; adjectifs et possession |
+| 13 | Telling about your family | Arbre généalogique simple ; description de sa famille ; relations, âge, état civil, personnes vivantes ou décédées |
+| 14 | Extended family | Famille élargie : cousins, neveux, nièces, beaux-frères, belles-sœurs, petits-enfants ; présent et passé simple |
+| 15 | Consolidation: describing family members | Révision de la famille et des descriptions physiques ; rédaction d’un paragraphe descriptif |
+| 16 | Colour, size and shape | Couleurs, formes, dimensions ; description d’objets ; articles et adjectifs |
+| 17 | Measurements | Longueur, hauteur, largeur, poids et distance ; unités : mètre, centimètre, kilogramme, kilomètre |
+| 18 | Asking questions about measurements | Questions sur l’âge, le poids, la hauteur, la distance et la longueur ; réponses chiffrées |
+| 19 | What things are made of: materials | Matériaux : bois, métal, plastique, verre, tissu, papier, etc. ; structure *be made of* |
+| 20 | Food and household items: market vocabulary | Aliments et produits domestiques ; noms comptables/non comptables ; *some, any, many, much* |
+| 21 | Going shopping | Prix, monnaie, achats, marchandage ; *How much?* ; lexique du marché ; produits bon marché ou chers |
+| 22 | Things you would like to do | Désirs, projets et choix ; modaux *would like to* et *should* ; achats souhaités et activités envisagées |
+| 23 | Describing your house and compound | Pièces, mobilier, cour, installations domestiques ; maison réelle ou idéale ; vocabulaire de l’habitat |
+
+Les notions grammaticales centrales de 8e année comprennent :
+
+- Possessifs : adjectifs, pronoms et génitif en *’s*
+- Présent simple et présent progressif
+- Passé simple pour des informations biographiques simples
+- Futur avec *going to*
+- Comparatif et superlatif
+- Questions-tag
+- Quantifieurs : *some, any, many, much, a little, a few*
+- Noms dénombrables et indénombrables
+- Modaux *can, should, would*
+- Expression de la mesure, du prix, de la quantité et de la préférence
+- Description structurée d’une personne, d’un objet, d’une famille, d’un logement ou d’un achat. [fr.scribd](https://fr.scribd.com/document/881322082/Anglais-College)
+
+## 9e et 10e années
+
+Les sources consultées confirment que le programme répartit les apprentissages du collège dans la logique MOBEL, avec une progression allant de l’initiation vers une communication plus autonome. Elles confirment également que les nouveaux programmes du secondaire ont été réactualisés en 2009 à partir des programmes antérieurs. [fr.scribd](https://fr.scribd.com/document/990886025/Brochure-Anglais-Colle-ge-Amadou-Oury)
+
+En revanche, je ne présenterai pas une liste fictive de sous-unités pour la 9e et la 10e année : le document numérisé auquel j’ai eu accès est tronqué avant la reproduction intégrale et vérifiable de ces deux niveaux.
+
+Les contenus à rechercher prioritairement dans les fascicules MOBEL 3 et MOBEL 4 ou dans les plans de progression des établissements sont les suivants :
+
+| Domaine à compléter | 9e année : progression attendue | 10e année : progression attendue |
+|---|---|---|
+| Communication orale | Exprimer accord, désaccord, opinion, demande d’explication, conseil et projet | Défendre un point de vue, participer à une discussion, rendre compte et présenter un sujet |
+| Compréhension orale | Instructions et échanges plus longs ; informations spécifiques ; prononciation et intonation | Messages plus complexes ; reformulation ; prise de notes et transfert d’informations |
+| Grammaire | Consolidation des temps, comparatifs, modaux, questions, pronoms et connecteurs | Concordance des temps, discours direct/indirect, voix active/passive, subordonnées et conditionnel |
+| Lexique | Santé, alimentation, transport, environnement, loisirs, école, vie sociale | Développement, citoyenneté, environnement, emploi, orientation, société et communication |
+| Lecture | Identification du thème, des personnages, des informations et du type de texte | Résumé, opinion argumentée, reformulation, analyse d’indices textuels |
+| Expression écrite | Paragraphe, description, récit bref, dialogue, lettre et formulaire | Récit, lettre, compte rendu, description, dialogue, texte informatif et production plus autonome |
+| Méthodes | Dictionnaire, champs lexicaux, familles de mots, relecture | Autoévaluation, correction, prise de notes, organisation du travail collectif et individuel |
+
+Ces rubriques ne sont pas une transcription officielle exhaustive pour les 9e et 10e années : elles indiquent les axes à compléter à partir des documents MOBEL manquants. Le COC de 2023 confirme que les programmes du secondaire constituent des textes à réviser et à harmoniser dans le cadre de la réforme curriculaire guinéenne. [ibe.unesco](https://www.ibe.unesco.org/sites/default/files/medias/fichiers/2023/10/COC%20R%C3%A9publique%20de%20Guin%C3%A9e%20Version%2028%2009%2023%20V3_0.pdf)
+
+## Méthodes et évaluation
+
+L’approche prévue est fonctionnelle : l’élève doit **agir avec la langue** dans des situations concrètes plutôt que mémoriser uniquement des listes grammaticales. Les unités combinent généralement :
+
+- Compréhension et exécution d’instructions orales
+- Répétition, jeux de rôles, questions-réponses et dialogues
+- Activités de description à partir de la classe, d’images ou d’objets
+- Lecture de phrases, consignes et courts textes
+- Copie, dictée de mots, production de phrases et de courts paragraphes
+- Réemploi régulier des acquisitions dans des unités de consolidation
+- Évaluation de l’oral, du vocabulaire, de la grammaire en contexte, de la lecture et de l’expression écrite. [fr.scribd](https://fr.scribd.com/document/990886025/Brochure-Anglais-Colle-ge-Amadou-Oury)
+
+L’anglais est donc construit autour de quatre compétences complémentaires :
+
+- **Listening** : écouter, comprendre et réagir
+- **Speaking** : interagir et s’exprimer oralement
+- **Reading** : lire et interpréter des consignes, descriptions et textes
+- **Writing** : écrire progressivement des mots, phrases, descriptions, dialogues, lettres et paragraphes
+
+Cette progression est cohérente avec l’objectif général du collège : permettre à l’élève de communiquer dans des situations quotidiennes simples, puis de comprendre et produire des messages plus structurés à l’oral comme à l’écrit. [fr.scribd](https://fr.scribd.com/document/990886025/Brochure-Anglais-Colle-ge-Amadou-Oury)

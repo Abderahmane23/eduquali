@@ -1,0 +1,72 @@
+# Ce que ce depot ne doit jamais contenir.
+#
+# --- Lire avant d'ajouter une ligne --------------------------------------
+#
+# Deux fichiers de ce projet suffiraient a compromettre tout le reste s'ils
+# partaient sur un depot distant. Ils sont en tete, et c'est voulu :
+#
+#   * `backend/.env` porte la cle `service_role` de Supabase. Elle **passe
+#     outre RLS** : qui la detient lit et modifie toutes les donnees de tous
+#     les comptes, y compris celles des mineurs. Ce n'est pas un mot de passe
+#     a changer, c'est l'acces complet.
+#
+#   * `frontend/mobile/android/key.properties` porte les mots de passe du
+#     magasin de cles de publication. Avec eux, n'importe qui signe un APK
+#     qu'un telephone acceptera comme une mise a jour d'Eduquali.
+#
+# Le magasin de cles lui-meme (`.jks`) vit hors du depot, dans
+# `C:\Users\HP\.eduquali` — il n'y a donc rien a exclure pour lui, mais le
+# motif est quand meme la au cas ou quelqu'un le deplacerait un jour.
+#
+# Si l'un de ces fichiers est deja parti sur un depot distant, l'ajouter ici
+# **ne suffit pas** : il reste dans l'historique. Il faut regenerer la cle
+# cote Supabase et refaire un magasin de cles.
+
+# --- Secrets ---------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pem
+key.properties
+
+# --- Dependances -----------------------------------------------------------
+node_modules/
+.pnpm-store/
+
+# --- Sorties de compilation ------------------------------------------------
+dist/
+build/
+.wrangler/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.apk
+*.aab
+*.so
+
+# `app_database.g.dart` (2,4 Mo) reste **versionne**, a dessein.
+#
+# C'est du code genere, donc le reflexe serait de l'exclure. Mais il est genere
+# par `dart run build_runner build`, qui prend deux minutes : exclu, un depot
+# frais ne compile pas et ne teste pas avant qu'on ait trouve cette commande.
+# Un historique un peu plus lourd coute moins cher qu'un clone qui ne demarre
+# pas.
+
+# --- Rapports de plantage de la JVM ---------------------------------------
+# Gradle en laisse a la racine d'`android/` quand il manque de memoire.
+hs_err_pid*.log
+replay_pid*.log
+
+# --- Outils et editeurs ----------------------------------------------------
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# --- Local, jamais partage -------------------------------------------------
+local.properties
+*.log

@@ -1,0 +1,3449 @@
+{
+  "stages": [
+    {
+      "id": "PRIMAIRE",
+      "name": "Écolier",
+      "order": 1,
+      "groupingLevelId": "lvl_primaire",
+      "hasClasses": false,
+      "note": "1ere a 6eme annee. La classe precise n'est pas demandee : le programme du primaire n'est pas detaille par annee dans le referentiel. Le nom designe la PERSONNE et non le cycle : les deux questions qui servent ces paliers sont « Ou en etes-vous ? » et « Ou en est votre enfant ? », auxquelles on repond « collegien », pas « college ». Les rangees `levels` de regroupement gardent, elles, le nom du cycle."
+    },
+    {
+      "id": "COLLEGE",
+      "name": "Collégien",
+      "order": 2,
+      "groupingLevelId": "lvl_college",
+      "hasClasses": true
+    },
+    {
+      "id": "LYCEE",
+      "name": "Lycéen",
+      "order": 3,
+      "groupingLevelId": "lvl_lycee",
+      "hasClasses": true
+    },
+    {
+      "id": "SUPERIEUR",
+      "name": "Universitaire",
+      "order": 4,
+      "groupingLevelId": null,
+      "hasClasses": true,
+      "note": "L1 a M2. Pas de niveau de regroupement : « universite » n'est pas une classe, c'est un palier. Porte le meme mot que le compte qui s'inscrit pour lui-meme, et c'est voulu : les deux doivent se repondre."
+    },
+    {
+      "id": "DIPLOME",
+      "name": "Diplômé",
+      "order": 5,
+      "groupingLevelId": "lvl_diplome",
+      "hasClasses": false,
+      "note": "A fini ses etudes. Cherche une remise a niveau, une langue, de l'informatique — pas une classe."
+    }
+  ],
+  "subjects": [
+    {
+      "id": "sub_math",
+      "name": "Mathematiques",
+      "code": "MATH",
+      "order": 1,
+      "cycles": [
+        "PRIMAIRE",
+        "COLLEGE",
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_phys",
+      "name": "Physique",
+      "code": "PHYS",
+      "order": 2,
+      "cycles": [
+        "COLLEGE",
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_chim",
+      "name": "Chimie",
+      "code": "CHIM",
+      "order": 3,
+      "cycles": [
+        "COLLEGE",
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_fran",
+      "name": "Francais",
+      "code": "FRAN",
+      "order": 4,
+      "cycles": [
+        "PRIMAIRE",
+        "COLLEGE",
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_angl",
+      "name": "Anglais",
+      "code": "ANGL",
+      "order": 5,
+      "cycles": [
+        "COLLEGE",
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_info",
+      "name": "Informatique",
+      "code": "INFO",
+      "order": 6,
+      "cycles": [
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_econ",
+      "name": "Economie",
+      "code": "ECON",
+      "order": 7,
+      "cycles": [
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_comp",
+      "name": "Comptabilite",
+      "code": "COMP",
+      "order": 8,
+      "cycles": [
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_droi",
+      "name": "Droit",
+      "code": "DROI",
+      "order": 9,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_hist",
+      "name": "Histoire",
+      "code": "HIST",
+      "order": 10,
+      "cycles": [
+        "PRIMAIRE",
+        "COLLEGE",
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_geog",
+      "name": "Geographie",
+      "code": "GEOG",
+      "order": 11,
+      "cycles": [
+        "PRIMAIRE",
+        "COLLEGE",
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_biol",
+      "name": "Biologie",
+      "code": "BIOL",
+      "order": 12,
+      "cycles": [
+        "COLLEGE",
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_geol",
+      "name": "Geologie",
+      "code": "GEOL",
+      "order": 13,
+      "cycles": [
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_philo",
+      "name": "Philosophie",
+      "code": "PHIL",
+      "order": 14,
+      "cycles": [
+        "LYCEE",
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_ecm",
+      "name": "Éducation civique et morale",
+      "code": "ECM",
+      "order": 15,
+      "cycles": [
+        "PRIMAIRE",
+        "COLLEGE",
+        "LYCEE"
+      ]
+    },
+    {
+      "id": "sub_eps",
+      "name": "Éducation physique et sportive",
+      "code": "EPS",
+      "order": 16,
+      "cycles": [
+        "PRIMAIRE",
+        "COLLEGE",
+        "LYCEE"
+      ]
+    },
+    {
+      "id": "sub_medc",
+      "name": "Médecine",
+      "code": "MEDC",
+      "order": 17,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_phar",
+      "name": "Pharmacie",
+      "code": "PHAR",
+      "order": 18,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_gest",
+      "name": "Gestion",
+      "code": "GEST",
+      "order": 19,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_mark",
+      "name": "Marketing",
+      "code": "MARK",
+      "order": 20,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_gciv",
+      "name": "Génie civil",
+      "code": "GCIV",
+      "order": 21,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_gele",
+      "name": "Génie électrique",
+      "code": "GELE",
+      "order": 22,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_tele",
+      "name": "Télécommunications",
+      "code": "TELE",
+      "order": 23,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_spol",
+      "name": "Sciences politiques",
+      "code": "SPOL",
+      "order": 24,
+      "cycles": [
+        "SUPERIEUR"
+      ]
+    },
+    {
+      "id": "sub_arab",
+      "name": "Arabe",
+      "code": "ARAB",
+      "order": 25,
+      "cycles": [
+        "COLLEGE",
+        "LYCEE"
+      ]
+    }
+  ],
+  "levels": [
+    {
+      "id": "lvl_primaire",
+      "name": "Primaire",
+      "code": "PRIMAIRE",
+      "category": "PRIMARY",
+      "order": 1,
+      "cycle": "PRIMAIRE",
+      "grouping": true
+    },
+    {
+      "id": "lvl_college",
+      "name": "Collège",
+      "code": "COLLEGE",
+      "category": "SECONDARY",
+      "order": 2,
+      "cycle": "COLLEGE",
+      "grouping": true
+    },
+    {
+      "id": "lvl_7",
+      "name": "7ème année",
+      "code": "AN7",
+      "category": "SECONDARY",
+      "order": 3,
+      "cycle": "COLLEGE"
+    },
+    {
+      "id": "lvl_8",
+      "name": "8ème année",
+      "code": "AN8",
+      "category": "SECONDARY",
+      "order": 4,
+      "cycle": "COLLEGE"
+    },
+    {
+      "id": "lvl_9",
+      "name": "9ème année",
+      "code": "AN9",
+      "category": "SECONDARY",
+      "order": 5,
+      "cycle": "COLLEGE"
+    },
+    {
+      "id": "lvl_10",
+      "name": "10ème année",
+      "code": "AN10",
+      "category": "SECONDARY",
+      "order": 6,
+      "cycle": "COLLEGE"
+    },
+    {
+      "id": "lvl_lycee",
+      "name": "Lycée",
+      "code": "LYCEE",
+      "category": "SECONDARY",
+      "order": 7,
+      "cycle": "LYCEE",
+      "grouping": true
+    },
+    {
+      "id": "lvl_11",
+      "name": "11ème année",
+      "code": "AN11",
+      "category": "SECONDARY",
+      "order": 8,
+      "cycle": "LYCEE"
+    },
+    {
+      "id": "lvl_12",
+      "name": "12ème année",
+      "code": "AN12",
+      "category": "SECONDARY",
+      "order": 9,
+      "cycle": "LYCEE"
+    },
+    {
+      "id": "lvl_terminale",
+      "name": "Terminale",
+      "code": "TLE",
+      "category": "SECONDARY",
+      "order": 10,
+      "cycle": "LYCEE"
+    },
+    {
+      "id": "lvl_l1",
+      "name": "L1",
+      "code": "L1",
+      "category": "UNIVERSITY",
+      "order": 11,
+      "cycle": "SUPERIEUR"
+    },
+    {
+      "id": "lvl_l2",
+      "name": "L2",
+      "code": "L2",
+      "category": "UNIVERSITY",
+      "order": 12,
+      "cycle": "SUPERIEUR"
+    },
+    {
+      "id": "lvl_l3",
+      "name": "L3",
+      "code": "L3",
+      "category": "UNIVERSITY",
+      "order": 13,
+      "cycle": "SUPERIEUR"
+    },
+    {
+      "id": "lvl_m1",
+      "name": "Master 1",
+      "code": "M1",
+      "category": "UNIVERSITY",
+      "order": 14,
+      "cycle": "SUPERIEUR"
+    },
+    {
+      "id": "lvl_m2",
+      "name": "Master 2",
+      "code": "M2",
+      "category": "UNIVERSITY",
+      "order": 15,
+      "cycle": "SUPERIEUR"
+    },
+    {
+      "id": "lvl_diplome",
+      "name": "Diplômé",
+      "code": "DIPL",
+      "category": "GRADUATE",
+      "order": 16,
+      "cycle": "DIPLOME",
+      "grouping": true
+    }
+  ],
+  "tests": [
+    {
+      "id": "test_math_l2",
+      "subjectId": "sub_math",
+      "levelId": "lvl_l2",
+      "bank": "questions_math_l2.json"
+    },
+    {
+      "id": "test_math_l1",
+      "subjectId": "sub_math",
+      "levelId": "lvl_l1",
+      "bank": "questions_math_l1.json"
+    },
+    {
+      "id": "test_math_lycee",
+      "subjectId": "sub_math",
+      "levelId": "lvl_lycee",
+      "bank": "questions_math_lycee.json"
+    },
+    {
+      "id": "test_phys_l1",
+      "subjectId": "sub_phys",
+      "levelId": "lvl_l1",
+      "bank": "questions_phys_l1.json"
+    },
+    {
+      "id": "test_chim_l1",
+      "subjectId": "sub_chim",
+      "levelId": "lvl_l1",
+      "bank": "questions_chim_l1.json"
+    },
+    {
+      "id": "test_info_l1",
+      "subjectId": "sub_info",
+      "levelId": "lvl_l1",
+      "bank": "questions_info_l1.json"
+    },
+    {
+      "id": "test_fran_lycee",
+      "subjectId": "sub_fran",
+      "levelId": "lvl_lycee",
+      "bank": "questions_fran_lycee.json"
+    },
+    {
+      "id": "test_angl_lycee",
+      "subjectId": "sub_angl",
+      "levelId": "lvl_lycee",
+      "bank": "questions_angl_lycee.json"
+    }
+  ],
+  "institutions": [
+    {
+      "id": "inst_unc",
+      "name": "Université Nongo Conakry",
+      "type": "UNIVERSITY",
+      "city": "Conakry",
+      "address": "Nongo Contéyah (C/Ratoma), BP 6420, Conakry",
+      "phone": "+224 610 00 38 89",
+      "phoneAlt": "+224 622 21 35 70",
+      "email": "contact@unc-edu.org",
+      "website": "https://unc-edu.org",
+      "foundedYear": 2007,
+      "ownership": "PRIVATE",
+      "academicSystem": "LMD",
+      "degrees": "BTS,LICENCE,MASTER",
+      "specialties": "Droit,Sciences politiques,Génie informatique,Télécommunications,MIAGE,Économie et gestion,Sociologie,Génie civil,Comptabilité,Logistique et transport,Banque et assurance,Master sécurité informatique",
+      "facilities": "40 salles de classe,8 salles informatique,2 amphithéâtres,1 salle de conférence,1 cyber-centre de recherche,1 bibliothèque,2 laboratoires,1 infirmerie,2 cafétérias et restaurants",
+      "managerName": "Direction des ressources humaines",
+      "description": "Université privée fondée en 2007 à Nongo Contéyah. Formations professionnalisantes et cursus LMD, du BTS au Master.",
+      "verificationStatus": "VERIFIED"
+    },
+    {
+      "id": "inst_gamal",
+      "name": "Universite Gamal Abdel Nasser",
+      "type": "UNIVERSITY",
+      "city": "Conakry",
+      "address": "Campus de Dixinn, Conakry",
+      "managerName": "Direction des ressources humaines",
+      "description": "Premiere universite publique de Guinee, formant plus de 20 000 etudiants.",
+      "verificationStatus": "VERIFIED",
+      "phone": "+224 622 10 20 30",
+      "phoneAlt": "+224 664 10 20 31",
+      "email": "contact@uganc.edu.gn",
+      "website": "https://uganc.edu.gn",
+      "foundedYear": 1962,
+      "ownership": "PUBLIC",
+      "academicSystem": "LMD",
+      "degrees": "LICENCE,MASTER,DOCTORAT",
+      "specialties": "Mathématiques,Physique,Chimie,Informatique,Médecine,Droit,Lettres modernes,Sciences économiques",
+      "facilities": "120 salles de classe,6 amphithéâtres,1 bibliothèque centrale,12 laboratoires,1 centre médical,3 restaurants universitaires"
+    },
+    {
+      "id": "inst_excellence",
+      "name": "Lycee Excellence",
+      "type": "HIGH_SCHOOL",
+      "city": "Kankan",
+      "address": "Quartier Timbo, Kankan",
+      "managerName": "Proviseur",
+      "description": "Etablissement prive d'enseignement general, series scientifiques et litteraires.",
+      "verificationStatus": "VERIFIED",
+      "phone": "+224 621 44 55 66",
+      "email": "direction@lycee-excellence.gn",
+      "foundedYear": 1998,
+      "ownership": "PRIVATE",
+      "academicSystem": "SECONDAIRE",
+      "degrees": "BAC",
+      "specialties": "Sciences mathématiques,Sciences expérimentales,Sciences sociales,Lettres",
+      "facilities": "24 salles de classe,2 salles informatique,1 bibliothèque,1 laboratoire de sciences,1 terrain de sport"
+    },
+    {
+      "id": "inst_kindia",
+      "name": "Universite de Kindia",
+      "type": "UNIVERSITY",
+      "city": "Kindia",
+      "address": "Route de Mamou, Kindia",
+      "managerName": "Service du personnel",
+      "description": "Universite regionale — sciences, agronomie et sciences de la sante.",
+      "verificationStatus": "VERIFIED",
+      "phone": "+224 628 77 11 22",
+      "email": "scolarite@univ-kindia.gn",
+      "website": "https://univ-kindia.gn",
+      "foundedYear": 2004,
+      "ownership": "PUBLIC",
+      "academicSystem": "LMD",
+      "degrees": "LICENCE,MASTER",
+      "specialties": "Agronomie,Sciences de la vie,Gestion,Sociologie,Sciences de l’éducation",
+      "facilities": "45 salles de classe,3 amphithéâtres,1 bibliothèque,4 laboratoires,1 ferme expérimentale,1 cafétéria"
+    },
+    {
+      "id": "inst_ismm",
+      "name": "Institut Superieur des Mines et Geologie",
+      "type": "INSTITUTE",
+      "city": "Boke",
+      "address": "Boke centre",
+      "managerName": "Directeur des etudes",
+      "description": "Institut specialise dans les metiers des mines et de la geologie.",
+      "verificationStatus": "VERIFIED",
+      "phone": "+224 655 30 40 50",
+      "email": "contact@ismg-boke.gn",
+      "foundedYear": 1992,
+      "ownership": "PUBLIC",
+      "academicSystem": "LMD",
+      "degrees": "BTS,LICENCE,MASTER",
+      "specialties": "Géologie,Exploitation minière,Génie civil,Électromécanique,Environnement",
+      "facilities": "30 salles de classe,5 laboratoires,1 halle technologique,1 bibliothèque,2 salles informatique,1 internat"
+    },
+    {
+      "id": "inst_cfp",
+      "name": "Centre de Formation Professionnelle Sonfonia",
+      "type": "TRAINING_CENTER",
+      "city": "Conakry",
+      "address": "Sonfonia, Ratoma",
+      "managerName": "Coordination pedagogique",
+      "description": "Formations qualifiantes en informatique, comptabilite et gestion.",
+      "verificationStatus": "VERIFIED",
+      "phone": "+224 620 88 99 00",
+      "email": "cfp.sonfonia@formation.gn",
+      "foundedYear": 2011,
+      "ownership": "PUBLIC",
+      "academicSystem": "PROFESSIONNEL",
+      "degrees": "CAP,BTS",
+      "specialties": "Électricité bâtiment,Maintenance informatique,Couture,Mécanique auto,Froid et climatisation",
+      "facilities": "12 ateliers,6 salles de classe,1 salle informatique,1 magasin d’outillage"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "job_math_gamal",
+      "institutionId": "inst_gamal",
+      "title": "Professeur de Mathematiques",
+      "subjectId": "sub_math",
+      "levelIds": [
+        "lvl_l2",
+        "lvl_l3"
+      ],
+      "city": "Conakry",
+      "contractType": "PERMANENT",
+      "description": "L'Universite Gamal Abdel Nasser recrute un enseignant de mathematiques pour les cours d'analyse et d'algebre lineaire en L2 et L3. Charge horaire de 12 heures hebdomadaires, encadrement de travaux diriges et participation aux jurys d'examen.",
+      "salaryMin": 3000000,
+      "salaryMax": 4200000,
+      "salaryPublished": true,
+      "minExperience": 3,
+      "requiresCertification": true,
+      "publishedDaysAgo": 4
+    },
+    {
+      "id": "job_phys_excellence",
+      "institutionId": "inst_excellence",
+      "title": "Enseignant de Physique",
+      "subjectId": "sub_phys",
+      "levelIds": [
+        "lvl_11",
+        "lvl_12"
+      ],
+      "city": "Kankan",
+      "contractType": "FIXED_TERM",
+      "description": "Le Lycee Excellence recherche un enseignant de physique pour les classes de 11eme et 12eme annee, series scientifiques. Preparation aux examens nationaux et animation du laboratoire.",
+      "salaryMin": 2200000,
+      "salaryMax": 2800000,
+      "salaryPublished": true,
+      "minExperience": 2,
+      "requiresCertification": false,
+      "publishedDaysAgo": 5
+    },
+    {
+      "id": "job_chim_kindia",
+      "institutionId": "inst_kindia",
+      "title": "Professeur de Chimie",
+      "subjectId": "sub_chim",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_l2",
+        "lvl_l3"
+      ],
+      "city": "Kindia",
+      "contractType": "PERMANENT",
+      "description": "Poste de professeur de chimie generale et organique, licences scientifiques. Encadrement de travaux pratiques et suivi des memoires de licence.",
+      "salaryMin": 2800000,
+      "salaryMax": 3600000,
+      "salaryPublished": true,
+      "minExperience": 3,
+      "requiresCertification": true,
+      "publishedDaysAgo": 6
+    },
+    {
+      "id": "job_info_cfp",
+      "institutionId": "inst_cfp",
+      "title": "Formateur en Informatique",
+      "subjectId": "sub_info",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_l2"
+      ],
+      "city": "Conakry",
+      "contractType": "HOURLY",
+      "description": "Formation aux bases de la programmation, aux bases de donnees et a la bureautique avancee. Vacations de 15 heures par semaine, possibilite d'evolution vers un contrat permanent.",
+      "salaryMin": 1800000,
+      "salaryMax": 2400000,
+      "salaryPublished": true,
+      "minExperience": 1,
+      "requiresCertification": false,
+      "publishedDaysAgo": 2
+    },
+    {
+      "id": "job_math_ismm",
+      "institutionId": "inst_ismm",
+      "title": "Enseignant-chercheur en Mathematiques appliquees",
+      "subjectId": "sub_math",
+      "levelIds": [
+        "lvl_l3",
+        "lvl_m1"
+      ],
+      "city": "Boke",
+      "contractType": "PERMANENT",
+      "description": "Enseignement des mathematiques appliquees a la geologie et aux mines. Statistiques, modelisation et analyse numerique. Participation aux projets de recherche de l'institut.",
+      "salaryMin": 3500000,
+      "salaryMax": 4500000,
+      "salaryPublished": true,
+      "minExperience": 5,
+      "requiresCertification": true,
+      "publishedDaysAgo": 8
+    },
+    {
+      "id": "job_fran_excellence",
+      "institutionId": "inst_excellence",
+      "title": "Professeur de Francais",
+      "subjectId": "sub_fran",
+      "levelIds": [
+        "lvl_lycee"
+      ],
+      "city": "Kankan",
+      "contractType": "FIXED_TERM",
+      "description": "Enseignement du francais au lycee : litterature, expression ecrite et preparation au baccalaureat. Remplacement d'un an renouvelable.",
+      "salaryMin": 2000000,
+      "salaryMax": 2500000,
+      "salaryPublished": false,
+      "minExperience": 2,
+      "requiresCertification": false,
+      "publishedDaysAgo": 11
+    },
+    {
+      "id": "job_angl_gamal",
+      "institutionId": "inst_gamal",
+      "title": "Enseignant d'Anglais",
+      "subjectId": "sub_angl",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_l2"
+      ],
+      "city": "Conakry",
+      "contractType": "HOURLY",
+      "description": "Cours d'anglais general et d'anglais de specialite pour les filieres scientifiques. Vacations reparties sur trois jours par semaine.",
+      "salaryMin": 1500000,
+      "salaryMax": 2000000,
+      "salaryPublished": true,
+      "minExperience": 1,
+      "requiresCertification": false,
+      "publishedDaysAgo": 1
+    },
+    {
+      "id": "job_math_unc",
+      "institutionId": "inst_unc",
+      "title": "Professeur de Mathematiques",
+      "subjectId": "sub_math",
+      "levelIds": [
+        "lvl_7",
+        "lvl_terminale"
+      ],
+      "city": "Conakry",
+      "contractType": "HOURLY",
+      "description": "Université Nongo Conakry recrute un enseignant de mathematiques. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 3000000,
+      "salaryMax": 3500000,
+      "salaryPublished": true,
+      "minExperience": 1,
+      "requiresCertification": true,
+      "publishedDaysAgo": 5
+    },
+    {
+      "id": "job_fran_gamal",
+      "institutionId": "inst_gamal",
+      "title": "Professeur de Francais",
+      "subjectId": "sub_fran",
+      "levelIds": [
+        "lvl_l3",
+        "lvl_m1"
+      ],
+      "city": "Conakry",
+      "contractType": "FIXED_TERM",
+      "description": "Universite Gamal Abdel Nasser recrute un enseignant de francais. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 2500000,
+      "salaryMax": 3300000,
+      "salaryPublished": true,
+      "minExperience": 0,
+      "requiresCertification": false,
+      "publishedDaysAgo": 17
+    },
+    {
+      "id": "job_angl_excellence",
+      "institutionId": "inst_excellence",
+      "title": "Professeur d’Anglais",
+      "subjectId": "sub_angl",
+      "levelIds": [
+        "lvl_7",
+        "lvl_12"
+      ],
+      "city": "Kankan",
+      "contractType": "PERMANENT",
+      "description": "Lycee Excellence recrute un enseignant de anglais. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 1500000,
+      "salaryMax": 2700000,
+      "salaryPublished": true,
+      "minExperience": 1,
+      "requiresCertification": false,
+      "publishedDaysAgo": 4
+    },
+    {
+      "id": "job_phys_kindia",
+      "institutionId": "inst_kindia",
+      "title": "Professeur de Physique",
+      "subjectId": "sub_phys",
+      "levelIds": [
+        "lvl_l2",
+        "lvl_12"
+      ],
+      "city": "Kindia",
+      "contractType": "HOURLY",
+      "description": "Universite de Kindia recrute un enseignant de physique. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 1500000,
+      "salaryMax": 2300000,
+      "salaryPublished": false,
+      "minExperience": 5,
+      "requiresCertification": true,
+      "publishedDaysAgo": 21
+    },
+    {
+      "id": "job_info_ismm",
+      "institutionId": "inst_ismm",
+      "title": "Enseignant en Informatique",
+      "subjectId": "sub_info",
+      "levelIds": [
+        "lvl_m1",
+        "lvl_terminale"
+      ],
+      "city": "Boke",
+      "contractType": "FIXED_TERM",
+      "description": "Institut Superieur des Mines et Geologie recrute un enseignant de informatique. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 2500000,
+      "salaryMax": 3700000,
+      "salaryPublished": true,
+      "minExperience": 2,
+      "requiresCertification": false,
+      "publishedDaysAgo": 17
+    },
+    {
+      "id": "job_biol_cfp",
+      "institutionId": "inst_cfp",
+      "title": "Professeur de Biologie",
+      "subjectId": "sub_biol",
+      "levelIds": [
+        "lvl_terminale",
+        "lvl_8"
+      ],
+      "city": "Conakry",
+      "contractType": "PERMANENT",
+      "description": "Centre de Formation Professionnelle Sonfonia recrute un enseignant de biologie. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 2500000,
+      "salaryMax": 3300000,
+      "salaryPublished": true,
+      "minExperience": 5,
+      "requiresCertification": false,
+      "publishedDaysAgo": 9
+    },
+    {
+      "id": "job_hist_unc",
+      "institutionId": "inst_unc",
+      "title": "Professeur d’Histoire",
+      "subjectId": "sub_hist",
+      "levelIds": [
+        "lvl_10",
+        "lvl_l2"
+      ],
+      "city": "Conakry",
+      "contractType": "HOURLY",
+      "description": "Université Nongo Conakry recrute un enseignant de histoire. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 2000000,
+      "salaryMax": 3200000,
+      "salaryPublished": true,
+      "minExperience": 2,
+      "requiresCertification": true,
+      "publishedDaysAgo": 12
+    },
+    {
+      "id": "job_econ_gamal",
+      "institutionId": "inst_gamal",
+      "title": "Enseignant en Economie",
+      "subjectId": "sub_econ",
+      "levelIds": [
+        "lvl_l2",
+        "lvl_terminale"
+      ],
+      "city": "Conakry",
+      "contractType": "PERMANENT",
+      "description": "Universite Gamal Abdel Nasser recrute un enseignant de economie. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 2500000,
+      "salaryMax": 3000000,
+      "salaryPublished": false,
+      "minExperience": 0,
+      "requiresCertification": false,
+      "publishedDaysAgo": 10
+    },
+    {
+      "id": "job_chim_excellence",
+      "institutionId": "inst_excellence",
+      "title": "Professeur de Chimie",
+      "subjectId": "sub_chim",
+      "levelIds": [
+        "lvl_l3",
+        "lvl_12"
+      ],
+      "city": "Kankan",
+      "contractType": "PERMANENT",
+      "description": "Lycee Excellence recrute un enseignant de chimie. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 1500000,
+      "salaryMax": 2700000,
+      "salaryPublished": true,
+      "minExperience": 0,
+      "requiresCertification": false,
+      "publishedDaysAgo": 12
+    },
+    {
+      "id": "job_philo_kindia",
+      "institutionId": "inst_kindia",
+      "title": "Professeur de Philosophie",
+      "subjectId": "sub_philo",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_l3"
+      ],
+      "city": "Kindia",
+      "contractType": "HOURLY",
+      "description": "Universite de Kindia recrute un enseignant de philosophie. Charge horaire a convenir, encadrement des travaux diriges et participation aux jurys.",
+      "salaryMin": 2500000,
+      "salaryMax": 3000000,
+      "salaryPublished": true,
+      "minExperience": 1,
+      "requiresCertification": true,
+      "publishedDaysAgo": 13
+    }
+  ],
+  "demoTeachers": [
+    {
+      "id": "tch_mamadou",
+      "firstName": "Mamadou",
+      "lastName": "Diallo",
+      "phone": "+224620000101",
+      "city": "Conakry",
+      "headline": "Enseignant en Mathematiques",
+      "bio": "Enseignant de mathematiques depuis 5 ans, specialise en analyse et algebre lineaire pour les cycles universitaires.",
+      "yearsExperience": 5,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE",
+        "HIGH_SCHOOL"
+      ],
+      "subjects": [
+        "sub_math"
+      ],
+      "levels": [
+        [
+          "sub_math",
+          "lvl_l1"
+        ],
+        [
+          "sub_math",
+          "lvl_l2"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_math",
+          "levelId": "lvl_l1",
+          "score": 91
+        },
+        {
+          "subjectId": "sub_math",
+          "levelId": "lvl_l2",
+          "score": 86
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Lycee Donka",
+          "position": "Professeur de Mathematiques",
+          "city": "Conakry",
+          "startYear": 2021,
+          "endYear": 2024,
+          "verified": true
+        },
+        {
+          "institutionName": "Universite Gamal Abdel Nasser",
+          "position": "Vacataire en Analyse",
+          "city": "Conakry",
+          "startYear": 2024,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_ibrahima",
+      "firstName": "Ibrahima",
+      "lastName": "Bah",
+      "phone": "+224620000102",
+      "city": "Conakry",
+      "headline": "Enseignant en Mathematiques et Physique",
+      "bio": "Titulaire d'un master en mathematiques appliquees, trois ans d'experience en licence scientifique.",
+      "yearsExperience": 3,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE"
+      ],
+      "subjects": [
+        "sub_math",
+        "sub_phys"
+      ],
+      "levels": [
+        [
+          "sub_math",
+          "lvl_l1"
+        ],
+        [
+          "sub_phys",
+          "lvl_l1"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_math",
+          "levelId": "lvl_l1",
+          "score": 87
+        },
+        {
+          "subjectId": "sub_phys",
+          "levelId": "lvl_l1",
+          "score": 78
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Institut Superieur de Technologie",
+          "position": "Assistant en Mathematiques",
+          "city": "Conakry",
+          "startYear": 2022,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_fatoumata",
+      "firstName": "Fatoumata",
+      "lastName": "Camara",
+      "phone": "+224620000103",
+      "city": "Kankan",
+      "headline": "Enseignante de Physique-Chimie",
+      "bio": "Sept ans d'enseignement au lycee, preparation aux examens nationaux et encadrement de laboratoire.",
+      "yearsExperience": 7,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "SCHOOL"
+      ],
+      "subjects": [
+        "sub_phys",
+        "sub_chim"
+      ],
+      "levels": [
+        [
+          "sub_phys",
+          "lvl_11"
+        ],
+        [
+          "sub_phys",
+          "lvl_12"
+        ],
+        [
+          "sub_chim",
+          "lvl_lycee"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_phys",
+          "levelId": "lvl_12",
+          "score": 82
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Lycee Excellence",
+          "position": "Professeur de Physique-Chimie",
+          "city": "Kankan",
+          "startYear": 2018,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_aissatou",
+      "firstName": "Aissatou",
+      "lastName": "Barry",
+      "phone": "+224620000104",
+      "city": "Conakry",
+      "headline": "Formatrice en Informatique",
+      "bio": "Developpeuse et formatrice, specialisee en programmation et bases de donnees.",
+      "yearsExperience": 4,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "TRAINING_CENTER",
+        "INSTITUTE",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_info"
+      ],
+      "levels": [
+        [
+          "sub_info",
+          "lvl_l1"
+        ],
+        [
+          "sub_info",
+          "lvl_l2"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_info",
+          "levelId": "lvl_l1",
+          "score": 88
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Centre de Formation Professionnelle Sonfonia",
+          "position": "Formatrice",
+          "city": "Conakry",
+          "startYear": 2021,
+          "endYear": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_ousmane",
+      "firstName": "Ousmane",
+      "lastName": "Sylla",
+      "phone": "+224620000105",
+      "city": "Kindia",
+      "headline": "Professeur de Chimie",
+      "bio": "Docteur en chimie organique, six ans d'enseignement universitaire et encadrement de memoires.",
+      "yearsExperience": 6,
+      "availability": "AVAILABLE_SOON",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE"
+      ],
+      "subjects": [
+        "sub_chim"
+      ],
+      "levels": [
+        [
+          "sub_chim",
+          "lvl_l1"
+        ],
+        [
+          "sub_chim",
+          "lvl_l2"
+        ],
+        [
+          "sub_chim",
+          "lvl_l3"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_chim",
+          "levelId": "lvl_l1",
+          "score": 93
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Universite de Kindia",
+          "position": "Maitre-assistant",
+          "city": "Kindia",
+          "startYear": 2019,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_mariama",
+      "firstName": "Mariama",
+      "lastName": "Conde",
+      "phone": "+224620000106",
+      "city": "Conakry",
+      "headline": "Professeure de Francais",
+      "bio": "Agregee de lettres modernes, huit ans d'experience en lycee et en classes preparatoires.",
+      "yearsExperience": 8,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_fran"
+      ],
+      "levels": [
+        [
+          "sub_fran",
+          "lvl_lycee"
+        ],
+        [
+          "sub_fran",
+          "lvl_l1"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_fran",
+          "levelId": "lvl_lycee",
+          "score": 90
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Lycee Sainte-Marie",
+          "position": "Professeure de Francais",
+          "city": "Conakry",
+          "startYear": 2017,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_sekou",
+      "firstName": "Sekou",
+      "lastName": "Toure",
+      "phone": "+224620000107",
+      "city": "Labe",
+      "headline": "Enseignant de Mathematiques",
+      "bio": "Enseignant au college et au lycee, deux ans d'experience, en cours de certification universitaire.",
+      "yearsExperience": 2,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "HIGH_SCHOOL"
+      ],
+      "subjects": [
+        "sub_math"
+      ],
+      "levels": [
+        [
+          "sub_math",
+          "lvl_college"
+        ],
+        [
+          "sub_math",
+          "lvl_lycee"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_math",
+          "levelId": "lvl_lycee",
+          "score": 74
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "College Moderne de Labe",
+          "position": "Enseignant",
+          "city": "Labe",
+          "startYear": 2023,
+          "endYear": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_kadiatou",
+      "firstName": "Kadiatou",
+      "lastName": "Sow",
+      "phone": "+224620000108",
+      "city": "Conakry",
+      "headline": "Enseignante d'Anglais",
+      "bio": "Licence d'anglais, quatre ans d'enseignement en lycee et en centre de langues.",
+      "yearsExperience": 4,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "TRAINING_CENTER",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_angl"
+      ],
+      "levels": [
+        [
+          "sub_angl",
+          "lvl_lycee"
+        ],
+        [
+          "sub_angl",
+          "lvl_l1"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_angl",
+          "levelId": "lvl_lycee",
+          "score": 85
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Lycee Gbessia",
+          "position": "Professeure d'Anglais",
+          "city": "Conakry",
+          "startYear": 2021,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_fatoumata_dioubate",
+      "firstName": "Fatoumata",
+      "lastName": "Dioubate",
+      "phone": "+224623000200",
+      "city": "Conakry",
+      "headline": "Enseignante en Sciences politiques",
+      "bio": "6 ans d’enseignement en sciences politiques a Conakry. Travail centre sur la travaux diriges.",
+      "yearsExperience": 6,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_spol",
+        "sub_mark"
+      ],
+      "levels": [
+        [
+          "sub_spol",
+          "lvl_m2"
+        ],
+        [
+          "sub_spol",
+          "lvl_l2"
+        ],
+        [
+          "sub_spol",
+          "lvl_l1"
+        ],
+        [
+          "sub_mark",
+          "lvl_l1"
+        ],
+        [
+          "sub_mark",
+          "lvl_l2"
+        ],
+        [
+          "sub_mark",
+          "lvl_m2"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_spol",
+          "levelId": "lvl_m2",
+          "score": 90
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Lycee Sainte-Therese",
+          "position": "Professeur de Sciences politiques",
+          "city": "Conakry",
+          "startYear": 2020,
+          "endYear": 2023,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_sekou_cisse",
+      "firstName": "Sekou",
+      "lastName": "Cisse",
+      "phone": "+224623000201",
+      "city": "Conakry",
+      "headline": "Enseignant en Télécommunications",
+      "bio": "18 ans d’enseignement en télécommunications a Conakry. Travail centre sur la remise a niveau.",
+      "yearsExperience": 18,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE"
+      ],
+      "subjects": [
+        "sub_tele"
+      ],
+      "levels": [
+        [
+          "sub_tele",
+          "lvl_l2"
+        ],
+        [
+          "sub_tele",
+          "lvl_l3"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Universite Gamal Abdel Nasser",
+          "position": "Professeur de Télécommunications",
+          "city": "Conakry",
+          "startYear": 2008,
+          "endYear": 2017,
+          "verified": true
+        },
+        {
+          "institutionName": "College Sainte-Marie",
+          "position": "Enseignant de Télécommunications",
+          "city": "Conakry",
+          "startYear": 2017,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_kadiatou_bah",
+      "firstName": "Kadiatou",
+      "lastName": "Bah",
+      "phone": "+224623000202",
+      "city": "Conakry",
+      "headline": "Enseignante en Génie électrique",
+      "bio": "6 ans d’enseignement en génie électrique a Conakry. Travail centre sur la travaux diriges.",
+      "yearsExperience": 6,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "NONE",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "TRAINING_CENTER"
+      ],
+      "subjects": [
+        "sub_gele"
+      ],
+      "levels": [
+        [
+          "sub_gele",
+          "lvl_l1"
+        ],
+        [
+          "sub_gele",
+          "lvl_m2"
+        ],
+        [
+          "sub_gele",
+          "lvl_l2"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_gele",
+          "levelId": "lvl_l1",
+          "score": 84
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Centre de Formation Sonfonia",
+          "position": "Professeur de Génie électrique",
+          "city": "Conakry",
+          "startYear": 2020,
+          "endYear": 2023,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_thierno_keita",
+      "firstName": "Thierno",
+      "lastName": "Keita",
+      "phone": "+224623000203",
+      "city": "Conakry",
+      "headline": "Enseignant en Génie civil",
+      "bio": "14 ans d’enseignement en génie civil a Conakry. Travail centre sur la methode de travail.",
+      "yearsExperience": 14,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE"
+      ],
+      "subjects": [
+        "sub_gciv",
+        "sub_econ"
+      ],
+      "levels": [
+        [
+          "sub_gciv",
+          "lvl_l1"
+        ],
+        [
+          "sub_gciv",
+          "lvl_l3"
+        ],
+        [
+          "sub_econ",
+          "lvl_terminale"
+        ],
+        [
+          "sub_econ",
+          "lvl_m2"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Lycee Donka",
+          "position": "Professeur de Génie civil",
+          "city": "Conakry",
+          "startYear": 2012,
+          "endYear": 2019,
+          "verified": true
+        },
+        {
+          "institutionName": "Groupe scolaire La Reference",
+          "position": "Enseignant de Génie civil",
+          "city": "Conakry",
+          "startYear": 2019,
+          "endYear": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_nene_balde",
+      "firstName": "Nene",
+      "lastName": "Balde",
+      "phone": "+224623000204",
+      "city": "Conakry",
+      "headline": "Enseignante en Marketing",
+      "bio": "11 ans d’enseignement en marketing a Conakry. Travail centre sur la preparation aux examens.",
+      "yearsExperience": 11,
+      "availability": "AVAILABLE",
+      "identityStatus": "PENDING",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_mark"
+      ],
+      "levels": [
+        [
+          "sub_mark",
+          "lvl_l1"
+        ],
+        [
+          "sub_mark",
+          "lvl_m2"
+        ],
+        [
+          "sub_mark",
+          "lvl_l3"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_mark",
+          "levelId": "lvl_l1",
+          "score": 72
+        },
+        {
+          "subjectId": "sub_mark",
+          "levelId": "lvl_m2",
+          "score": 78
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Universite Gamal Abdel Nasser",
+          "position": "Professeur de Marketing",
+          "city": "Conakry",
+          "startYear": 2015,
+          "endYear": 2020,
+          "verified": true
+        },
+        {
+          "institutionName": "College Sainte-Marie",
+          "position": "Enseignant de Marketing",
+          "city": "Conakry",
+          "startYear": 2020,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_mamadou_yansane",
+      "firstName": "Mamadou",
+      "lastName": "Yansane",
+      "phone": "+224623000205",
+      "city": "Conakry",
+      "headline": "Enseignant en Gestion",
+      "bio": "3 ans d’enseignement en gestion a Conakry. Travail centre sur la exercices et corriges commentes.",
+      "yearsExperience": 3,
+      "availability": "AVAILABLE_SOON",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "NONE",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_gest"
+      ],
+      "levels": [
+        [
+          "sub_gest",
+          "lvl_m2"
+        ],
+        [
+          "sub_gest",
+          "lvl_m1"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Universite de Kindia",
+          "position": "Professeur de Gestion",
+          "city": "Conakry",
+          "startYear": 2023,
+          "endYear": 2024,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_binta_sow",
+      "firstName": "Binta",
+      "lastName": "Sow",
+      "phone": "+224623000206",
+      "city": "Conakry",
+      "headline": "Enseignante en Pharmacie",
+      "bio": "12 ans d’enseignement en pharmacie a Conakry. Travail centre sur la methode de travail.",
+      "yearsExperience": 12,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "TRAINING_CENTER"
+      ],
+      "subjects": [
+        "sub_phar",
+        "sub_geol"
+      ],
+      "levels": [
+        [
+          "sub_phar",
+          "lvl_m1"
+        ],
+        [
+          "sub_phar",
+          "lvl_m2"
+        ],
+        [
+          "sub_phar",
+          "lvl_l2"
+        ],
+        [
+          "sub_geol",
+          "lvl_11"
+        ],
+        [
+          "sub_geol",
+          "lvl_l2"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_phar",
+          "levelId": "lvl_m1",
+          "score": 90
+        },
+        {
+          "subjectId": "sub_phar",
+          "levelId": "lvl_m2",
+          "score": 84
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Ecole Internationale de Conakry",
+          "position": "Professeur de Pharmacie",
+          "city": "Conakry",
+          "startYear": 2014,
+          "endYear": 2020,
+          "verified": true
+        },
+        {
+          "institutionName": "Complexe scolaire Les Lauriers",
+          "position": "Enseignant de Pharmacie",
+          "city": "Conakry",
+          "startYear": 2020,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_amadou_diallo",
+      "firstName": "Amadou",
+      "lastName": "Diallo",
+      "phone": "+224623000207",
+      "city": "Conakry",
+      "headline": "Enseignant en Médecine",
+      "bio": "18 ans d’enseignement en médecine a Conakry. Travail centre sur la exercices et corriges commentes.",
+      "yearsExperience": 18,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_medc"
+      ],
+      "levels": [
+        [
+          "sub_medc",
+          "lvl_l3"
+        ],
+        [
+          "sub_medc",
+          "lvl_l1"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Lycee de Kipe",
+          "position": "Professeur de Médecine",
+          "city": "Conakry",
+          "startYear": 2008,
+          "endYear": 2017,
+          "verified": true
+        },
+        {
+          "institutionName": "Groupe scolaire La Reference",
+          "position": "Enseignant de Médecine",
+          "city": "Conakry",
+          "startYear": 2017,
+          "endYear": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_adama_sow",
+      "firstName": "Adama",
+      "lastName": "Sow",
+      "phone": "+224623000208",
+      "city": "Conakry",
+      "headline": "Enseignante en Éducation physique et sportive",
+      "bio": "6 ans d’enseignement en éducation physique et sportive a Conakry. Travail centre sur la preparation aux examens.",
+      "yearsExperience": 6,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "NONE",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "TRAINING_CENTER"
+      ],
+      "subjects": [
+        "sub_eps"
+      ],
+      "levels": [
+        [
+          "sub_eps",
+          "lvl_9"
+        ],
+        [
+          "sub_eps",
+          "lvl_8"
+        ],
+        [
+          "sub_eps",
+          "lvl_terminale"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_eps",
+          "levelId": "lvl_9",
+          "score": 88
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Universite de Kindia",
+          "position": "Professeur de Éducation physique et sportive",
+          "city": "Conakry",
+          "startYear": 2020,
+          "endYear": 2023,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_lansana_sow",
+      "firstName": "Lansana",
+      "lastName": "Sow",
+      "phone": "+224623000209",
+      "city": "Conakry",
+      "headline": "Enseignant en Éducation civique et morale",
+      "bio": "11 ans d’enseignement en éducation civique et morale a Conakry. Travail centre sur la preparation aux examens.",
+      "yearsExperience": 11,
+      "availability": "AVAILABLE",
+      "identityStatus": "PENDING",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "HIGH_SCHOOL"
+      ],
+      "subjects": [
+        "sub_ecm",
+        "sub_philo"
+      ],
+      "levels": [
+        [
+          "sub_ecm",
+          "lvl_12"
+        ],
+        [
+          "sub_ecm",
+          "lvl_7"
+        ],
+        [
+          "sub_ecm",
+          "lvl_11"
+        ],
+        [
+          "sub_philo",
+          "lvl_11"
+        ],
+        [
+          "sub_philo",
+          "lvl_l1"
+        ],
+        [
+          "sub_philo",
+          "lvl_12"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Lycee Sainte-Therese",
+          "position": "Professeur de Éducation civique et morale",
+          "city": "Conakry",
+          "startYear": 2015,
+          "endYear": 2020,
+          "verified": true
+        },
+        {
+          "institutionName": "Universite Gamal Abdel Nasser",
+          "position": "Enseignant de Éducation civique et morale",
+          "city": "Conakry",
+          "startYear": 2020,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_fatoumata_bangoura",
+      "firstName": "Fatoumata",
+      "lastName": "Bangoura",
+      "phone": "+224623000210",
+      "city": "Conakry",
+      "headline": "Enseignante en Philosophie",
+      "bio": "12 ans d’enseignement en philosophie a Conakry. Travail centre sur la travaux diriges.",
+      "yearsExperience": 12,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE"
+      ],
+      "subjects": [
+        "sub_philo"
+      ],
+      "levels": [
+        [
+          "sub_philo",
+          "lvl_m2"
+        ],
+        [
+          "sub_philo",
+          "lvl_11"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_philo",
+          "levelId": "lvl_m2",
+          "score": 78
+        },
+        {
+          "subjectId": "sub_philo",
+          "levelId": "lvl_11",
+          "score": 84
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Universite Gamal Abdel Nasser",
+          "position": "Professeur de Philosophie",
+          "city": "Conakry",
+          "startYear": 2014,
+          "endYear": 2020,
+          "verified": true
+        },
+        {
+          "institutionName": "Groupe scolaire La Reference",
+          "position": "Enseignant de Philosophie",
+          "city": "Conakry",
+          "startYear": 2020,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_sekou_kaba",
+      "firstName": "Sekou",
+      "lastName": "Kaba",
+      "phone": "+224623000211",
+      "city": "Kindia",
+      "headline": "Enseignant en Geologie",
+      "bio": "14 ans d’enseignement en geologie a Kindia. Travail centre sur la remise a niveau.",
+      "yearsExperience": 14,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "NONE",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE"
+      ],
+      "subjects": [
+        "sub_geol"
+      ],
+      "levels": [
+        [
+          "sub_geol",
+          "lvl_12"
+        ],
+        [
+          "sub_geol",
+          "lvl_m1"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Ecole Internationale de Conakry",
+          "position": "Professeur de Geologie",
+          "city": "Kindia",
+          "startYear": 2012,
+          "endYear": 2019,
+          "verified": false
+        },
+        {
+          "institutionName": "Lycee 2 Octobre",
+          "position": "Enseignant de Geologie",
+          "city": "Kindia",
+          "startYear": 2019,
+          "endYear": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_saran_soumah",
+      "firstName": "Saran",
+      "lastName": "Soumah",
+      "phone": "+224623000212",
+      "city": "Kankan",
+      "headline": "Enseignante en Biologie",
+      "bio": "9 ans d’enseignement en biologie a Kankan. Travail centre sur la exercices et corriges commentes.",
+      "yearsExperience": 9,
+      "availability": "AVAILABLE_SOON",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "TRAINING_CENTER"
+      ],
+      "subjects": [
+        "sub_biol",
+        "sub_phar"
+      ],
+      "levels": [
+        [
+          "sub_biol",
+          "lvl_m1"
+        ],
+        [
+          "sub_biol",
+          "lvl_terminale"
+        ],
+        [
+          "sub_biol",
+          "lvl_8"
+        ],
+        [
+          "sub_phar",
+          "lvl_m1"
+        ],
+        [
+          "sub_phar",
+          "lvl_l2"
+        ],
+        [
+          "sub_phar",
+          "lvl_l1"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_biol",
+          "levelId": "lvl_m1",
+          "score": 81
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Universite Gamal Abdel Nasser",
+          "position": "Professeur de Biologie",
+          "city": "Kankan",
+          "startYear": 2017,
+          "endYear": 2021,
+          "verified": true
+        },
+        {
+          "institutionName": "Institut Superieur de Technologie",
+          "position": "Enseignant de Biologie",
+          "city": "Kankan",
+          "startYear": 2021,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_facinet_sidibe",
+      "firstName": "Facinet",
+      "lastName": "Sidibe",
+      "phone": "+224623000213",
+      "city": "Labe",
+      "headline": "Enseignant en Geographie",
+      "bio": "15 ans d’enseignement en geographie a Labe. Travail centre sur la travaux diriges.",
+      "yearsExperience": 15,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "HIGH_SCHOOL"
+      ],
+      "subjects": [
+        "sub_geog"
+      ],
+      "levels": [
+        [
+          "sub_geog",
+          "lvl_terminale"
+        ],
+        [
+          "sub_geog",
+          "lvl_8"
+        ],
+        [
+          "sub_geog",
+          "lvl_l3"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Groupe scolaire La Reference",
+          "position": "Professeur de Geographie",
+          "city": "Labe",
+          "startYear": 2011,
+          "endYear": 2018,
+          "verified": true
+        },
+        {
+          "institutionName": "Ecole Internationale de Conakry",
+          "position": "Enseignant de Geographie",
+          "city": "Labe",
+          "startYear": 2018,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_binta_doumbouya",
+      "firstName": "Binta",
+      "lastName": "Doumbouya",
+      "phone": "+224623000214",
+      "city": "Nzerekore",
+      "headline": "Enseignante en Histoire",
+      "bio": "13 ans d’enseignement en histoire a Nzerekore. Travail centre sur la methode de travail.",
+      "yearsExperience": 13,
+      "availability": "AVAILABLE",
+      "identityStatus": "PENDING",
+      "diplomaStatus": "NONE",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "TRAINING_CENTER"
+      ],
+      "subjects": [
+        "sub_hist"
+      ],
+      "levels": [
+        [
+          "sub_hist",
+          "lvl_l1"
+        ],
+        [
+          "sub_hist",
+          "lvl_m1"
+        ],
+        [
+          "sub_hist",
+          "lvl_9"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_hist",
+          "levelId": "lvl_l1",
+          "score": 90
+        },
+        {
+          "subjectId": "sub_hist",
+          "levelId": "lvl_m1",
+          "score": 93
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Lycee de Matoto",
+          "position": "Professeur de Histoire",
+          "city": "Nzerekore",
+          "startYear": 2013,
+          "endYear": 2019,
+          "verified": false
+        },
+        {
+          "institutionName": "Lycee de Matoto",
+          "position": "Enseignant de Histoire",
+          "city": "Nzerekore",
+          "startYear": 2019,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_facinet_soumah",
+      "firstName": "Facinet",
+      "lastName": "Soumah",
+      "phone": "+224623000215",
+      "city": "Boke",
+      "headline": "Enseignant en Droit",
+      "bio": "4 ans d’enseignement en droit a Boke. Travail centre sur la accompagnement regulier.",
+      "yearsExperience": 4,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE"
+      ],
+      "subjects": [
+        "sub_droi",
+        "sub_geol"
+      ],
+      "levels": [
+        [
+          "sub_droi",
+          "lvl_l2"
+        ],
+        [
+          "sub_droi",
+          "lvl_l1"
+        ],
+        [
+          "sub_geol",
+          "lvl_terminale"
+        ],
+        [
+          "sub_geol",
+          "lvl_m2"
+        ],
+        [
+          "sub_geol",
+          "lvl_11"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Lycee Donka",
+          "position": "Professeur de Droit",
+          "city": "Boke",
+          "startYear": 2022,
+          "endYear": 2024,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_mariama_traore",
+      "firstName": "Mariama",
+      "lastName": "Traore",
+      "phone": "+224623000216",
+      "city": "Mamou",
+      "headline": "Enseignante en Comptabilite",
+      "bio": "2 ans d’enseignement en comptabilite a Mamou. Travail centre sur la preparation aux examens.",
+      "yearsExperience": 2,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_comp"
+      ],
+      "levels": [
+        [
+          "sub_comp",
+          "lvl_l2"
+        ],
+        [
+          "sub_comp",
+          "lvl_terminale"
+        ],
+        [
+          "sub_comp",
+          "lvl_m2"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_comp",
+          "levelId": "lvl_l2",
+          "score": 81
+        },
+        {
+          "subjectId": "sub_comp",
+          "levelId": "lvl_terminale",
+          "score": 90
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "College Bonfi",
+          "position": "Professeur de Comptabilite",
+          "city": "Mamou",
+          "startYear": 2024,
+          "endYear": 2025,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_lansana_yansane",
+      "firstName": "Lansana",
+      "lastName": "Yansane",
+      "phone": "+224623000217",
+      "city": "Faranah",
+      "headline": "Enseignant en Economie",
+      "bio": "13 ans d’enseignement en economie a Faranah. Travail centre sur la exercices et corriges commentes.",
+      "yearsExperience": 13,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "NONE",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "TRAINING_CENTER"
+      ],
+      "subjects": [
+        "sub_econ"
+      ],
+      "levels": [
+        [
+          "sub_econ",
+          "lvl_l2"
+        ],
+        [
+          "sub_econ",
+          "lvl_m1"
+        ],
+        [
+          "sub_econ",
+          "lvl_m2"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Lycee de Matoto",
+          "position": "Professeur de Economie",
+          "city": "Faranah",
+          "startYear": 2013,
+          "endYear": 2019,
+          "verified": false
+        },
+        {
+          "institutionName": "Complexe scolaire Les Lauriers",
+          "position": "Enseignant de Economie",
+          "city": "Faranah",
+          "startYear": 2019,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_oumou_cisse",
+      "firstName": "Oumou",
+      "lastName": "Cisse",
+      "phone": "+224623000218",
+      "city": "Siguiri",
+      "headline": "Enseignante en Informatique",
+      "bio": "2 ans d’enseignement en informatique a Siguiri. Travail centre sur la accompagnement regulier.",
+      "yearsExperience": 2,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "SCHOOL",
+        "HIGH_SCHOOL"
+      ],
+      "subjects": [
+        "sub_info",
+        "sub_ecm"
+      ],
+      "levels": [
+        [
+          "sub_info",
+          "lvl_l2"
+        ],
+        [
+          "sub_info",
+          "lvl_l3"
+        ],
+        [
+          "sub_info",
+          "lvl_m1"
+        ],
+        [
+          "sub_ecm",
+          "lvl_7"
+        ],
+        [
+          "sub_ecm",
+          "lvl_11"
+        ],
+        [
+          "sub_ecm",
+          "lvl_terminale"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_info",
+          "levelId": "lvl_l2",
+          "score": 88
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Universite Gamal Abdel Nasser",
+          "position": "Professeur de Informatique",
+          "city": "Siguiri",
+          "startYear": 2024,
+          "endYear": 2025,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_ibrahima_conde",
+      "firstName": "Ibrahima",
+      "lastName": "Conde",
+      "phone": "+224623000219",
+      "city": "Kissidougou",
+      "headline": "Enseignant en Anglais",
+      "bio": "18 ans d’enseignement en anglais a Kissidougou. Travail centre sur la preparation aux examens.",
+      "yearsExperience": 18,
+      "availability": "AVAILABLE_SOON",
+      "identityStatus": "PENDING",
+      "diplomaStatus": "PENDING",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_angl"
+      ],
+      "levels": [
+        [
+          "sub_angl",
+          "lvl_9"
+        ],
+        [
+          "sub_angl",
+          "lvl_l2"
+        ],
+        [
+          "sub_angl",
+          "lvl_11"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Complexe scolaire Les Lauriers",
+          "position": "Professeur de Anglais",
+          "city": "Kissidougou",
+          "startYear": 2008,
+          "endYear": 2017,
+          "verified": true
+        },
+        {
+          "institutionName": "Lycee Sainte-Therese",
+          "position": "Enseignant de Anglais",
+          "city": "Kissidougou",
+          "startYear": 2017,
+          "endYear": null,
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "tch_hawa_traore",
+      "firstName": "Hawa",
+      "lastName": "Traore",
+      "phone": "+224623000220",
+      "city": "Coyah",
+      "headline": "Enseignante en Francais",
+      "bio": "15 ans d’enseignement en francais a Coyah. Travail centre sur la exercices et corriges commentes.",
+      "yearsExperience": 15,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "NONE",
+      "preferredInstitutionTypes": [
+        "HIGH_SCHOOL",
+        "UNIVERSITY"
+      ],
+      "subjects": [
+        "sub_fran"
+      ],
+      "levels": [
+        [
+          "sub_fran",
+          "lvl_l1"
+        ],
+        [
+          "sub_fran",
+          "lvl_m2"
+        ],
+        [
+          "sub_fran",
+          "lvl_terminale"
+        ]
+      ],
+      "certifications": [
+        {
+          "subjectId": "sub_fran",
+          "levelId": "lvl_l1",
+          "score": 90
+        },
+        {
+          "subjectId": "sub_fran",
+          "levelId": "lvl_m2",
+          "score": 81
+        }
+      ],
+      "experiences": [
+        {
+          "institutionName": "Ecole Internationale de Conakry",
+          "position": "Professeur de Francais",
+          "city": "Coyah",
+          "startYear": 2011,
+          "endYear": 2018,
+          "verified": false
+        },
+        {
+          "institutionName": "Universite de Kindia",
+          "position": "Enseignant de Francais",
+          "city": "Coyah",
+          "startYear": 2018,
+          "endYear": null,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "tch_mamadou_diakite",
+      "firstName": "Mamadou",
+      "lastName": "Diakite",
+      "phone": "+224623000221",
+      "city": "Dubreka",
+      "headline": "Enseignant en Chimie",
+      "bio": "5 ans d’enseignement en chimie a Dubreka. Travail centre sur la exercices et corriges commentes.",
+      "yearsExperience": 5,
+      "availability": "AVAILABLE",
+      "identityStatus": "VERIFIED",
+      "diplomaStatus": "VERIFIED",
+      "preferredInstitutionTypes": [
+        "UNIVERSITY",
+        "INSTITUTE"
+      ],
+      "subjects": [
+        "sub_chim",
+        "sub_droi"
+      ],
+      "levels": [
+        [
+          "sub_chim",
+          "lvl_terminale"
+        ],
+        [
+          "sub_chim",
+          "lvl_l2"
+        ],
+        [
+          "sub_droi",
+          "lvl_m2"
+        ],
+        [
+          "sub_droi",
+          "lvl_l1"
+        ]
+      ],
+      "certifications": [],
+      "experiences": [
+        {
+          "institutionName": "Complexe scolaire Les Lauriers",
+          "position": "Professeur de Chimie",
+          "city": "Dubreka",
+          "startYear": 2021,
+          "endYear": 2023,
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "tutoringServices": [
+    {
+      "id": "tut_mamadou_math",
+      "teacherId": "tch_mamadou",
+      "subjectId": "sub_math",
+      "levelIds": [
+        "lvl_lycee",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 60000,
+      "city": "Conakry",
+      "districts": [
+        "Ratoma",
+        "Kaloum",
+        "Dixinn"
+      ],
+      "availabilityNote": "Mercredi après-midi, samedi matin",
+      "description": "Préparation au bac : méthode, exercices types, corrigés commentés."
+    },
+    {
+      "id": "tut_mariama_fran",
+      "teacherId": "tch_mariama",
+      "subjectId": "sub_fran",
+      "levelIds": [
+        "lvl_lycee",
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 50000,
+      "city": "Conakry",
+      "districts": [
+        "Ratoma",
+        "Matam"
+      ],
+      "availabilityNote": "Samedi et dimanche",
+      "description": "Dissertation, commentaire de texte, expression écrite."
+    },
+    {
+      "id": "tut_kadiatou_angl",
+      "teacherId": "tch_kadiatou",
+      "subjectId": "sub_angl",
+      "levelIds": [
+        "lvl_college",
+        "lvl_lycee"
+      ],
+      "mode": "ONLINE",
+      "hourlyRate": 40000,
+      "city": "Conakry",
+      "districts": [],
+      "availabilityNote": "En soirée, du lundi au jeudi",
+      "description": "Anglais oral et écrit, par appel vidéo."
+    },
+    {
+      "id": "tut_ibrahima_phys",
+      "teacherId": "tch_ibrahima",
+      "subjectId": "sub_phys",
+      "levelIds": [
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "mode": "AT_TEACHER",
+      "hourlyRate": 55000,
+      "city": "Conakry",
+      "districts": [
+        "Matoto"
+      ],
+      "availabilityNote": "Mardi et jeudi, 17 h – 19 h",
+      "description": "Physique au lycée : mécanique, électricité, optique."
+    },
+    {
+      "id": "tut_fatoumata_phys",
+      "teacherId": "tch_fatoumata",
+      "subjectId": "sub_phys",
+      "levelIds": [
+        "lvl_11",
+        "lvl_12"
+      ],
+      "mode": "ONLINE",
+      "hourlyRate": 45000,
+      "city": "Kankan",
+      "districts": [],
+      "availabilityNote": "Tous les soirs apres 17 h",
+      "description": "Cours de physique a domicile : travaux diriges."
+    },
+    {
+      "id": "tut_aissatou_info",
+      "teacherId": "tch_aissatou",
+      "subjectId": "sub_info",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_l2"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 80000,
+      "city": "Conakry",
+      "districts": [
+        "Matoto",
+        "Matam",
+        "Ratoma"
+      ],
+      "availabilityNote": "Tous les soirs apres 17 h",
+      "description": "Cours de informatique a domicile : remise a niveau."
+    },
+    {
+      "id": "tut_ousmane_chim",
+      "teacherId": "tch_ousmane",
+      "subjectId": "sub_chim",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_l2",
+        "lvl_l3"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 50000,
+      "city": "Kindia",
+      "districts": [],
+      "availabilityNote": "Trois soirs par semaine, a convenir",
+      "description": "Cours de chimie a domicile : accompagnement regulier."
+    },
+    {
+      "id": "tut_sekou_math",
+      "teacherId": "tch_sekou",
+      "subjectId": "sub_math",
+      "levelIds": [
+        "lvl_college",
+        "lvl_lycee"
+      ],
+      "mode": "ONLINE",
+      "hourlyRate": 80000,
+      "city": "Labe",
+      "districts": [],
+      "availabilityNote": "Trois soirs par semaine, a convenir",
+      "description": "Cours de mathematiques a domicile : travaux diriges."
+    },
+    {
+      "id": "tut_fatoumata_dioubate_spol",
+      "teacherId": "tch_fatoumata_dioubate",
+      "subjectId": "sub_spol",
+      "levelIds": [
+        "lvl_m2",
+        "lvl_l2",
+        "lvl_l1"
+      ],
+      "mode": "AT_TEACHER",
+      "hourlyRate": 40000,
+      "city": "Conakry",
+      "districts": [
+        "Kaloum",
+        "Matam",
+        "Dixinn"
+      ],
+      "availabilityNote": "Lundi, mardi et jeudi en soiree",
+      "description": "Cours de sciences politiques a domicile : remise a niveau."
+    },
+    {
+      "id": "tut_sekou_cisse_tele",
+      "teacherId": "tch_sekou_cisse",
+      "subjectId": "sub_tele",
+      "levelIds": [
+        "lvl_l2",
+        "lvl_l3"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 70000,
+      "city": "Conakry",
+      "districts": [
+        "Kaloum",
+        "Matam"
+      ],
+      "availabilityNote": "Lundi, mardi et jeudi en soiree",
+      "description": "Cours de télécommunications a domicile : remise a niveau."
+    },
+    {
+      "id": "tut_kadiatou_bah_gele",
+      "teacherId": "tch_kadiatou_bah",
+      "subjectId": "sub_gele",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_m2",
+        "lvl_l2"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 80000,
+      "city": "Conakry",
+      "districts": [
+        "Ratoma",
+        "Dixinn"
+      ],
+      "availabilityNote": "Samedi et dimanche matin",
+      "description": "Cours de génie électrique a domicile : remise a niveau."
+    },
+    {
+      "id": "tut_thierno_keita_gciv",
+      "teacherId": "tch_thierno_keita",
+      "subjectId": "sub_gciv",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_l3"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 50000,
+      "city": "Conakry",
+      "districts": [
+        "Kaloum",
+        "Ratoma",
+        "Dixinn"
+      ],
+      "availabilityNote": "Trois soirs par semaine, a convenir",
+      "description": "Cours de génie civil a domicile : remise a niveau."
+    },
+    {
+      "id": "tut_nene_balde_mark",
+      "teacherId": "tch_nene_balde",
+      "subjectId": "sub_mark",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_m2",
+        "lvl_l3"
+      ],
+      "mode": "AT_TEACHER",
+      "hourlyRate": 80000,
+      "city": "Conakry",
+      "districts": [
+        "Matam",
+        "Kaloum"
+      ],
+      "availabilityNote": "Samedi et dimanche matin",
+      "description": "Cours de marketing a domicile : methode de travail."
+    },
+    {
+      "id": "tut_mamadou_yansane_gest",
+      "teacherId": "tch_mamadou_yansane",
+      "subjectId": "sub_gest",
+      "levelIds": [
+        "lvl_m2",
+        "lvl_m1"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 60000,
+      "city": "Conakry",
+      "districts": [
+        "Ratoma",
+        "Dixinn",
+        "Kaloum"
+      ],
+      "availabilityNote": "Samedi et dimanche matin",
+      "description": "Cours de gestion a domicile : accompagnement regulier."
+    },
+    {
+      "id": "tut_binta_sow_phar",
+      "teacherId": "tch_binta_sow",
+      "subjectId": "sub_phar",
+      "levelIds": [
+        "lvl_m1",
+        "lvl_m2",
+        "lvl_l2"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 80000,
+      "city": "Conakry",
+      "districts": [
+        "Matam",
+        "Dixinn",
+        "Kaloum"
+      ],
+      "availabilityNote": "Trois soirs par semaine, a convenir",
+      "description": "Cours de pharmacie a domicile : accompagnement regulier."
+    },
+    {
+      "id": "tut_amadou_diallo_medc",
+      "teacherId": "tch_amadou_diallo",
+      "subjectId": "sub_medc",
+      "levelIds": [
+        "lvl_l3",
+        "lvl_l1"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 70000,
+      "city": "Conakry",
+      "districts": [
+        "Ratoma",
+        "Kaloum",
+        "Matam"
+      ],
+      "availabilityNote": "Samedi et dimanche matin",
+      "description": "Cours de médecine a domicile : accompagnement regulier."
+    },
+    {
+      "id": "tut_adama_sow_eps",
+      "teacherId": "tch_adama_sow",
+      "subjectId": "sub_eps",
+      "levelIds": [
+        "lvl_9",
+        "lvl_8",
+        "lvl_terminale"
+      ],
+      "mode": "AT_TEACHER",
+      "hourlyRate": 50000,
+      "city": "Conakry",
+      "districts": [
+        "Kaloum",
+        "Dixinn",
+        "Matam"
+      ],
+      "availabilityNote": "Lundi, mardi et jeudi en soiree",
+      "description": "Cours de éducation physique et sportive a domicile : travaux diriges."
+    },
+    {
+      "id": "tut_lansana_sow_ecm",
+      "teacherId": "tch_lansana_sow",
+      "subjectId": "sub_ecm",
+      "levelIds": [
+        "lvl_12",
+        "lvl_7",
+        "lvl_11"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 80000,
+      "city": "Conakry",
+      "districts": [
+        "Ratoma",
+        "Matoto",
+        "Dixinn"
+      ],
+      "availabilityNote": "Lundi, mardi et jeudi en soiree",
+      "description": "Cours de éducation civique et morale a domicile : remise a niveau."
+    },
+    {
+      "id": "tut_fatoumata_bangoura_philo",
+      "teacherId": "tch_fatoumata_bangoura",
+      "subjectId": "sub_philo",
+      "levelIds": [
+        "lvl_m2",
+        "lvl_11"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 40000,
+      "city": "Conakry",
+      "districts": [
+        "Matam",
+        "Kaloum"
+      ],
+      "availabilityNote": "Mercredi apres-midi, samedi matin",
+      "description": "Cours de philosophie a domicile : methode de travail."
+    },
+    {
+      "id": "tut_sekou_kaba_geol",
+      "teacherId": "tch_sekou_kaba",
+      "subjectId": "sub_geol",
+      "levelIds": [
+        "lvl_12",
+        "lvl_m1"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 70000,
+      "city": "Kindia",
+      "districts": [],
+      "availabilityNote": "Tous les soirs apres 17 h",
+      "description": "Cours de geologie a domicile : preparation aux examens."
+    },
+    {
+      "id": "tut_saran_soumah_biol",
+      "teacherId": "tch_saran_soumah",
+      "subjectId": "sub_biol",
+      "levelIds": [
+        "lvl_m1",
+        "lvl_terminale",
+        "lvl_8"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 70000,
+      "city": "Kankan",
+      "districts": [],
+      "availabilityNote": "Lundi, mardi et jeudi en soiree",
+      "description": "Cours de biologie a domicile : methode de travail."
+    },
+    {
+      "id": "tut_facinet_sidibe_geog",
+      "teacherId": "tch_facinet_sidibe",
+      "subjectId": "sub_geog",
+      "levelIds": [
+        "lvl_terminale",
+        "lvl_8",
+        "lvl_l3"
+      ],
+      "mode": "AT_TEACHER",
+      "hourlyRate": 50000,
+      "city": "Labe",
+      "districts": [],
+      "availabilityNote": "Trois soirs par semaine, a convenir",
+      "description": "Cours de geographie a domicile : travaux diriges."
+    },
+    {
+      "id": "tut_binta_doumbouya_hist",
+      "teacherId": "tch_binta_doumbouya",
+      "subjectId": "sub_hist",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_m1",
+        "lvl_9"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 80000,
+      "city": "Nzerekore",
+      "districts": [],
+      "availabilityNote": "Trois soirs par semaine, a convenir",
+      "description": "Cours de histoire a domicile : preparation aux examens."
+    },
+    {
+      "id": "tut_facinet_soumah_droi",
+      "teacherId": "tch_facinet_soumah",
+      "subjectId": "sub_droi",
+      "levelIds": [
+        "lvl_l2",
+        "lvl_l1"
+      ],
+      "mode": "AT_TEACHER",
+      "hourlyRate": 45000,
+      "city": "Boke",
+      "districts": [],
+      "availabilityNote": "Lundi, mardi et jeudi en soiree",
+      "description": "Cours de droit a domicile : preparation aux examens."
+    },
+    {
+      "id": "tut_mariama_traore_comp",
+      "teacherId": "tch_mariama_traore",
+      "subjectId": "sub_comp",
+      "levelIds": [
+        "lvl_l2",
+        "lvl_terminale",
+        "lvl_m2"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 60000,
+      "city": "Mamou",
+      "districts": [],
+      "availabilityNote": "Samedi et dimanche matin",
+      "description": "Cours de comptabilite a domicile : accompagnement regulier."
+    },
+    {
+      "id": "tut_lansana_yansane_econ",
+      "teacherId": "tch_lansana_yansane",
+      "subjectId": "sub_econ",
+      "levelIds": [
+        "lvl_l2",
+        "lvl_m1",
+        "lvl_m2"
+      ],
+      "mode": "AT_TEACHER",
+      "hourlyRate": 50000,
+      "city": "Faranah",
+      "districts": [],
+      "availabilityNote": "Mercredi apres-midi, samedi matin",
+      "description": "Cours de economie a domicile : remise a niveau."
+    },
+    {
+      "id": "tut_oumou_cisse_info",
+      "teacherId": "tch_oumou_cisse",
+      "subjectId": "sub_info",
+      "levelIds": [
+        "lvl_l2",
+        "lvl_l3",
+        "lvl_m1"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 40000,
+      "city": "Siguiri",
+      "districts": [],
+      "availabilityNote": "Lundi, mardi et jeudi en soiree",
+      "description": "Cours de informatique a domicile : exercices et corriges commentes."
+    },
+    {
+      "id": "tut_ibrahima_conde_angl",
+      "teacherId": "tch_ibrahima_conde",
+      "subjectId": "sub_angl",
+      "levelIds": [
+        "lvl_9",
+        "lvl_l2",
+        "lvl_11"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 70000,
+      "city": "Kissidougou",
+      "districts": [],
+      "availabilityNote": "Mercredi apres-midi, samedi matin",
+      "description": "Cours de anglais a domicile : preparation aux examens."
+    },
+    {
+      "id": "tut_hawa_traore_fran",
+      "teacherId": "tch_hawa_traore",
+      "subjectId": "sub_fran",
+      "levelIds": [
+        "lvl_l1",
+        "lvl_m2",
+        "lvl_terminale"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 40000,
+      "city": "Coyah",
+      "districts": [],
+      "availabilityNote": "Mercredi apres-midi, samedi matin",
+      "description": "Cours de francais a domicile : preparation aux examens."
+    },
+    {
+      "id": "tut_mamadou_diakite_chim",
+      "teacherId": "tch_mamadou_diakite",
+      "subjectId": "sub_chim",
+      "levelIds": [
+        "lvl_terminale",
+        "lvl_l2"
+      ],
+      "mode": "AT_STUDENT",
+      "hourlyRate": 50000,
+      "city": "Dubreka",
+      "districts": [],
+      "availabilityNote": "Samedi et dimanche matin",
+      "description": "Cours de chimie a domicile : travaux diriges."
+    }
+  ],
+  "videoCourses": [
+    {
+      "id": "vc_math_fonctions",
+      "teacherId": "tch_mamadou",
+      "subjectId": "sub_math",
+      "title": "Les fonctions affines, de A a Z",
+      "description": "Tout ce qui tombe au bac sur les fonctions affines : reconnaitre, tracer, resoudre. Chaque chapitre se termine par les exercices corriges de l'annee precedente.",
+      "levelIds": [
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "price": 75000,
+      "status": "PUBLISHED",
+      "chapters": [
+        {
+          "title": "Reconnaitre une fonction affine",
+          "description": "On part du graphique plutot que de la formule : c'est ce qu'on voit en premier dans un enonce.",
+          "items": [
+            {
+              "kind": "VIDEO",
+              "title": "La droite et son equation",
+              "durationSeconds": 724
+            },
+            {
+              "kind": "VIDEO",
+              "title": "Trois cas a ne pas confondre",
+              "durationSeconds": 512
+            },
+            {
+              "kind": "DOCUMENT",
+              "title": "Exercices du chapitre 1"
+            }
+          ]
+        },
+        {
+          "title": "Le coefficient directeur",
+          "description": "Calculer la pente a partir de deux points, et lire son signe.",
+          "items": [
+            {
+              "kind": "VIDEO",
+              "title": "Calculer la pente",
+              "durationSeconds": 648
+            },
+            {
+              "kind": "VIDEO",
+              "title": "Signe et sens de variation",
+              "durationSeconds": 431
+            },
+            {
+              "kind": "DOCUMENT",
+              "title": "Corrige detaille"
+            }
+          ]
+        },
+        {
+          "title": "Resoudre une equation du premier degre",
+          "description": "La methode en trois gestes, puis les pieges classiques.",
+          "items": [
+            {
+              "kind": "VIDEO",
+              "title": "La methode",
+              "durationSeconds": 836
+            },
+            {
+              "kind": "VIDEO",
+              "title": "Les pieges du bac",
+              "durationSeconds": 592
+            },
+            {
+              "kind": "DOCUMENT",
+              "title": "Annales 2024 - 2025"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vc_phys_meca",
+      "teacherId": "tch_fatoumata",
+      "subjectId": "sub_phys",
+      "title": "Mecanique : forces et mouvement",
+      "description": "Les trois lois de Newton expliquees avec des objets qu'on a sous la main. Pour la Terminale et la premiere annee d'universite.",
+      "levelIds": [
+        "lvl_terminale",
+        "lvl_l1"
+      ],
+      "price": 60000,
+      "status": "PUBLISHED",
+      "chapters": [
+        {
+          "title": "Forces et equilibre",
+          "description": "Representer les forces avant de calculer quoi que ce soit.",
+          "items": [
+            {
+              "kind": "VIDEO",
+              "title": "Dessiner les forces",
+              "durationSeconds": 701
+            },
+            {
+              "kind": "VIDEO",
+              "title": "Equilibre et resultante nulle",
+              "durationSeconds": 548
+            },
+            {
+              "kind": "DOCUMENT",
+              "title": "Fiche de synthese"
+            }
+          ]
+        },
+        {
+          "title": "Les trois lois de Newton",
+          "description": "Enoncees simplement, puis appliquees a un chariot et a une corde.",
+          "items": [
+            {
+              "kind": "VIDEO",
+              "title": "Premiere et deuxieme loi",
+              "durationSeconds": 912
+            },
+            {
+              "kind": "VIDEO",
+              "title": "Troisieme loi",
+              "durationSeconds": 467
+            },
+            {
+              "kind": "LINK",
+              "title": "Simulation interactive (navigateur)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vc_fran_dissertation",
+      "teacherId": "tch_aissatou",
+      "subjectId": "sub_fran",
+      "title": "Reussir sa dissertation",
+      "description": "Du brouillon au devoir rendu : comment lire un sujet, batir un plan qui tient, et ecrire une introduction qui annonce vraiment le propos.",
+      "levelIds": [
+        "lvl_11",
+        "lvl_12",
+        "lvl_terminale"
+      ],
+      "price": 50000,
+      "status": "PUBLISHED",
+      "chapters": [
+        {
+          "title": "Lire le sujet",
+          "description": "La moitie des copies hors sujet se decide dans les cinq premieres minutes.",
+          "items": [
+            {
+              "kind": "VIDEO",
+              "title": "Reperer les mots qui comptent",
+              "durationSeconds": 603
+            },
+            {
+              "kind": "DOCUMENT",
+              "title": "Vingt sujets a analyser"
+            }
+          ]
+        },
+        {
+          "title": "Batir le plan",
+          "description": "Deux ou trois parties, et pourquoi le choix se fait apres.",
+          "items": [
+            {
+              "kind": "VIDEO",
+              "title": "Du brouillon au plan",
+              "durationSeconds": 775
+            },
+            {
+              "kind": "VIDEO",
+              "title": "Les transitions",
+              "durationSeconds": 388
+            }
+          ]
+        },
+        {
+          "title": "L'introduction et la conclusion",
+          "description": "Les deux paragraphes que le correcteur lit le plus attentivement.",
+          "items": [
+            {
+              "kind": "VIDEO",
+              "title": "Ecrire une introduction",
+              "durationSeconds": 690
+            },
+            {
+              "kind": "DOCUMENT",
+              "title": "Exemples rediges"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "shopItems": [
+    {
+      "id": "lot_forfait_500mo",
+      "name": "Forfait internet 500 Mo",
+      "summary": "La premiere recompense a portee : deux seances suivies suffisent.",
+      "image": "",
+      "pointsPrice": 150,
+      "valueGnf": 7500,
+      "stock": 100,
+      "kind": "DIRECT",
+      "position": 0
+    },
+    {
+      "id": "lot_forfait_1go",
+      "name": "Forfait internet 1 Go",
+      "summary": "De quoi suivre quatre seances en direct, ou telecharger une dizaine de cours video.",
+      "image": "",
+      "pointsPrice": 250,
+      "valueGnf": 15000,
+      "stock": 50,
+      "kind": "DIRECT",
+      "position": 1
+    },
+    {
+      "id": "lot_mois_offert",
+      "name": "Un mois d'abonnement offert",
+      "summary": "Le mois suivant ne vous est pas facture. L'assistant et les cours restent ouverts.",
+      "image": "",
+      "pointsPrice": 400,
+      "valueGnf": 50000,
+      "stock": 30,
+      "kind": "DIRECT",
+      "position": 2
+    },
+    {
+      "id": "lot_seance_offerte",
+      "name": "Une seance en direct offerte",
+      "summary": "Une place dans la seance de votre choix, sans la payer.",
+      "image": "",
+      "pointsPrice": 600,
+      "valueGnf": 40000,
+      "stock": 40,
+      "kind": "DIRECT",
+      "position": 3
+    },
+    {
+      "id": "lot_forfait_3go",
+      "name": "Forfait internet 3 Go",
+      "summary": "De quoi tenir un mois de seances en direct.",
+      "image": "",
+      "pointsPrice": 700,
+      "valueGnf": 45000,
+      "stock": 25,
+      "kind": "DIRECT",
+      "position": 4
+    },
+    {
+      "id": "lot_cours_video",
+      "name": "Un cours video au choix",
+      "summary": "N'importe quel cours du catalogue, jusqu'a 50 000 GNF.",
+      "image": "",
+      "pointsPrice": 800,
+      "valueGnf": 50000,
+      "stock": 20,
+      "kind": "DIRECT",
+      "position": 5
+    },
+    {
+      "id": "lot_galaxy_a5",
+      "name": "Samsung Galaxy A5",
+      "summary": "Telephone Android, ecran 5,2 pouces. Mis au tirage : chaque entree est une chance.",
+      "image": "lot-galaxy-a5",
+      "pointsPrice": 150,
+      "valueGnf": 750000,
+      "stock": 3,
+      "kind": "RAFFLE",
+      "drawsInDays": 30,
+      "position": 6
+    },
+    {
+      "id": "lot_watch_ultra_3",
+      "name": "Apple Watch Ultra 3",
+      "summary": "Montre connectee, bracelet Alpine. Mise au tirage.",
+      "image": "lot-watch-ultra-3",
+      "pointsPrice": 300,
+      "valueGnf": 6500000,
+      "stock": 1,
+      "kind": "RAFFLE",
+      "drawsInDays": 90,
+      "position": 7
+    },
+    {
+      "id": "lot_iphone_15",
+      "name": "iPhone 15",
+      "summary": "128 Go, double capteur photo. Mis au tirage.",
+      "image": "lot-iphone-15",
+      "pointsPrice": 300,
+      "valueGnf": 5000000,
+      "stock": 1,
+      "kind": "RAFFLE",
+      "drawsInDays": 90,
+      "position": 8
+    },
+    {
+      "id": "lot_iphone_17",
+      "name": "iPhone 17",
+      "summary": "128 Go. Le grand tirage de fin d annee.",
+      "image": "lot-iphone-17",
+      "pointsPrice": 500,
+      "valueGnf": 8000000,
+      "stock": 1,
+      "kind": "RAFFLE",
+      "drawsInDays": 180,
+      "position": 9
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo_unc_rentree",
+      "institutionId": "inst_unc",
+      "title": "Inscriptions ouvertes pour la rentree",
+      "message": "Licences en informatique, gestion et droit. Dossiers recus jusqu'au 30 septembre, sur place ou par courriel.",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "promo_excellence_bourses",
+      "institutionId": "inst_excellence",
+      "title": "Dix bourses au merite en Terminale",
+      "message": "Pour les eleves de Kankan et des prefectures voisines. Selection sur les resultats de Premiere et un entretien.",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "promo_cfp_soir",
+      "institutionId": "inst_cfp",
+      "title": "Formations du soir en electricite et froid",
+      "message": "Trois mois, cours de 18 h a 21 h, diplome reconnu. Pensees pour ceux qui travaillent la journee.",
+      "status": "ACTIVE"
+    }
+  ]
+}

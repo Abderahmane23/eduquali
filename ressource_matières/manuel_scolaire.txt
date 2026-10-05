@@ -1,0 +1,87 @@
+Pour le collège guinéen, il n’existe pas actuellement de **liste nationale unique, récente et facilement accessible en ligne** qui permette d’affirmer qu’un même manuel est obligatoire dans tous les établissements. Les programmes INRAP et les manuels diffusés dans les écoles coexistent avec des ressources complémentaires ; cette situation est appelée à évoluer puisque la réforme des programmes du secondaire a été officiellement lancée en avril 2026. [guinee360](https://www.guinee360.com/17/04/2026/education-en-guinee-le-gouvernement-lance-la-reforme-des-programmes-denseignement-du-secondaire/)
+
+Les ouvrages ci-dessous sont les **manuels de référence les plus couramment associés aux programmes actuels ou historiques du collège**. Il faut les distinguer des nouveaux manuels qui pourront être homologués après la réforme curriculaire.
+
+## Manuels principaux du collège
+
+| Discipline | Manuels ou collections couramment utilisés | Niveaux concernés | Statut à retenir |
+|---|---|---|---|
+| Français | *Le Manguier* | 7e à 10e année | Manuel de référence couramment utilisé |
+| Français | *Indigo Français* | 7e à 10e année | Manuel complémentaire ou de référence selon l’établissement |
+| Français | *À l’écoute du monde* | Surtout 9e année | Support de lecture et de langue |
+| Français | *Grammaire française – IPAM* | Collège | Ouvrage de grammaire et d’exercices complémentaire |
+| Mathématiques | Collection **CIAM** — *Mathématiques 6e, 5e, 4e, 3e* | 7e à 10e année | Référence traditionnelle correspondant aux quatre années du collège |
+| Anglais | **MOBEL Student’s Book 1, 2, 3 et 4** | 7e à 10e année | Collection directement liée au programme d’anglais du collège |
+| Anglais | **MOBEL Teacher’s Guide 1, 2, 3 et 4** | Enseignants de 7e à 10e | Guide pédagogique associé aux MOBEL |
+| Physique | *Sciences physiques 7e, 8e, 9e et 10e années* | 7e à 10e année | Manuels ou fascicules construits à partir des programmes INRAP/CESPCG |
+| Chimie | *Chimie 7e, 8e, 9e et 10e années* | 7e à 10e année | Manuels ou fascicules fondés sur les programmes de chimie du collège |
+| Biologie | *Biologie 7e, 8e, 9e et 10e années* | 7e à 10e année | Manuels de l’élève et guides de l’enseignant par niveau |
+| Histoire-géographie | Manuels d’histoire et de géographie de collège acquis/diffusés dans le cadre des programmes nationaux | 7e à 10e année | La référence exacte varie selon l’édition disponible et l’établissement |
+| ECM | Manuels ou fascicules d’Éducation civique et morale | 7e à 10e année | Ressources liées aux programmes nationaux, mais catalogue public unifié non retrouvé |
+| Arabe | Manuels de langue arabe et de culture islamique | 7e à 10e année | Utilisés dans les filières concernées ; titres à vérifier localement |
+
+La collection **MOBEL** est particulièrement identifiable : les documents relatifs à l’anglais guinéen associent MOBEL 1 à la 7e année, MOBEL 2 à la 8e, MOBEL 3 à la 9e et MOBEL 4 à la 10e année. Les guides de l’enseignant et les manuels de l’élève constituent deux supports distincts. [globalpartnership](https://www.globalpartnership.org/node/document/download?file=document/file/2020-21-Guinea-ESP-IRpdf.pdf)
+
+## Correspondance classes et ouvrages
+
+| Classe guinéenne | Équivalence habituelle | Français | Mathématiques | Anglais |
+|---|---:|---|---|---|
+| 7e année | 6e | *Le Manguier 6e* ou *Indigo 6e* | CIAM 6e | MOBEL 1 |
+| 8e année | 5e | *Le Manguier 5e* ou *Indigo 5e* | CIAM 5e | MOBEL 2 |
+| 9e année | 4e | *Le Manguier 4e*, *Indigo 4e*, éventuellement *À l’écoute du monde* | CIAM 4e | MOBEL 3 |
+| 10e année | 3e | *Le Manguier 3e* ou *Indigo 3e* | CIAM 3e | MOBEL 4 |
+
+Cette équivalence est importante lorsque vous recherchez les ouvrages : beaucoup de titres commerciaux sont étiquetés selon le système « 6e–5e–4e–3e », tandis que l’administration et les programmes guinéens utilisent « 7e–8e–9e–10e année ».
+
+## Sciences physiques et biologie
+
+Pour les sciences, il faut faire une distinction pratique entre les **programmes officiels** et les **manuels effectivement disponibles**.
+
+Les programmes de physique et de chimie de collège sont structurés par année et peuvent être utilisés comme documents de référence par les enseignants. Des fascicules portant des titres tels que *Sciences physiques 7e année*, *Physique 8e année* ou *Chimie 10e année* circulent dans les établissements et en versions numériques ; ils reprennent généralement les contenus INRAP ou ceux produits par des collectifs d’enseignants de sciences physiques et de chimie de Guinée. [fr.scribd](https://fr.scribd.com/document/785974663/Coure-de-Physique-Chimie-7eme-Annee)
+
+Pour la biologie, l’existence de **manuels de l’élève** et de **guides de l’enseignant** pour les 7e, 8e et 9e années est explicitement attestée dans un module de formation destiné aux enseignants. Le document renvoie notamment à des pages précises de ces manuels par niveau, ce qui confirme qu’il s’agit de ressources pédagogiques effectivement mobilisées. [apprendre.auf](https://apprendre.auf.org/wp-content/uploads/2022/07/Module-de-formation_Biologie.pdf)
+
+Les matières scientifiques à rechercher sous forme de manuels ou fascicules sont donc :
+
+- *Sciences physiques 7e année*
+- *Sciences physiques 8e année*
+- *Physique 9e année*
+- *Physique 10e année*
+- *Chimie 7e année*
+- *Chimie 8e année*
+- *Chimie 9e année*
+- *Chimie 10e année*
+- *Biologie 7e année* et guide de l’enseignant
+- *Biologie 8e année* et guide de l’enseignant
+- *Biologie 9e année* et guide de l’enseignant
+- *Biologie 10e année*, lorsque diffusé par l’établissement ou la DPE/DCE
+
+## Ce qui est réellement officiel
+
+Il faut éviter de qualifier automatiquement tout livre trouvé en librairie, sur Scribd ou au format PDF de « manuel officiel ». Un manuel doit être considéré comme officiellement retenu lorsqu’il est :
+
+- Produit, validé ou explicitement recommandé par l’INRAP ou le ministère compétent
+- Distribué dans le cadre d’un marché ou d’un projet public de fourniture de manuels
+- Inscrit sur une liste de manuels retenus communiquée par le ministère, une DPE, une DCE ou la direction de l’établissement
+- Utilisé avec le guide pédagogique correspondant lorsqu’un guide officiel existe
+
+L’INRAP est l’institution chargée de la conception, de l’élaboration, de la mise en œuvre et de l’évaluation de la politique pédagogique guinéenne aux niveaux préscolaire, fondamental, secondaire général et technique. [unesdoc.unesco](https://unesdoc.unesco.org/ark:/48223/pf0000375769)
+
+L’État guinéen a déjà procédé à des acquisitions importantes de manuels pour le collège : un rapport officiel mentionne 809 017 manuels de collège acquis sur financement C2D, dont une acquisition complémentaire de manuels de français de 10e année. Cela confirme une diffusion publique de manuels, mais le rapport consulté ne fournit pas la liste bibliographique complète des titres et éditions. [docstore.ohchr](https://docstore.ohchr.org/SelfServices/FilesHandler.ashx?enc=K4fbXgegCmspyGl3itBwFcuVMVABp0UCpwCWq10LkbsyzkjGDYJ6IhDa8WXAdhrpQJc3y2HlVNpTYv8dJU+ugA==)
+
+## Situation actuelle
+
+La prudence est nécessaire pour l’année scolaire 2026–2027. En 2024, les autorités guinéennes ont indiqué être engagées dans une évaluation de la qualité des manuels scolaires, avec l’INRAP et l’appui de l’UNESCO. [unesco](https://www.unesco.org/fr/articles/amelioration-de-la-qualite-des-manuels-scolaires-en-afrique-subsaharienne-francophone)
+
+En avril 2026, le gouvernement a lancé une réforme des programmes du secondaire qui concerne notamment :
+
+- Le français
+- Les mathématiques
+- Les sciences physiques
+- L’histoire et la géographie
+- L’éducation civique et morale
+- L’éducation physique et artistique
+- L’entrepreneuriat
+- Les TIC. [guinee7](https://www.guinee7.com/2026/04/17/guinee-une-reforme-ambitieuse-des-programmes-scolaires-lancee/)
+
+Par conséquent, les collections telles que **CIAM**, **MOBEL**, **Le Manguier**, **Indigo** et les fascicules de sciences restent très utiles pour documenter les programmes détaillés actuellement enseignés ou récemment enseignés. Toutefois, il faudra vérifier auprès de la direction de chaque collège, de la DPE/DCE ou de l’INRAP si un nouveau manuel obligatoire a été adopté à la suite de la réforme.

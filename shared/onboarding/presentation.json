@@ -1,0 +1,184 @@
+{
+  "id": "presentation",
+  "version": 1,
+  "audience": "ANY",
+  "locale": "fr",
+  "currency": "GNF",
+  "externalFields": [
+    "role"
+  ],
+  "sections": [
+    {
+      "id": "proof",
+      "label": "Bienvenue",
+      "steps": [
+        {
+          "id": "social_proof",
+          "type": "statement",
+          "title": "Votre compte est créé",
+          "body": "Vous rejoignez des professeurs et des établissements qui travaillent déjà ensemble ici.",
+          "image": {
+            "name": "welcome",
+            "alt": "Une enseignante, un directeur et un parent avec son enfant, devant une école"
+          },
+          "highlights": [
+            {
+              "value": "200+",
+              "label": "professeurs inscrits"
+            },
+            {
+              "value": "3",
+              "label": "établissements partenaires"
+            },
+            {
+              "value": "3",
+              "label": "contrôles avant toute mise en relation"
+            }
+          ],
+          "cta": "Continuer"
+        }
+      ]
+    },
+    {
+      "id": "value",
+      "label": "Pour vous",
+      "steps": [
+        {
+          "id": "value_teacher",
+          "type": "statement",
+          "title": "Ce que ça change pour vous",
+          "showIf": {
+            "field": "role",
+            "equals": "TEACHER"
+          },
+          "image": {
+            "name": "teacher",
+            "alt": "Une enseignante au tableau, un manuel sous le bras"
+          },
+          "highlights": [
+            {
+              "value": "Vos matières",
+              "label": "seules les offres qui vous concernent"
+            },
+            {
+              "value": "Votre niveau",
+              "label": "prouvé une fois, visible par toutes les écoles"
+            },
+            {
+              "value": "Près de chez vous",
+              "label": "des cours à domicile dans votre quartier"
+            }
+          ],
+          "cta": "Continuer"
+        },
+        {
+          "id": "value_institution",
+          "type": "statement",
+          "title": "Ce que ça change pour vous",
+          "showIf": {
+            "field": "role",
+            "equals": "INSTITUTION"
+          },
+          "image": {
+            "name": "school",
+            "alt": "L’entrée d’un établissement scolaire"
+          },
+          "highlights": [
+            {
+              "value": "Zéro CV",
+              "label": "des candidats classés, pas une pile à trier"
+            },
+            {
+              "value": "Vérifiés",
+              "label": "identité, diplôme et niveau contrôlés avant l’entretien"
+            },
+            {
+              "value": "Prêt à signer",
+              "label": "le contrat se prépare dans l’application"
+            }
+          ],
+          "cta": "Continuer"
+        },
+        {
+          "id": "value_parent",
+          "type": "statement",
+          "title": "Ce que ça change pour vous",
+          "showIf": {
+            "field": "role",
+            "equals": "PARENT"
+          },
+          "image": {
+            "name": "find-teacher",
+            "alt": "Un parent et son enfant accueillis par une enseignante à l’entrée d’une école"
+          },
+          "highlights": [
+            {
+              "value": "Sa classe",
+              "label": "des professeurs qui enseignent son niveau"
+            },
+            {
+              "value": "Votre quartier",
+              "label": "quelqu’un qui peut vraiment se déplacer"
+            },
+            {
+              "value": "Vérifiés",
+              "label": "vous savez qui entre chez vous"
+            }
+          ],
+          "cta": "Continuer"
+        }
+      ]
+    },
+    {
+      "id": "howto",
+      "label": "Comment faire",
+      "steps": [
+        {
+          "id": "howto_teacher",
+          "type": "steps_preview",
+          "title": "Vos trois premiers gestes",
+          "showIf": {
+            "field": "role",
+            "equals": "TEACHER"
+          },
+          "items": [
+            "Complétez votre profil : matières, classes, expérience",
+            "Passez le test de votre matière pour être certifié",
+            "Postulez aux offres, ou publiez un cours à domicile"
+          ],
+          "cta": "Commencer"
+        },
+        {
+          "id": "howto_institution",
+          "type": "steps_preview",
+          "title": "Vos trois premiers gestes",
+          "showIf": {
+            "field": "role",
+            "equals": "INSTITUTION"
+          },
+          "items": [
+            "Complétez la fiche de votre établissement",
+            "Publiez votre première offre",
+            "Comparez les candidats classés et proposez un entretien"
+          ],
+          "cta": "Commencer"
+        },
+        {
+          "id": "howto_parent",
+          "type": "steps_preview",
+          "title": "Vos trois premiers gestes",
+          "showIf": {
+            "field": "role",
+            "equals": "PARENT"
+          },
+          "items": [
+            "Vérifiez la fiche de votre enfant : classe et matières",
+            "Parcourez les professeurs de votre quartier",
+            "Réservez : le professeur vous répond dans l’application"
+          ],
+          "cta": "Commencer"
+        }
+      ]
+    }
+  ]
+}

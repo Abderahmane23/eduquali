@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#4F2BD9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16161d" media="(prefers-color-scheme: dark)" />
+
+    <title>Acalia — Professeurs vérifiés, écoles et familles</title>
+    <meta
+      name="description"
+      content="Trouvez un poste, recrutez un professeur ou inscrivez votre enfant. Sur Acalia, chaque professeur passe trois contrôles : identité, diplôme, niveau."
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Acalia" />
+    <meta property="og:locale" content="fr_GN" />
+    <meta property="og:title" content="Acalia — Professeurs vérifiés" />
+    <meta
+      property="og:description"
+      content="Chaque professeur passe trois contrôles : identité, diplôme, niveau."
+    />
+    <meta property="og:image" content="/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!--
+      Inter est declaree dans tokens.css : sans ce chargement, toute la
+      typographie retombait silencieusement sur la police systeme.
+      Deux graisses seulement (400, 600) : chaque graisse en plus est un
+      fichier a telecharger sur un reseau ou la bande passante se paie.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;800&display=swap"
+      />
+    </noscript>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

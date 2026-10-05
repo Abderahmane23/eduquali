@@ -1,0 +1,326 @@
+{
+  "country": "GN",
+  "note": "Decoupage administratif de la Guinee : 10 regions, dont Conakry (region speciale, decoupee en communes) et les deux regions recentes de Siguiri et Beyla. La liste des prefectures de Siguiri n'est pas exhaustive.",
+  "updated": "2026-09-19",
+  "regions": [
+    {
+      "code": "CKY",
+      "name": "Conakry",
+      "kind": "SPECIALE",
+      "divisionKind": "COMMUNE",
+      "divisions": [
+        {
+          "code": "CKY_KALOUM",
+          "name": "Kaloum"
+        },
+        {
+          "code": "CKY_MATOTO",
+          "name": "Matoto"
+        },
+        {
+          "code": "CKY_GBESSIA",
+          "name": "Gbéssia"
+        },
+        {
+          "code": "CKY_TOMBOLIA",
+          "name": "Tombolia"
+        },
+        {
+          "code": "CKY_RATOMA",
+          "name": "Ratoma"
+        },
+        {
+          "code": "CKY_SONFONIA",
+          "name": "Sonfonia"
+        },
+        {
+          "code": "CKY_LAMBANYI",
+          "name": "Lambanyi"
+        },
+        {
+          "code": "CKY_DIXINN",
+          "name": "Dixinn"
+        },
+        {
+          "code": "CKY_MATAM",
+          "name": "Matam"
+        },
+        {
+          "code": "CKY_KAGBELEN",
+          "name": "Kagbelen"
+        },
+        {
+          "code": "CKY_SANOYAH",
+          "name": "Sanoyah"
+        },
+        {
+          "code": "CKY_MANEAH",
+          "name": "Manéah"
+        },
+        {
+          "code": "CKY_KASSA",
+          "name": "Kassa"
+        }
+      ]
+    },
+    {
+      "code": "BOK",
+      "name": "Boké",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "BOK_BOKE",
+          "name": "Boké"
+        },
+        {
+          "code": "BOK_BOFFA",
+          "name": "Boffa"
+        },
+        {
+          "code": "BOK_FRIA",
+          "name": "Fria"
+        },
+        {
+          "code": "BOK_GAOUAL",
+          "name": "Gaoual"
+        },
+        {
+          "code": "BOK_KOUNDARA",
+          "name": "Koundara"
+        },
+        {
+          "code": "BOK_KAMSAR",
+          "name": "Kamsar",
+          "recent": true
+        }
+      ]
+    },
+    {
+      "code": "KND",
+      "name": "Kindia",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "KND_KINDIA",
+          "name": "Kindia"
+        },
+        {
+          "code": "KND_COYAH",
+          "name": "Coyah"
+        },
+        {
+          "code": "KND_DUBREKA",
+          "name": "Dubréka"
+        },
+        {
+          "code": "KND_FORECARIAH",
+          "name": "Forécariah"
+        },
+        {
+          "code": "KND_TELIMELE",
+          "name": "Télimélé"
+        }
+      ]
+    },
+    {
+      "code": "MAM",
+      "name": "Mamou",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "MAM_MAMOU",
+          "name": "Mamou"
+        },
+        {
+          "code": "MAM_DALABA",
+          "name": "Dalaba"
+        },
+        {
+          "code": "MAM_PITA",
+          "name": "Pita"
+        },
+        {
+          "code": "MAM_TIMBO",
+          "name": "Timbo",
+          "recent": true
+        }
+      ]
+    },
+    {
+      "code": "LAB",
+      "name": "Labé",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "LAB_LABE",
+          "name": "Labé"
+        },
+        {
+          "code": "LAB_KOUBIA",
+          "name": "Koubia"
+        },
+        {
+          "code": "LAB_LELOUMA",
+          "name": "Lélouma"
+        },
+        {
+          "code": "LAB_MALI",
+          "name": "Mali"
+        },
+        {
+          "code": "LAB_TOUGUE",
+          "name": "Tougué"
+        }
+      ]
+    },
+    {
+      "code": "FAR",
+      "name": "Faranah",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "FAR_FARANAH",
+          "name": "Faranah"
+        },
+        {
+          "code": "FAR_DABOLA",
+          "name": "Dabola"
+        },
+        {
+          "code": "FAR_DINGUIRAYE",
+          "name": "Dinguiraye"
+        },
+        {
+          "code": "FAR_KISSIDOUGOU",
+          "name": "Kissidougou"
+        }
+      ]
+    },
+    {
+      "code": "KAN",
+      "name": "Kankan",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "KAN_KANKAN",
+          "name": "Kankan"
+        },
+        {
+          "code": "KAN_KEROUANE",
+          "name": "Kérouané"
+        },
+        {
+          "code": "KAN_KOUROUSSA",
+          "name": "Kouroussa"
+        },
+        {
+          "code": "KAN_MANDIANA",
+          "name": "Mandiana"
+        },
+        {
+          "code": "KAN_TOKOUNOU",
+          "name": "Tokounou",
+          "recent": true
+        },
+        {
+          "code": "KAN_DIALAKORO",
+          "name": "Dialakoro",
+          "recent": true
+        },
+        {
+          "code": "KAN_SABADOU_BARANAMA",
+          "name": "Sabadou-Baranama",
+          "recent": true
+        }
+      ]
+    },
+    {
+      "code": "SIG",
+      "name": "Siguiri",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "SIG_SIGUIRI",
+          "name": "Siguiri"
+        },
+        {
+          "code": "SIG_DOKO",
+          "name": "Doko",
+          "recent": true
+        },
+        {
+          "code": "SIG_SIGUIRINI",
+          "name": "Siguirini",
+          "recent": true
+        },
+        {
+          "code": "SIG_KINTINIAN",
+          "name": "Kintinian",
+          "recent": true
+        }
+      ]
+    },
+    {
+      "code": "NZE",
+      "name": "Nzérékoré",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "NZE_NZEREKORE",
+          "name": "Nzérékoré"
+        },
+        {
+          "code": "NZE_MACENTA",
+          "name": "Macenta"
+        },
+        {
+          "code": "NZE_LOLA",
+          "name": "Lola"
+        },
+        {
+          "code": "NZE_YOMOU",
+          "name": "Yomou"
+        },
+        {
+          "code": "NZE_GUECKEDOU",
+          "name": "Guéckédou"
+        }
+      ]
+    },
+    {
+      "code": "BEY",
+      "name": "Beyla",
+      "kind": "REGION",
+      "divisionKind": "PREFECTURE",
+      "divisions": [
+        {
+          "code": "BEY_BEYLA",
+          "name": "Beyla"
+        },
+        {
+          "code": "BEY_SINKO",
+          "name": "Sinko",
+          "recent": true
+        },
+        {
+          "code": "BEY_KOUANKAN",
+          "name": "Kouankan",
+          "recent": true
+        },
+        {
+          "code": "BEY_KARALA",
+          "name": "Karala",
+          "recent": true
+        }
+      ]
+    }
+  ]
+}

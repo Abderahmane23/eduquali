@@ -1,0 +1,42 @@
+{
+  "testId": "test_info_l1",
+  "title": "Informatique — L1",
+  "durationMinutes": 15,
+  "passingScore": 70,
+  "rules": "Test individuel et chronometre. Une seule reponse par question.",
+  "questions": [
+    { "q": "Un octet est compose de :", "o": ["4 bits", "8 bits", "16 bits", "32 bits"], "a": "B", "d": "Bases et representation", "x": 1, "e": "Un octet (byte) contient 8 bits." },
+    { "q": "Le nombre binaire 1010 vaut en decimal :", "o": ["8", "10", "12", "1010"], "a": "B", "d": "Bases et representation", "x": 2, "e": "8 + 0 + 2 + 0 = 10." },
+    { "q": "Combien de valeurs differentes peut coder un octet ?", "o": ["8", "128", "256", "512"], "a": "C", "d": "Bases et representation", "x": 2, "e": "2^8 = 256 valeurs." },
+    { "q": "Le systeme hexadecimal utilise une base :", "o": ["2", "8", "10", "16"], "a": "D", "d": "Bases et representation", "x": 1, "e": "L'hexadecimal est en base 16." },
+    { "q": "Le nombre decimal 5 s'ecrit en binaire :", "o": ["101", "110", "011", "111"], "a": "A", "d": "Bases et representation", "x": 2, "e": "4 + 1 = 5, soit 101." },
+    { "q": "L'unite centrale de traitement d'un ordinateur est :", "o": ["la RAM", "le processeur", "le disque dur", "la carte graphique"], "a": "B", "d": "Bases et representation", "x": 1, "e": "Le processeur (CPU) execute les instructions." },
+    { "q": "La memoire vive (RAM) est :", "o": ["permanente", "volatile", "en lecture seule", "amovible"], "a": "B", "d": "Bases et representation", "x": 2, "e": "Son contenu est perdu a l'extinction de la machine." },
+
+    { "q": "Une boucle « tant que » s'execute :", "o": ["exactement une fois", "tant que sa condition est vraie", "un nombre fixe de fois", "jamais"], "a": "B", "d": "Algorithmique", "x": 1, "e": "La condition est evaluee avant chaque iteration." },
+    { "q": "Quelle structure permet de choisir entre deux traitements ?", "o": ["la boucle pour", "la condition si-sinon", "la fonction", "le tableau"], "a": "B", "d": "Algorithmique", "x": 1, "e": "L'instruction conditionnelle realise un branchement." },
+    { "q": "La complexite d'une recherche dichotomique dans un tableau trie de n elements est :", "o": ["O(n)", "O(log n)", "O(n^2)", "O(1)"], "a": "B", "d": "Algorithmique", "x": 3, "e": "L'espace de recherche est divise par deux a chaque etape." },
+    { "q": "La complexite du tri a bulles dans le pire des cas est :", "o": ["O(n)", "O(n log n)", "O(n^2)", "O(log n)"], "a": "C", "d": "Algorithmique", "x": 3, "e": "Deux boucles imbriquees sur n elements." },
+    { "q": "Une fonction recursive est une fonction qui :", "o": ["s'appelle elle-meme", "ne retourne rien", "boucle indefiniment", "n'a pas de parametre"], "a": "A", "d": "Algorithmique", "x": 2, "e": "Elle doit comporter un cas d'arret." },
+    { "q": "Dans un tableau indexe a partir de 0, le premier element a pour indice :", "o": ["0", "1", "-1", "le premier indice libre"], "a": "A", "d": "Algorithmique", "x": 1, "e": "L'indexation commence a zero dans la plupart des langages." },
+    { "q": "Une pile fonctionne selon le principe :", "o": ["premier entre, premier sorti", "dernier entre, premier sorti", "aleatoire", "trie"], "a": "B", "d": "Algorithmique", "x": 2, "e": "Une pile est une structure LIFO." },
+    { "q": "Une file fonctionne selon le principe :", "o": ["premier entre, premier sorti", "dernier entre, premier sorti", "aleatoire", "par priorite uniquement"], "a": "A", "d": "Algorithmique", "x": 2, "e": "Une file est une structure FIFO." },
+    { "q": "Un algorithme doit toujours :", "o": ["utiliser une boucle", "se terminer en un nombre fini d'etapes", "etre recursif", "manipuler des tableaux"], "a": "B", "d": "Algorithmique", "x": 2, "e": "La finitude fait partie de la definition d'un algorithme." },
+
+    { "q": "En programmation, une variable de type booleen peut valoir :", "o": ["0 a 255", "vrai ou faux", "tout nombre entier", "une chaine"], "a": "B", "d": "Programmation", "x": 1, "e": "Un booleen ne prend que deux valeurs." },
+    { "q": "Le langage Python se caracterise par :", "o": ["une compilation obligatoire", "une indentation significative", "un typage statique strict", "l'absence de fonctions"], "a": "B", "d": "Programmation", "x": 2, "e": "L'indentation delimite les blocs en Python." },
+    { "q": "Une fonction qui ne retourne aucune valeur est souvent appelee :", "o": ["procedure", "constante", "pointeur", "classe"], "a": "A", "d": "Programmation", "x": 2, "e": "Une procedure realise une action sans valeur de retour." },
+    { "q": "En programmation orientee objet, une classe est :", "o": ["une instance", "un modele decrivant des objets", "une variable globale", "une boucle"], "a": "B", "d": "Programmation", "x": 2, "e": "Les objets sont des instances de la classe." },
+    { "q": "L'encapsulation consiste a :", "o": ["masquer les details internes d'un objet", "dupliquer le code", "supprimer les fonctions", "compiler plus vite"], "a": "A", "d": "Programmation", "x": 3, "e": "Elle regroupe donnees et traitements en controlant l'acces." },
+    { "q": "Un commentaire dans un programme sert a :", "o": ["accelerer l'execution", "documenter le code sans etre execute", "declarer une variable", "importer un module"], "a": "B", "d": "Programmation", "x": 1, "e": "Les commentaires sont ignores par le compilateur ou l'interpreteur." },
+    { "q": "L'heritage en programmation orientee objet permet :", "o": ["de reutiliser et specialiser une classe existante", "de supprimer une classe", "d'accelerer le programme", "de compiler plusieurs fichiers"], "a": "A", "d": "Programmation", "x": 2, "e": "Une classe fille herite des membres de sa classe mere." },
+
+    { "q": "En SQL, quelle commande permet de lire des donnees ?", "o": ["INSERT", "SELECT", "UPDATE", "DELETE"], "a": "B", "d": "Bases de donnees et reseaux", "x": 1, "e": "SELECT interroge une ou plusieurs tables." },
+    { "q": "Une cle primaire sert a :", "o": ["identifier de maniere unique chaque ligne", "trier la table", "chiffrer les donnees", "relier deux bases"], "a": "A", "d": "Bases de donnees et reseaux", "x": 2, "e": "Elle garantit l'unicite des enregistrements." },
+    { "q": "Une cle etrangere permet :", "o": ["de chiffrer une colonne", "de referencer la cle primaire d'une autre table", "d'indexer un champ", "de supprimer une table"], "a": "B", "d": "Bases de donnees et reseaux", "x": 2, "e": "Elle materialise une relation entre deux tables." },
+    { "q": "En SQL, la clause WHERE sert a :", "o": ["trier les resultats", "filtrer les lignes", "grouper les lignes", "joindre deux tables"], "a": "B", "d": "Bases de donnees et reseaux", "x": 1, "e": "WHERE applique une condition de selection." },
+    { "q": "Le protocole HTTPS assure :", "o": ["une connexion chiffree", "une connexion plus rapide", "un stockage local", "une compression des images"], "a": "A", "d": "Bases de donnees et reseaux", "x": 2, "e": "HTTPS ajoute une couche TLS a HTTP." },
+    { "q": "Une adresse IP sert a :", "o": ["identifier une machine sur un reseau", "chiffrer un fichier", "compiler un programme", "stocker des donnees"], "a": "A", "d": "Bases de donnees et reseaux", "x": 1, "e": "Elle identifie un hote dans un reseau IP." },
+    { "q": "Le modele client-serveur repose sur :", "o": ["un poste unique", "des requetes envoyees par le client au serveur", "un echange sans reseau", "une base locale uniquement"], "a": "B", "d": "Bases de donnees et reseaux", "x": 2, "e": "Le client emet des requetes, le serveur repond." }
+  ]
+}

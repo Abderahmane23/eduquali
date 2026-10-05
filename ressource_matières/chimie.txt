@@ -1,0 +1,147 @@
+Voici le programme structuré de **chimie au collège guinéen** pour les 7e, 8e, 9e et 10e années. Il repose sur les programmes de sciences physiques élaborés sous la direction de l’INRAP et sur une compilation de contenus de collège publiée à Conakry en 2023 ; les intitulés et sous-chapitres repris ci-dessous sont ceux explicitement retrouvés dans ces documents. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+La progression suit une logique claire : découverte de la chimie et des combustions en 7e année, étude de l’eau et du symbolisme chimique en 8e année, classification des éléments et chimie quantitative en 9e année, puis oxydoréduction, solutions aqueuses et chimie organique en 10e année. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+## Principes du programme
+
+L’enseignement de la chimie au collège doit partir d’expériences, de l’environnement immédiat et de problèmes pratiques : eau potable, combustibles, corrosion, bauxite, métaux, alimentation, air, savon, médicaments, engrais, piles ou produits ménagers. Le document écarte l’enseignement fondé seulement sur la mémorisation : l’élève doit observer, manipuler, expérimenter, formuler une hypothèse, exploiter des résultats et réinvestir ses connaissances. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+Les objectifs généraux sont notamment de :
+
+- Développer la curiosité et le goût de l’expérimentation
+- Acquérir une culture scientifique élémentaire
+- Comprendre l’usage quotidien et les risques des produits chimiques
+- Développer l’observation, la rigueur, l’habileté manuelle et la démarche scientifique
+- Sensibiliser à la santé, à la sécurité, à la consommation responsable et à la protection de l’environnement
+- Donner des bases utiles pour les formations scientifiques, techniques et professionnelles. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+## 7e année
+
+La 7e année est une année d’**initiation à la chimie**. Le programme porte sur les transformations physiques et chimiques, l’air, les combustions et l’utilisation sécurisée des combustibles. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+| Partie | Leçons et sous-chapitres | Apprentissages attendus |
+|---|---|---|
+| Introduction à la chimie | Rôle de la chimie dans la vie courante ; produits chimiques de l’environnement | Distinguer la place de la chimie dans le savon, les métaux, les plastiques, les engrais, les médicaments et les produits de consommation |
+| Transformations physiques | États physiques ; fusion ; solidification ; vaporisation ; liquéfaction ou condensation ; sublimation | Comprendre qu’une transformation physique change l’état d’un corps sans modifier sa nature chimique |
+| Transformations chimiques | Différence entre transformation physique et chimique | Reconnaître qu’une combustion fait disparaître certains corps et apparaître de nouvelles substances |
+| Composition de l’air | Constituants essentiels de l’air ; dioxygène ; diazote ; proportions volumiques principales | Identifier les deux gaz principaux de l’air et leur rôle |
+| Combustions dans l’air | Flammes ; types de flammes ; conditions de combustion ; rôle du dioxygène | Observer et comparer la combustion d’une bougie, d’une lampe à pétrole, d’un briquet ou d’un réchaud |
+| Butane | Gaz combustible ; briquet à gaz ; bouteille de gaz ; risques liés aux fuites | Identifier le butane comme combustible et appliquer les règles de sécurité |
+| Combustion du soufre | Combustion du soufre ; produits formés ; caractère chimique de la réaction | Montrer qu’une combustion produit de nouveaux corps |
+| Combustion du fer | Combustion de la paille de fer ou de la limaille de fer ; incandescence ; oxydation | Interpréter la combustion du fer comme une réaction chimique |
+| Appareils utilisant des combustibles | Réchaud à bois ; charbon de bois ; gaz ; pétrole ; foyers améliorés | Expliquer le fonctionnement général d’appareils de cuisson ou de chauffage |
+| Aspects pratiques des combustions | Choix, emploi et rendement pratique des combustibles | Employer un combustible de façon rationnelle |
+| Dangers des combustions usuelles | Incendie ; brûlure ; gaz toxiques ; intoxication ; prévention | Adopter des comportements de sécurité dans l’usage du bois, charbon, pétrole, gaz et briquets |
+
+### Points essentiels de 7e année
+
+- Une **transformation physique** modifie l’état ou l’aspect d’un corps sans former un nouveau corps.
+- Une **transformation chimique** produit de nouvelles substances.
+- Une combustion met en jeu un **combustible** et un **comburant**, notamment le dioxygène de l’air.
+- L’air contient principalement du diazote et du dioxygène.
+- Les combustions sont utiles, mais elles présentent des risques : incendies, fumées, monoxyde de carbone, brûlures et explosions en cas de mauvaise utilisation du gaz. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+## 8e année
+
+La 8e année est consacrée à l’**eau**, aux solutions, aux corps purs, aux atomes, aux molécules et aux premières équations chimiques. Les volumes horaires retrouvés indiquent notamment 18 heures pour l’étude de l’eau, 16 heures pour le symbolisme chimique et 18 heures pour les équations chimiques et la conservation des atomes. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+| Partie | Leçons et sous-chapitres | Apprentissages attendus |
+|---|---|---|
+| Étude de l’eau | Eaux naturelles ; eau douce ; eau salée ; sources d’eau ; cycle de l’eau | Identifier les différentes formes et sources d’eau dans la nature |
+| Eau limpide et eau potable | Eau claire, eau trouble, eau potable, eau polluée | Distinguer une eau limpide d’une eau potable et comprendre les exigences de potabilité |
+| Eau et dissolution | Solvant ; soluté ; solution homogène ; dissolution d’un solide dans l’eau | Préparer et identifier une solution aqueuse simple |
+| Solubilité | Solubilité ; solution saturée ; influence de la quantité de soluté | Définir la solubilité et reconnaître une solution saturée |
+| Concentration massique | Masse de soluté ; volume de solution ; concentration massique | Calculer une concentration massique simple |
+| Mélanges liquide-liquide | Eau et alcool ; eau et huile ; liquides miscibles et non miscibles | Distinguer miscibilité, non-miscibilité et émulsion |
+| Dissolution des gaz | Gaz dissous dans l’eau ; boissons gazeuses ; dégagement de dioxyde de carbone | Montrer que l’eau peut dissoudre des gaz |
+| Mélanges et corps purs | Mélanges homogènes et hétérogènes ; corps pur simple ; corps pur composé | Distinguer un mélange d’un corps pur et classer les substances |
+| Séparation des constituants | Décantation ; filtration ; évaporation ; distillation ; aimantation | Choisir une technique de séparation adaptée |
+| Atomes | Symbole chimique ; éléments chimiques ; tableau périodique simplifié | Représenter les atomes par leurs symboles |
+| Molécules | Formules moléculaires ; modèles moléculaires ; molécules simples | Comprendre qu’une molécule est un assemblage d’atomes |
+| Réactions chimiques | Réactifs ; produits ; équation-bilan en mots | Décrire une réaction chimique par une équation en langage courant |
+| Conservation des atomes | Conservation des atomes lors d’une réaction | Écrire et équilibrer progressivement des équations chimiques simples |
+| Acide chlorhydrique et calcaire | Action de l’acide chlorhydrique sur le calcaire ; dégagement gazeux | Identifier une réaction où l’air n’intervient pas |
+| Cycle des réactions du soufre | Combustion du soufre ; transformations successives | Relier des réactions chimiques entre elles |
+| Allumettes | Composition et fonctionnement simplifié ; réaction de combustion | Comprendre la réaction chimique mise en jeu lors de l’allumage |
+
+### Exemple d’application
+
+Lorsqu’on dissout du sel ou du sucre dans l’eau, le solide semble disparaître mais reste présent dans la solution. L’eau est le **solvant**, le sel ou le sucre est le **soluté**, et le mélange homogène obtenu est une **solution**. Lorsque l’on ne peut plus dissoudre davantage de solide dans un même volume d’eau, la solution est dite **saturée**. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+## 9e année
+
+La 9e année développe la compréhension de la structure de la matière, des métaux, de l’électrolyse et des calculs chimiques. Elle constitue le passage entre la chimie descriptive et une chimie plus structurée fondée sur les éléments, les ions, les équations et les quantités de matière. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+| Partie | Leçons et sous-chapitres | Apprentissages attendus |
+|---|---|---|
+| Système périodique des éléments | Numéro atomique ; périodes ; groupes ; familles chimiques ; métaux et non-métaux | Lire une classification périodique simple et relier la position d’un élément à certaines de ses propriétés |
+| Courant électrique dans les métaux | Conducteurs et isolants ; électrons ; sens conventionnel du courant | Comprendre que les électrons assurent le passage du courant dans les métaux |
+| Ions métalliques | Ions ; cations ; anions ; métal sous forme atomique ou ionique | Distinguer le métal et l’ion métallique correspondant |
+| Transformation électrochimique du cuivre | Cuivre métal ; ion cuivre ; électrode ; transformation électrochimique | Mettre en évidence le passage du cuivre métallique à l’ion cuivre, et inversement |
+| Courant électrique dans les électrolytes | Électrolytes ; solutions ioniques ; migration des ions | Comprendre que le courant dans un électrolyte est transporté par les ions |
+| Transformations du cuivre et de l’ion cuivre | Reconnaissance de l’ion cuivre ; transformations chimiques du cuivre | Utiliser des réactions simples pour passer du cuivre à l’ion cuivre et inversement |
+| Métaux et alliages | Propriétés des métaux ; alliages ; avantages des alliages | Citer les propriétés et utilisations du fer, cuivre, aluminium, zinc et autres métaux usuels |
+| Corrosion des métaux | Corrosion ; rouille ; humidité ; salinité ; corrosion de l’aluminium, cuivre et zinc | Identifier les causes de corrosion et les moyens de protection |
+| Protection des métaux | Peinture ; vernis ; plastique ; galvanisation ; alliages | Proposer des moyens de protéger les métaux ferreux |
+| Aluminium | Bauxite ; alumine ; procédé Bayer ; propriétés ; usages | Expliquer l’importance de l’aluminium et de la bauxite en Guinée |
+| Corps moléculaires | Propriétés et structure moléculaire des gaz ; masse molaire ; pression atmosphérique | Décrire qualitativement les gaz et leur structure moléculaire |
+| Électrolyse de l’eau | Décomposition de l’eau par électrolyse | Réaliser ou interpréter l’électrolyse de l’eau |
+| Synthèse de l’eau | Réaction entre le dihydrogène et le dioxygène | Écrire l’équation-bilan de la synthèse de l’eau |
+| Chimie quantitative | Mole ; masse molaire ; volume molaire ; densité d’un gaz par rapport à l’air | Résoudre des problèmes chimiques simples à partir d’équations-bilans |
+
+### Métaux et aluminium
+
+L’étude de l’aluminium est particulièrement contextualisée pour la Guinée. Le programme indique que l’aluminium se trouve dans la nature sous forme combinée, notamment dans la **bauxite**, et souligne l’importance des réserves guinéennes. L’élève doit connaître, à un niveau élémentaire, les étapes allant du minerai à l’alumine puis à l’aluminium, les propriétés de ce métal — faible masse volumique et résistance à la corrosion — et ses principaux usages. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+## 10e année
+
+La 10e année consolide les acquis du collège et introduit des notions plus formelles : oxydoréduction, solutions ioniques, pH, reconnaissance des ions, piles électrochimiques et chimie organique. [fr.scribd](https://fr.scribd.com/document/892168948/CONTENUS-PROGRAMMES-DE-CHIMIE-COLLEGE-2023)
+
+| Partie | Leçons et sous-chapitres | Apprentissages attendus |
+|---|---|---|
+| Oxydoréduction par transfert d’oxygène | Oxydation ; réduction ; combustion du carbone, soufre et fer ; oxydes métalliques | Comprendre qu’une oxydation correspond à une fixation d’oxygène et une réduction à une perte d’oxygène |
+| Réduction des oxydes | Réduction de l’oxyde ferrique par l’aluminium ; réduction de l’oxyde de cuivre par le carbone | Écrire et équilibrer des équations simples d’oxydoréduction |
+| Importance industrielle de la réduction | Haut fourneau ; minerais ; production de métaux | Comprendre le principe de réduction d’un oxyde métallique pour produire un métal |
+| Oxydoréduction par transfert d’électrons | Perte et gain d’électrons ; oxydant ; réducteur | Comprendre l’interprétation électronique simplifiée des réactions redox |
+| Pile électrochimique | Générateur électrochimique ; énergie chimique et énergie électrique ; usure d’une pile | Expliquer qu’une pile fonctionne grâce à une réaction d’oxydoréduction |
+| Pile cuivre-zinc | Électrodes ; circulation des électrons ; réaction chimique | Étudier un exemple de pile électrochimique |
+| Pile Daniell | Demi-piles ; électrolyte ; transformation chimique spontanée | Identifier les constituants et le fonctionnement simplifié d’une pile Daniell |
+| Pile saline, alcaline et lithium | Types de piles ; caractéristiques et usages | Comparer quelques générateurs électrochimiques usuels |
+| Solutions aqueuses | Solutions acides, basiques et neutres | Classer une solution aqueuse suivant son caractère acide, basique ou neutre |
+| Acidité et basicité | Indicateurs colorés ; bleu de bromothymol ; papier pH ; échelle de pH | Lire une valeur de pH et identifier le caractère d’une solution |
+| Conductibilité des solutions | Ions en solution ; électrolytes | Relier la conduction électrique à la présence d’ions |
+| Ions en solution aqueuse | Cations et anions ; électroneutralité ; dissociation d’un électrolyte | Écrire et interpréter des formules ioniques simples |
+| Caractérisation des ions | Ions cuivre \(Cu^{2+}\), fer(II) \(Fe^{2+}\), fer(III) \(Fe^{3+}\), zinc \(Zn^{2+}\), chlorure \(Cl^{-}\), sulfate \(SO_4^{2-}\), carbonate \(CO_3^{2-}\) | Reconnaître certains ions par des tests chimiques |
+| Chimie organique | Composés du carbone ; tétravalence du carbone ; nomenclature élémentaire | Comprendre que la chimie organique étudie principalement les composés du carbone |
+| Alcanes | Méthane ; formule générale ; chaînes carbonées ; nomenclature ; propriétés chimiques | Reconnaître les alcanes et citer leurs usages |
+| Alcènes | Éthylène ; double liaison ; propriétés et réactions | Identifier les alcènes |
+| Alcynes | Acétylène ; triple liaison ; propriétés chimiques | Identifier les alcynes et leurs caractéristiques principales |
+
+### Réactions d’oxydoréduction
+
+Le programme demande d’abord une approche par le transfert d’oxygène :
+
+- **Oxydation** : gain ou fixation d’oxygène
+- **Réduction** : perte d’oxygène
+- Les deux phénomènes sont généralement simultanés dans une réaction d’oxydoréduction. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+Il introduit ensuite l’interprétation par transfert d’électrons :
+
+- Une oxydation est associée à une perte d’électrons.
+- Une réduction est associée à un gain d’électrons.
+- La pile est un exemple de dispositif où une réaction d’oxydoréduction produit de l’énergie électrique. [fr.scribd](https://fr.scribd.com/document/919866835/Chimie-coll-1)
+
+### Chimie organique
+
+La partie organique porte explicitement sur :
+
+- Introduction à la chimie organique et tétravalence du carbone
+- Nomenclature élémentaire des composés organiques
+- Méthane et famille des alcanes
+- Structures et nomenclature des alcanes
+- Réactions chimiques des alcanes
+- Éthylène et famille des alcènes
+- Acétylène et famille des alcynes
+- Propriétés chimiques des alcynes. [fr.scribd](https://fr.scribd.com/document/892168948/CONTENUS-PROGRAMMES-DE-CHIMIE-COLLEGE-2023)
+
+Le niveau attendu reste introductif : il s’agit surtout de reconnaître les familles d’hydrocarbures, leurs liaisons caractéristiques, leurs formules simples, leur nomenclature élémentaire et certains usages ou risques liés aux combustibles. [fr.scribd](https://fr.scribd.com/document/892168948/CONTENUS-PROGRAMMES-DE-CHIMIE-COLLEGE-2023)

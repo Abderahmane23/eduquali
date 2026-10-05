@@ -1,0 +1,162 @@
+# Deploiement de l'API sur Cloudflare Workers.
+#
+# `wrangler deploy` suffit une fois les secrets poses. Les secrets ne sont
+# jamais ecrits ici : ce fichier est versionne.
+#
+#   wrangler secret put SUPABASE_URL
+#   wrangler secret put SUPABASE_ANON_KEY
+#   wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+#   wrangler secret put GEMINI_API_KEY
+#   wrangler secret put DJOMY_BASE_URL
+#   wrangler secret put DJOMY_CLIENT_ID
+#   wrangler secret put DJOMY_CLIENT_SECRET
+#   wrangler secret put DJOMY_WEBHOOK_SECRET
+#   wrangler secret put DJOMY_COUNTRY
+#   wrangler secret put LIVEKIT_URL
+#   wrangler secret put LIVEKIT_API_KEY
+#   wrangler secret put LIVEKIT_API_SECRET
+#   wrangler secret put CF_ACCOUNT_ID
+#   wrangler secret put CF_STREAM_API_TOKEN
+#   wrangler secret put CF_STREAM_CUSTOMER_CODE
+#   wrangler secret put R2_ENDPOINT
+#   wrangler secret put R2_RECORDINGS_BUCKET
+#   wrangler secret put R2_ACCESS_KEY_ID
+#   wrangler secret put R2_SECRET_ACCESS_KEY
+#   wrangler secret put R2_REGION
+#
+# Puis, hors wrangler : declarer le webhook LiveKit vers
+#   https://<worker>/api/v1/live/webhooks/livekit
+# (participant_joined, participant_left, room_finished, egress_ended).
+# Sans lui, la presence et les rediffusions n'existent pas, et rien ne le dit.
+#
+# Les secrets sont **par cible**. Deux passes, donc : une sans `--env` pour le
+# bac a sable, une avec `--env production` pour la production. Un secret pose
+# une seule fois ne vaut que pour la cible ou il a ete pose — c'est ce qui
+# empeche un jeu de cles de fuir d'un environnement a l'autre.
+#
+#   wrangler secret put DJOMY_CLIENT_SECRET                  # bac a sable
+#   wrangler secret put DJOMY_CLIENT_SECRET --env production  # production
+#
+# `DJOMY_ENVIRONMENT` n'est pas un secret : il est dans `[vars]` ci-dessous,
+# une valeur par cible, visible dans ce fichier. C'est voulu — savoir quelle
+# cible encaisse pour de vrai doit se lire sans interroger Cloudflare.
+#
+# `ALLOWED_ORIGINS` n'est pas un secret : c'est une liste de domaines
+# publics, et la voir versionnee aide a comprendre qui peut appeler l'API.
+#
+# --- L'APPLICATION MOBILE N'A RIEN A FAIRE ICI ---------------------------
+#
+# CORS est une regle que le **navigateur** s'impose. Un client natif — Dio sur
+# Android — n'envoie aucun en-tete `Origin` et n'est soumis a rien : l'APK joint
+# le serveur quelle que soit la valeur d'`ALLOWED_ORIGINS`. Il n'y a d'ailleurs
+# aucune URL a inscrire : une application installee n'a pas d'origine.
+#
+# Ce qui rend l'application capable de parler au serveur est ailleurs, et c'est
+# une valeur de COMPILATION :
+#
+#   flutter build apk --release \
+#     --dart-define=ACALIA_API=https://eduquali-api.<compte>.workers.dev/api/v1 \
+#     --dart-define=SUPABASE_URL=https://<ref>.supabase.co \
+#     --dart-define=SUPABASE_ANON_KEY=sb_publishable_...
+#
+# Sans `ACALIA_API`, `AppConstants.hasBackend` est faux et l'application travaille
+# entierement en local — c'est le defaut, et c'est voulu : une adresse inventee
+# ferait attendre l'application toutes les 45 secondes pour un serveur absent.
+#
+# `_lib/cors.test.ts` fige le point qui compte : une requete sans `Origin` n'est
+# jamais refusee. L'interdire couperait l'APK sans qu'aucun ecran ne l'explique.
+
+name = "eduquali-api"
+main = "worker.ts"
+compatibility_date = "2026-09-01"
+
+# L'adresse publique `*.workers.dev`. Declaree plutot que laissee par defaut :
+# wrangler l'activait en l'absence de reglage, et un comportement par defaut qui
+# ouvre une adresse publique merite d'etre ecrit.
+workers_dev = true
+
+# Pas d'adresse par version.
+#
+# Activees, chaque deploiement garde une URL publique permanente qui sert LE
+# CODE DE CE JOUR-LA, avec les memes secrets. Une faille corrigee reste donc
+# joignable a son ancienne adresse, indefiniment : c'est exactement ce qui
+# serait arrive au classement, qui servait des prenoms d'eleves sans exiger de
+# compte jusqu'a ce qu'`auth-context.test.ts` le signale.
+#
+# Le confort d'essayer une version avant de la promouvoir ne vaut pas une
+# collection d'API anciennes qu'on ne pense jamais a fermer.
+preview_urls = false
+
+# Remplit `process.env` a partir des variables et des secrets, et fournit les
+# modules Node dont `@supabase/supabase-js` a besoin.
+compatibility_flags = ["nodejs_compat"]
+
+# --- Bac a sable (cible par defaut) --------------------------------------
+#
+# `wrangler deploy` sans `--env` deploie ici. Les secrets de cette cible
+# pointent sur le bac a sable de Djomy : c'est la que l'on essaie, et un
+# paiement y est annonce comme un test jusque dans l'ecran de l'acheteur.
+[vars]
+# Le site en developpement. Ecrites en clair plutot que deduites de `NODE_ENV` :
+# `nodejs_compat` pose souvent `NODE_ENV=production` sur un Worker deploye, et
+# les adresses de developpement disparaissaient alors sans explication.
+#
+# Les deux formes de localhost, parce qu'un navigateur envoie exactement ce que
+# la barre d'adresse contient et que `127.0.0.1` n'est pas `localhost` pour CORS.
+# Le port 5174 est celui de Flutter web en developpement.
+# Le domaine de Pages est ajoute ici, dans l'environnement **par defaut**,
+# parce que c'est celui qui est reellement deploye : une requete de
+# `https://eduquali.pages.dev` au Worker en service revenait sans aucun
+# en-tete CORS (verifie le 05/10). Le bloc `[env.production]` porte bien
+# ce domaine, mais il n'a jamais ete deploye — et le deployer basculerait
+# Djomy en argent reel, ce qui est une autre decision.
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,https://eduquali.pages.dev"
+AI_MONTHLY_BUDGET_USD = "50"
+# Declare, jamais devine : chercher « sandbox » dans l'URL serait la bonne
+# facon de se tromper le jour ou l'hote de test ne porte pas ce mot.
+DJOMY_ENVIRONMENT = "sandbox"
+
+# Chaque nuit a 2 h UTC, soit 2 h a Conakry. Deux travaux, tous deux
+# rejouables, donc une execution manquee se rattrape au passage suivant :
+#
+#   1. generer les seances des cours en direct, un mois d'avance ;
+#   2. le cycle des concours — fermer ceux qui sont echus **en distribuant leurs
+#      points**, puis ouvrir celui de la semaine s'il n'existe pas encore.
+#
+# Le second manquait jusqu'au 03/10 : les concours se terminaient sans que
+# personne ne touche ses points, et aucun nouveau ne s'ouvrait.
+#
+# `worker.ts` les lance en `allSettled` : le cycle des concours ne doit pas
+# sauter le soir ou la generation des seances echoue.
+#
+# Ce declenchement sert aussi de battement de coeur : l'offre gratuite de
+# Supabase met le projet en pause apres sept jours sans requete, et toutes les
+# requetes echouent alors jusqu'a sa reouverture a la main.
+[triggers]
+crons = ["0 2 * * *"]
+
+[observability]
+enabled = true
+
+# --- Production -----------------------------------------------------------
+[env.production]
+name = "eduquali-api"
+
+[env.production.triggers]
+crons = ["0 2 * * *"]
+
+[env.production.vars]
+# ⚠ A CORRIGER AVANT LE PREMIER DEPLOIEMENT EN PRODUCTION.
+#
+# Cette valeur est une supposition : `.env.example` parle d'`acalia.vercel.app` et
+# d'`acalia.gn`, ce fichier d'`eduquali.pages.dev`. Les deux ne peuvent pas etre
+# vrais, et une origine fausse donne le symptome le plus desagreable qui soit —
+# le site se charge, puis chaque appel echoue dans la console du navigateur sans
+# message a l'ecran.
+#
+# Y mettre le ou les domaines reels du site, separes par des virgules. Rien a
+# ajouter pour l'application mobile : voir l'explication en tete de fichier.
+ALLOWED_ORIGINS = "https://eduquali.pages.dev"
+AI_MONTHLY_BUDGET_USD = "50"
+# Ici l'argent est reel.
+DJOMY_ENVIRONMENT = "production"

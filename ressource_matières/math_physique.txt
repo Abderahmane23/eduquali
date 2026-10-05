@@ -1,0 +1,185 @@
+Voici la compilation structurée des programmes de **mathématiques** et de **physique au collège guinéen** — 7e, 8e, 9e et 10e années — à partir des programmes INRAP de Conakry, octobre 2009. Les mathématiques disposent d’un tableau synoptique particulièrement complet ; pour la physique, le détail de la 7e année et une large partie de la 8e année sont explicitement accessibles, tandis que certains intitulés détaillés de 9e et 10e doivent être recoupés avec les fascicules locaux ou plans de progression. [scribd](https://www.scribd.com/document/768192410/Math-Coll)
+
+## Mathématiques au collège
+
+Le programme de mathématiques est issu des **programmes harmonisés** des pays francophones d’Afrique et de l’océan Indien. Il s’organise autour de deux ensembles : les activités numériques et les activités géométriques. Les manuels associés relèvent de la collection CIAM — *Collection Inter-Africaine de Mathématiques*. [scribd](https://www.scribd.com/document/768192410/Math-Coll)
+
+| Classe | Axes principaux |
+|---|---|
+| 7e année | Nombres décimaux et relatifs, fractions, géométrie plane élémentaire, solides, symétries, proportionnalité |
+| 8e année | Fractions et division euclidienne, calcul littéral initial, géométrie des triangles et cercles, prismes, repérage |
+| 9e année | Nombres rationnels, puissances, calcul algébrique, équations, vecteurs, Thalès, Pythagore, statistiques |
+| 10e année | Nombres réels, radicaux, polynômes, systèmes, fonctions affines et linéaires, trigonométrie, géométrie analytique |
+
+### 7e année
+
+| Domaine | Chapitres et sous-chapitres |
+|---|---|
+| Arithmétique | Nombres entiers naturels ; multiples et diviseurs ; critères de divisibilité par 2, 3, 5, 9, 10, 100 et 1 000 |
+| Fractions | Écritures fractionnaires ; simplification ; écriture fractionnaire d’un nombre décimal ; addition et soustraction de fractions de même dénominateur ; produit d’un entier naturel par une fraction |
+| Nombres décimaux | Addition, soustraction, multiplication, division ; comparaison ; ordre de grandeur ; valeur approchée |
+| Nombres relatifs | Introduction des décimaux relatifs ; ensembles \(D\) et \(Z\) ; opposé d’un nombre ; somme d’entiers relatifs |
+| Calcul littéral | Priorités opératoires ; parenthèses ; propriétés de l’addition et de la multiplication ; premières expressions littérales liées aux périmètres, aires et volumes |
+| Équations et inéquations | Équations simples de type \(a+x=b\) ou \(ax=b\) ; recherche de nombres vérifiant des inégalités simples |
+| Proportionnalité | Tableaux de proportionnalité ; coefficient de proportionnalité ; pourcentage ; échelle |
+| Statistiques | Lecture et interprétation de graphiques simples |
+| Droites et segments | Droite, demi-droite, alignement ; droites sécantes, perpendiculaires et parallèles ; segment ; longueur ; milieu ; médiatrice |
+| Angles | Vocabulaire ; mesure en degrés ; angles adjacents, complémentaires et supplémentaires ; bissectrice |
+| Triangles | Vocabulaire ; triangles particuliers ; hauteur, médiatrice, bissectrice ; périmètre et aire |
+| Cercles | Centre, rayon, diamètre, corde ; périmètre du cercle ; aire du disque |
+| Quadrilatères | Parallélogramme ; propriétés des côtés et diagonales ; losange, rectangle et carré ; périmètres et aires |
+| Solides | Cube, pavé droit et cylindre ; vocabulaire ; patrons ; aires latérales et totales ; volumes |
+| Symétries | Symétrie axiale ; symétrie centrale ; construction de symétriques de points, segments, droites et angles ; axe et centre de symétrie |
+| Repérage | Demi-droite graduée ; droite graduée ; origine, unité et abscisse ; placement et lecture de points |
+
+Le programme insiste sur l’utilisation effective de la règle, de l’équerre, du compas et du rapporteur. Les constructions et les manipulations doivent précéder la formalisation des propriétés géométriques. [fr.scribd](https://fr.scribd.com/document/733809637/Programmes-College)
+
+### 8e année
+
+| Domaine | Chapitres et sous-chapitres |
+|---|---|
+| Arithmétique | Division euclidienne ; nombres premiers ; décomposition en facteurs premiers ; recherche de multiples et de diviseurs ; PPCM et PGCD |
+| Fractions | Fractions irréductibles ; simplification ; comparaison à l’unité ; encadrement entre deux décimaux ; somme et différence de fractions de dénominateurs différents ; produit de fractions |
+| Nombres relatifs | Addition, soustraction, multiplication et comparaison de nombres décimaux relatifs |
+| Calcul littéral | Valeur numérique d’une expression ; développement de \(a(x+y)\) ; réduction de termes semblables ; factorisation de \(ax+bx\) |
+| Équations et inéquations | Équations de type \(ax+b=0\) dans \(Q\) ; inéquations simples de premier degré à une inconnue |
+| Proportionnalité | Coefficients de proportionnalité ; vitesse ; masse volumique ; débit ; représentation graphique d’un tableau de proportionnalité |
+| Pourcentages et échelles | Calcul de pourcentages ; agrandissement et réduction à l’échelle |
+| Statistiques | Collecte et organisation des données ; effectifs ; fréquences ; moyenne ; diagrammes à bandes et diagrammes circulaires |
+| Distance | Distance de deux points ; inégalité triangulaire ; médiatrice ; caractérisation d’un segment ; régionnement du plan |
+| Angles | Angles opposés par le sommet ; angles formés par deux parallèles coupées par une sécante ; angles alternes-internes et correspondants |
+| Triangles | Somme des angles ; triangles isocèles et équilatéraux ; médiatrices ; cercle circonscrit ; triangles superposables |
+| Cercles | Cercle circonscrit à un triangle rectangle ; intérieur, extérieur et frontière d’un cercle |
+| Quadrilatères et polygones | Caractérisation du parallélogramme, du losange, du rectangle et du carré ; trapèze ; polygones réguliers ; triangle équilatéral, hexagone, carré et octogone |
+| Solides | Prisme droit ; vocabulaire ; patron ; construction ; aire latérale, aire totale et volume |
+| Symétries | Symétriques de points, droites, segments, triangles et cercles par rapport à un axe ou un centre ; propriétés de conservation |
+| Repérage | Quadrillage ; nœuds et mailles ; couples de coordonnées ; coordonnées d’un point dans le plan |
+
+La notion de proportionnalité doit être mise en relation avec des situations concrètes : vitesse, débit, consommation, masse volumique, prix, plans et cartes. [scribd](https://www.scribd.com/document/768192410/Math-Coll)
+
+### 9e année
+
+| Domaine | Chapitres et sous-chapitres |
+|---|---|
+| Arithmétique | Utilisation du PPCM et du PGCD dans la résolution de problèmes |
+| Nombres décimaux | Écriture scientifique \(a \times 10^n\), avec \(a\in Z\) et \(n\in Z\) ; multiplication de nombres écrits sous cette forme |
+| Nombres rationnels | Ensemble \(Q\) ; fraction irréductible ; comparaison ; somme, différence, produit et inverse d’un rationnel non nul |
+| Puissances | Puissances à exposant entier naturel d’un nombre rationnel non nul ; propriétés ; calculs simples ; encadrements et approximations décimales |
+| Calcul algébrique | Développement ; réduction ; factorisation ; produits remarquables : \((a+b)^2\), \((a-b)^2\), \((a+b)(a-b)\) |
+| Équations | Équations du premier degré à une inconnue dans \(R\) |
+| Inéquations | Inéquations du premier degré à une inconnue ; représentation des solutions |
+| Systèmes | Équations et systèmes de deux équations du premier degré dans \(R \times R\) ; inéquations et systèmes d’inéquations |
+| Proportionnalité | Coefficients de proportionnalité ; propriété \( \frac{a}{b}=\frac{c}{d}\iff ad=bc \) lorsque les dénominateurs sont non nuls ; représentation graphique |
+| Statistiques | Données qualitatives et quantitatives ; effectifs ; fréquences ; moyenne ; diagrammes à bandes et circulaires ; regroupement en classes ; histogrammes |
+| Géométrie plane | Distance d’un point à une droite ; distance entre deux droites ; bissectrice ; triangle et droite des milieux ; propriétés directe et réciproque |
+| Pythagore | Théorème direct ; réciproque ; calcul de longueurs dans le triangle rectangle |
+| Cercle | Positions relatives d’une droite et d’un cercle ; tangente ; tangentes issues d’un point |
+| Vecteurs | Définition par la translation ; égalité de vecteurs ; représentant d’origine donnée ; somme ; relation de Chasles ; vecteur nul ; vecteur opposé ; milieu |
+| Repérage | Repère orthogonal et orthonormal ; coordonnées d’un point ; distance entre deux points ; norme d’un vecteur ; condition d’orthogonalité |
+| Espace | Plans et droites de l’espace ; positions relatives ; perspective cavalière ; représentation de solides |
+
+Le programme recommande d’introduire le vecteur à partir de la **translation**, afin que l’élève comprenne d’abord l’idée de déplacement avant de manipuler des coordonnées et des formules. [fr.scribd](https://fr.scribd.com/document/733809637/Programmes-College)
+
+### 10e année
+
+| Domaine | Chapitres et sous-chapitres |
+|---|---|
+| Nombres réels | Introduction de \(R\) ; comparaison ; intervalles ; encadrement de somme, différence, produit et quotient |
+| Radicaux | Définition de la racine carrée ; propriétés ; comparaison ; opérations sur les radicaux |
+| Puissances | Puissances à exposant entier relatif d’un nombre réel ; propriétés |
+| Calcul numérique | Approximations décimales ; usage raisonné des tables numériques et de la calculatrice |
+| Monômes | Degré ; coefficient ; opérations sur les monômes |
+| Polynômes | Notion de polynôme ; degré ; addition et multiplication de polynômes |
+| Équations | Équations du premier degré dans \(R\) ; systèmes de deux équations du premier degré dans \(R \times R\) |
+| Inéquations | Inéquations et systèmes d’inéquations du premier degré dans \(R \times R\) ; interprétation graphique |
+| Applications linéaires | Définition ; propriétés de linéarité ; bijection ; sens de variation ; représentation graphique |
+| Applications affines | Définition ; sens de variation ; représentation graphique ; applications concrètes |
+| Statistiques | Regroupement en classes d’amplitudes égales ; histogramme ; étendue |
+| Angles inscrits | Angle inscrit ; angle au centre ; arcs interceptés ; propriétés et relations entre angles |
+| Trigonométrie | Sinus, cosinus et tangente d’un angle aigu ; calcul dans le triangle rectangle ; utilisation de tables et de calculatrice ; angles remarquables de 30°, 45° et 60° |
+| Polygones réguliers | Triangle équilatéral, carré, pentagone, hexagone et octogone ; lien avec la rotation |
+| Solides | Pyramide et cône de révolution ; vocabulaire ; patron ; aires et volumes |
+| Sections de solides | Section d’une pyramide ou d’un cône par un plan parallèle à la base ; tronc de pyramide et tronc de cône ; réduction et agrandissement |
+| Coordonnées de vecteurs | Coordonnées d’une somme ; coordonnées d’un produit par un réel ; colinéarité ; orthogonalité ; norme |
+| Droites | Vecteur directeur ; équation de droite ; coefficient directeur ; parallélisme et orthogonalité de deux droites |
+| Transformations | Symétrie orthogonale ; translation ; composée de translations ; rotation abordée expérimentalement ; homothétie possible en complément facultatif |
+
+L’homothétie et la rotation apparaissent comme des compléments facultatifs : la première est liée aux propriétés de Thalès et la seconde aux polygones réguliers et à la conservation des distances. [fr.scribd](https://fr.scribd.com/document/733809637/Programmes-College)
+
+## Physique au collège
+
+Le programme de physique fait partie des programmes de **sciences physiques** élaborés sous la direction de l’INRAP. Il adopte une démarche expérimentale : les phénomènes doivent être étudiés à partir de l’environnement quotidien de l’élève, de manipulations effectives et de matériels accessibles localement. [fr.scribd](https://fr.scribd.com/document/803546754/Phys-coll)
+
+Les programmes sont organisés en trois rubriques :
+
+- Contenus scientifiques à enseigner
+- Savoirs et savoir-faire à développer
+- Commentaires et orientations méthodologiques pour l’enseignant. [fr.scribd](https://fr.scribd.com/document/803546754/Phys-coll)
+
+### 7e année
+
+La 7e année est structurée autour de trois grands blocs : propriétés physiques de la matière, électricité et aimantation. Le programme prévoit notamment 34 heures sur la matière, 35 heures sur l’électricité et 6 heures sur les aimants. [fr.scribd](https://fr.scribd.com/document/803546754/Phys-coll)
+
+| Chapitre | Sous-chapitres et contenus |
+|---|---|
+| Propriétés physiques de la matière | États de la matière ; solides, liquides et gaz ; critères de reconnaissance ; surface libre des liquides ; existence, compressibilité et expansibilité de l’air |
+| Mesure de la masse | Masse d’un corps ; balances ; balance Roberval ; pesée de solides et liquides ; unités et sous-unités de masse ; conversions |
+| Mesure du poids | Caractéristiques du poids : direction et sens ; verticalité ; peson et dynamomètre ; différence masse/poids ; relation \(P=m\times g\), avec \(g=10\ \text{N/kg}\) |
+| Mesure du volume | Volume des solides, liquides et gaz ; volume d’un solide régulier ; éprouvette graduée ; seringue ; déplacement de liquide ; lecture du ménisque ; unités et conversions |
+| Température et chaleur | Thermomètres ; température ; échelle Celsius ; thermomètre médical ; distinction entre température et chaleur |
+| Changements d’état | Fusion ; solidification ; vaporisation ; ébullition ; évaporation ; condensation ; conservation de la masse ; non-conservation possible du volume ; cycle de l’eau |
+| Circuit électrique simple | Pile, lampe, fils conducteurs, interrupteur ; circuit ouvert et fermé ; lampe torche ; tension nominale d’une lampe et d’un générateur |
+| Conducteurs et isolants | Métaux, plastiques, bois, caoutchouc, eau pure, eau salée ; rôle de la gaine électrique ; conducteurs et isolants de l’environnement |
+| Schématisation des circuits | Symboles normalisés ; différence entre dessin et schéma ; schéma d’une pile, d’une lampe, d’un interrupteur, d’un commutateur et d’une prise secteur |
+| Associations de piles | Bornes positive et négative ; montage en série ; montage en opposition ; tension d’une association ; adaptation d’une lampe à un générateur |
+| Associations de lampes | Montage en série ; montage en dérivation ; conséquences d’une lampe grillée ; court-circuit ; exemples domestiques et guirlandes |
+| Sécurité électrique | Test lampe-pile ; recherche de panne ; dangers d’électrocution ; dangers d’incendie ; fusibles ; disjoncteurs ; remplacement d’un fusible identique |
+| Aimants | Corps ferreux et nickel ; pôles Nord et Sud ; attraction et répulsion ; boussole ; orientation Nord-Sud ; aimantation temporaire du fer et permanente de l’acier |
+
+Le programme interdit les manipulations des élèves sur le courant du secteur, jugé dangereux. Les montages doivent être réalisés avec des piles et du matériel à basse tension. [fr.scribd](https://fr.scribd.com/document/803546754/Phys-coll)
+
+### 8e année
+
+La 8e année approfondit la matière, la chaleur et l’électricité. Le premier ensemble explicitement détaillé concerne les propriétés physiques de la matière, pour un volume prévu de 32 heures. [fr.scribd](https://fr.scribd.com/document/803546754/Phys-coll)
+
+| Chapitre | Sous-chapitres et contenus |
+|---|---|
+| État gazeux | Compressibilité et expansibilité des gaz ; pression atmosphérique ; mesure et comparaison de pressions ; masse de l’air et de gaz usuels ; pas de calcul formel reliant pression, force et surface |
+| Masse volumique | Masse volumique des solides, liquides et gaz ; unités ; détermination expérimentale avec balance et récipient gradué ; calcul de masse, volume ou masse volumique |
+| Calorimétrie | Échanges de chaleur entre masses d’eau à températures différentes ; température d’équilibre ; invariance de la température lors de la fusion et de l’ébullition d’un corps pur ; principe de la bouteille thermos |
+| Dilatation | Dilatation des solides, liquides et gaz ; étude qualitative ; joints de dilatation des rails et ponts ; thermomètre à liquide ; bilame ; vase d’expansion |
+| Transmission de chaleur | Conduction dans les solides ; convection dans les liquides et les gaz ; rayonnement ; isolation thermique ; applications : casseroles, maisons, glacières, thermos et foyers améliorés |
+| Électricité | Mesure de l’intensité et de la tension ; circuits en série et en dérivation ; unicité de l’intensité dans un circuit sans dérivation ; additivité des tensions ; unicité de la tension et additivité des intensités dans les circuits avec dérivation |
+| Électromagnétisme | Étude signalée dans les plans de progression récents : effets magnétiques du courant et applications usuelles ; la liste exhaustive des sous-leçons nécessite toutefois une vérification directe du fascicule complet.  [fr.scribd](https://fr.scribd.com/document/803546754/Phys-coll) |
+
+### 9e année
+
+Les sources accessibles confirment l’entrée de l’élève dans l’acoustique, l’optique et la mécanique. Les intitulés ci-dessous sont explicitement retrouvés ou recoupés dans le programme de physique du collège. [fr.scribd](https://fr.scribd.com/document/914586473/Phys-coll)
+
+| Domaine | Sous-chapitres confirmés ou à compléter |
+|---|---|
+| Acoustique | Production et propagation du son ; sources sonores ; phénomènes acoustiques ; durée indiquée dans le programme : 2 heures pour l’introduction à l’acoustique |
+| Optique | Étude de la lumière ; propagation rectiligne ; ombre et pénombre ; réflexion et réfraction ; miroirs et lentilles selon le niveau de développement du chapitre |
+| Mécanique | Forces et effets des forces ; poids ; équilibre ; mouvement ; relation entre masse et poids reprise dans une approche plus expérimentale |
+| Énergie mécanique | Travail, puissance et énergie mécanique ; applications aux machines et activités de la vie courante |
+| Technologie | Approche des dispositifs mécaniques et techniques à partir d’objets de l’environnement |
+
+Le programme précise que l’établissement expérimental de la relation entre poids et masse, seulement donnée en 7e année, est repris plus tard lors de l’étude des forces. [fr.scribd](https://fr.scribd.com/document/803546754/Phys-coll)
+
+### 10e année
+
+La 10e année consolide les notions d’optique, de mécanique et de technologie en vue du BEPC et de l’entrée au lycée. Les rubriques explicitement retrouvées dans le programme comprennent l’optique — dont la réflexion et la réfraction — ainsi que la mécanique et la technologie. [fr.scribd](https://fr.scribd.com/document/914586473/Phys-coll)
+
+| Domaine | Sous-chapitres confirmés ou à compléter |
+|---|---|
+| Optique | Réflexion et réfraction de la lumière sur des surfaces planes ; durée repérée : 3 heures pour cette leçon ; applications pratiques de la propagation et du changement de direction de la lumière |
+| Optique géométrique | Miroirs, lentilles, formation d’images et instruments simples : à vérifier dans le fascicule original complet avant transcription exhaustive |
+| Mécanique | Travail, puissance et énergie mécaniques ; durée repérée : 9 heures ; calculs et interprétation de situations mécaniques |
+| Mécanique et technologie | Ensemble « mécanique et technologie » identifié à 27 heures dans le programme ; étude fonctionnelle de systèmes ou mécanismes techniques usuels |
+| Démarche expérimentale | Mesures, exploitation des résultats, schémas, identification de grandeurs physiques, unités et résolution de problèmes contextualisés |
+
+## Principes pédagogiques
+
+En mathématiques, le programme demande de développer le calcul mental, la visualisation graphique, la justification progressive et une utilisation raisonnée de la calculatrice. Le langage ensembliste — \( \in \), \( \notin \), \( \subset \), \( \cap \), \( \cup \) — doit être introduit seulement lorsqu’il est utile, sans devenir un cours autonome de théorie des ensembles. [fr.scribd](https://fr.scribd.com/document/733809637/Programmes-College)
+
+En physique, le cours magistral seul est explicitement déconseillé. L’élève doit observer, questionner, manipuler, construire des circuits, relever des mesures, comparer des résultats et relier les notions aux objets de son environnement : eau, thermomètre, balance, bicyclette, piles, lampes, maison, pont, moteur ou installation électrique. [fr.scribd](https://fr.scribd.com/document/803546754/Phys-coll)

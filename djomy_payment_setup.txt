@@ -1,0 +1,1218 @@
+Djomy payment platform API (v1.0)
+Djomy payment platform api documentation   Entête X-API-KEY Obligatoire
+
+Pour garantir une communication sécurisée, chaque entreprise dispose d'une clé API (clientId) et d'une clé secrète (clientSecret) fournies via l'espace marchand. Ces identifiants sont utilisés pour générer une signature HMAC nécessaire à l'authentification de requêtes API et demander un access token de type Bearer (cf. rubrique '#Authentification').   **Fonctionnement de l'ajout de l'entête HTTP X-API-KEY:
+
+Signez la clé API à l'aide de la clé secrète avec l'algorithme HMAC-SHA256.
+Convertissez le hachage résultant en chaîne hexadécimale.
+Ajoutez l'en-tête HTTP X-API-KEY dans chaque requête sous la forme suivante :
+X-API-KEY: <clientId>:<HMAC-SIGNATURE>
+⚠️Attention : Toutes les requêtes vers nos ressources doivent obligatoirement contenir cette en-tête au format ci-dessus.   Comment générer une signature Vous trouverez ci-après quelque snippet de code pour générer une signature, qu'elle soit pour l'entête X-API-KEY ou pour les webhook.   Exemple en JavaScript  
+
+const CryptoJS = require("crypto-js");
+function encryptHMAC(key, secret) {
+  try {
+    const hash = CryptoJS.HmacSHA256(key, secret);
+    return hash.toString(CryptoJS.enc.Hex);
+  } catch (err) {
+    console.error("Erreur de chiffrement :", err);
+    throw err;
+  }
+}
+ 
+
+Exemple en Java  
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.util.Formatter;
+
+public class HmacGenerator {
+    public static String generateHmac(String stringToSign, String clientSecret) throws Exception {
+        Mac sha256Hmac = Mac.getInstance("HmacSHA256");
+        SecretKeySpec secretKey = new SecretKeySpec(clientSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        sha256Hmac.init(secretKey);
+
+        byte[] hashBytes = sha256Hmac.doFinal(stringToSign.getBytes(StandardCharsets.UTF_8));
+         return formatToHex(hashBytes);
+        }
+
+        private static String formatToHex(byte[] bytes) {
+            StringBuilder sb = new StringBuilder();
+            for (byte b : bytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        }
+    }
+ 
+
+Exemple en Laravel/PHP  
+
+function generateHmac($stringToSign, $clientSecret) {
+    try {
+        $hmacSignature = hash_hmac('sha256', $stringToSign, $clientSecret);
+        return $hmacSignature;
+    } catch (Exception $e) {
+        throw new Exception("Erreur de chiffrement : " . $e->getMessage());
+    }
+}
+
+// Utilisation
+$stringToSign = 'your_string_to_sign';
+$clientSecret = 'your_client_secret';
+$signature = generateHmac($stringToSign, $clientSecret);
+💡 Vous pouvez tester cette génération de signature dans vos outils Postman ou directement dans votre code client.    
+
+Topups
+Liste des recharges
+Liste paginée des demandes de recharge du marchand.
+
+Authorizations:
+X-API-KEY
+query Parameters
+paginationRequest
+required
+object (PaginationRequest)
+Responses
+200 Liste récupérée avec succès
+401 Clé API manquante ou invalide
+500 Erreur interne du serveur
+
+get
+/v1/topups
+
+Response samples
+401500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Détails d'une recharge
+Retourne une demande de recharge.
+
+Authorizations:
+X-API-KEY
+path Parameters
+topupId
+required
+string <uuid>
+Example: 9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+Identifiant de la demande
+
+Responses
+200 Demande récupérée
+401 Clé API manquante ou invalide
+404 Demande de recharge introuvable
+500 Erreur interne du serveur
+
+get
+/v1/topups/{topupId}
+
+Response samples
+401404500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Consulter la preuve de virement
+Retourne un lien de téléchargement temporaire.
+
+Authorizations:
+X-API-KEY
+path Parameters
+topupId
+required
+string <uuid>
+Example: 9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+Identifiant de la demande
+
+Responses
+200 URL de téléchargement générée
+401 Clé API manquante ou invalide
+404 Demande introuvable, ou sans preuve
+500 Erreur interne du serveur
+
+get
+/v1/topups/{topupId}/proof
+
+Response samples
+401404500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Envoyer la preuve de virement
+Ajoute la preuve de virement.
+
+Authorizations:
+X-API-KEY
+path Parameters
+topupId
+required
+string <uuid>
+Example: 9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+Identifiant de la demande
+
+Request Body schema: multipart/form-data
+proofFile
+required
+string <binary>
+Preuve de virement : JPG, PNG ou PDF, 5 Mo maximum
+
+Responses
+200 Preuve envoyée, demande en attente de validation
+400 Fichier manquant, vide ou au mauvais format
+401 Clé API manquante ou invalide
+404 Demande de recharge introuvable
+409 La demande n'accepte plus de preuve
+413 Fichier supérieur à 5 Mo
+500 Erreur interne du serveur
+
+put
+/v1/topups/{topupId}/proof
+
+Response samples
+400401404409413500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Liens de paiement
+Récupérer un lien de paiement
+Récupère les informations détaillées d'un lien de paiement existant en utilisant sa référence unique. Retourne toutes les données associées au lien incluant son statut, sa configuration et ses métadonnées.
+
+Authorizations:
+(X-API-KEYBearerAuth)
+path Parameters
+reference
+required
+string
+Responses
+200 Lien de paiement récupéré avec succès
+400 Format de référence invalide
+401 Clé API manquante ou invalide
+403 Accès non autorisé à ce lien
+404 Lien de paiement introuvable
+429 Limite de taux dépassée
+500 Erreur interne du serveur
+
+get
+/v1/links/{reference}
+
+Générer un lien de paiement
+Crée un nouveau lien de paiement avec les paramètres spécifiés.Le lien généré peut être partagé avec les clients pour effectuer des paiements.Retourne les informations détaillées du lien créé avec sa référence unique.
+
+Authorizations:
+(X-API-KEYBearerAuth)
+Request Body schema: application/json
+required
+amountToPay	
+number
+Indique le montant à payer. Si fournit, le payeur n'aura pas à le saisir au moment du paiement.
+
+linkName	
+string
+Indique le nom du lien. Utile pour retrouver facilement le lien de paiement dans la rubrique Liens de paiements dans l'espace marchand
+
+phoneNumber	
+string
+Le numéro de téléphone du payeur. Si vous voulez que Djomy envoie le lien de paiement au payeur alors le numéro de téléphone est obligatoire
+
+sendSms	
+boolean
+Indique si Djomy doit envoyer le lien de paiement au payeur par SMS.
+
+*true : Indique que Djomy peut envoyer le lien
+false : Indique que le lien doit/sera pas envoyé La valeur par défaut est false
+description	
+string
+Permet de donner du contexte au paiement qui sera effectué. Cette information utile et affichée dans le tableau de bord
+
+countryCode
+required
+string^[A-Z]{2}$
+Code du pays, Il doit respecter le standard international. ISO (ex : GN pour la Guinée, CI pour le Côte D'Ivoire)
+
+usageType	
+string
+Enum: "UNIQUE" "MULTIPLE"
+Indique le type d'usage de lien de paiement."
+
+UNIQUE : indique qu'un seul paiement pour être effectués à travers ce lien. Une fois le paiement effectué avec succès, le lien se d'ésactive automatiquement
+MULTIPLE : indique que plusieurs paiements pour être effectués à travers ce lien.
+expiresAt	
+string <date-time>
+Indique la date à laquelle le lien ne sera plus valide. Il sera automatique désactivé
+
+merchantReference	
+string
+Permet au marchant d'indiquer une référence qui sera lié au paiement une fois effectué. Dans le cas de paiement à usage multiple, tous les paiements effectués seront liés au lien à travers cette référence
+
+usageLimit	
+integer <int32>
+Indique le nombre de paiement autorisé à travers ce lien. Une fois ce nombre effectué avec succès est atteint, le lien est automatiquement desactivé. ⚠️ Attention ce champs n'est applicable que pour les usages MULTIPLE
+
+returnUrl	
+string
+Url de redirection vers le site du marchand. Permet au payeur d'être vers le site du marchand, une fois le paiment finalisé. Djomy rajoutera en paramètre d'url les informations suivantes : transactionId et le status. Si l'url est fournie, alors elle doit être en https. Le cas échéant un bad request sera retourné en reponse. Exemple d'url de retour : https://merchant.example.com/checkout/return ?transactionId=691b9039-0818-4ff2-a3a0-6073c3b4660d &status=SUCCESS
+
+cancelUrl	
+string
+Url de redirection vers le site du marchand dans le cas ou le payeur veut annuler le processus de paiement. ⚠️ L'annulation n'est plus possible une fois le paiement soumis. Cependant si le paiement échoue, elle devient possible Si l'url est fournie, alors elle doit être en https. Le cas échéant un bad request sera retourné en reponse. Exemple d'url de retour : https://merchant.example.com/checkout/cancel
+
+customFields	
+Array of objects (PaymentLinkCustomFieldRequest)
+Indique la liste de champs personnalisés qui apparaitront sur la page de paiement. Ces champs permettent au marchand de capturer des informations auprès du payeur.
+
+allowedPaymentMethods	
+Array of strings
+Indique la liste des méthodes de paiement qui seront affichées sur la page de page de paiement que vous avez fourni. Par défaut toutes méthodes seront affichées.
+- **OM** : Orange Money
+- **MOMO** : MTN MoMo
+- **SOUTRA_MONEY** : Soutra money
+- **PAYCARD** : PayCard
+- **CARD** : pour les paiements par carte (VISA & MasterCard)
+-  ⚠️ Si vous fournissez une méthode de paiement qui ne figure pas dans la liste ou avec une mauvaise prthographe, celle-ci ne sera pas prise en compte.
+Si la liste fournie n'est pas valide, la liste par défaut sera affichée (c'est à dire toutes les méthodes) sur la page de paiement.
+metadata	
+object
+Ce champs optionnel permet au marchant d'envoyer des informations qu'il souhaitent récupérer dans les webhooks et/ou quand il demande le datail d'un lien de paiement
+- Il doit être au format JSON et ne contenir ni de list, ni de structure imbriquée
+- Ex : { "order_id": "ORD-456", "vip": true, "referrer": "campaign-2026" }
+skipDjomyStatusPage	
+boolean
+Indique la redirection automatique vers le site du marchand. Par défaut, elle est à false et aucune redirection ne sera faite.
+Responses
+201 Lien de paiement généré avec succès
+400 Données de création invalides ou manquantes
+401 Clé API manquante ou invalides
+403 Accès refusé - permissions insuffisantes
+422 Données non traitables
+429 Limite de taux dépassée
+500 Erreur interne du serveur
+
+post
+/v1/links
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"amountToPay": 0,
+"linkName": "string",
+"phoneNumber": "string",
+"sendSms": true,
+"description": "string",
+"countryCode": "string",
+"usageType": "UNIQUE",
+"expiresAt": "2019-08-24T14:15:22Z",
+"merchantReference": "string",
+"usageLimit": 0,
+"returnUrl": "string",
+"cancelUrl": "string",
+"customFields": [
+{}
+],
+"allowedPaymentMethods": [
+"string"
+],
+"metadata": {
+"property1": { },
+"property2": { }
+},
+"skipDjomyStatusPage": true
+}
+Lister tous les liens de paiement
+Récupère la liste paginée de tous les liens de paiement associés au compte. Supporte la pagination, le tri et le filtrage par période avec des paramètres optionnels de date. Si aucune date n'est spécifiée, retourne tous les liens.
+
+Authorizations:
+(X-API-KEYBearerAuth)
+query Parameters
+paginationRequest
+required
+object (PaginationRequest)
+startDate	
+string <date-time>
+Example: startDate=2024-01-01T00:00:00
+Date de début (optionnelle)
+
+endDate	
+string <date-time>
+Example: endDate=2024-12-31T23:59:59
+Date de fin (optionnelle)
+
+Responses
+200 Liste des liens récupérée avec succès
+400 Paramètres de pagination ou dates invalides
+401 Clé API manquante ou invalide
+403 Accès refusé - permissions insuffisantes
+422 Période de dates invalide
+429 Limite de taux dépassée
+500 Erreur interne du serveur
+
+get
+/v1/links
+
+Paiements
+Demander un paiement sans redirection vers le portail Djomy
+Cet endpoint permet d’initier un nouveau paiement directement via API, sans passer par la redirection vers notre portail de paiement.
+
+Le paiement est transmis au partenaire. Selon le moyen de paiement choisi, le flux diffère :
+
+• OM et MOMO : Le payeur est notifié par SMS ou via l’application Orange Money / MTN MoMo, afin de confirmer le paiement directement depuis son téléphone.
+
+• KULU : L’API retourne un lien de redirection dans la réponse. Le marchand doit rediriger le payeur vers cette URL :
+
+Si l’application KULU est installée, elle s’ouvrira automatiquement pour confirmation.
+Sinon, le payeur sera redirigé vers le portail web de KULU pour confirmer son paiement.
+• VISA et MASTERCARD : ⚠️ Les paiements par carte bancaire ne sont pas autorisés sur cet endpoint. Merci d’utiliser à la place l’API de paiement avec redirection vers notre portail Djomy.
+
+🔒 Sécurité : Cet appel nécessite :
+
+Un en-tête Authorization : Bearer <jwt_token>
+Un en-tête X-API-KEY : clientId:signature
+La signature HMAC-SHA256 est calculée de la façon suivante :
+
+signature = HMAC_SHA256(clientId, clientSecret)
+X-API-KEY = clientId:signature
+Exemple :
+
+X-API-KEY: djomy-merchant-001:ab56b4d92b40713acc5af89985d4b786
+Authorizations:
+(X-API-KEYBearerAuth)
+Request Body schema: application/json
+required
+paymentMethod
+required
+string
+Méthode de paiement. Valeurs possibles :
+
+OM : pour Orange Money
+MOMO : pour MTN Mobile Money
+KULU : pour Kulu de Digital Pay
+SOUTRA_MONEY : pour Soutra Money (Disponible bientôt)
+PAYCARD : pour PayCard (Disponible bientôt)
+YMO : pour Ymo (Disponible bientôt)
+payerIdentifier
+required
+string
+Le numero de compte payeur. Il peut être un numéro de téléphone pour un portefeuille électronique ou une numéro de carte bancaire " + "pour un paiement par carte bancaire. Attention le numéro de téléphone doit au format international. Ex : 00224623707722 ## ⚠ ce champ est obligatoire si le payeur n'est pas à rédiriger vers le portail de paiement de Djomy
+
+amount
+required
+number
+Motant à payer par le payyer. Il doit être un nombre positif
+
+countryCode
+required
+string [ 2 .. 3 ] characters
+Code du pays, Il doit respecter le standard international. ISO (ex : GN pour la Guinée, CI pour le Côte D'Ivoire)
+
+description	
+string [ 0 .. 255 ] characters
+Description associée au paiement pour donner du contexte
+
+merchantPaymentReference	
+string [ 0 .. 255 ] characters
+Indique la reference fournie par le marchand. Celle-ci peut être liée à une référence de commande chez le marchand. Elle n'est pas obligatoire, mais fortement recommandée
+
+returnUrl	
+string
+Url de retour vers le site marchand si paiement effectué avec succès ou non. ## Ce champ est obligatoire si le payeur est à rédiriger vers le portail de paiement de Djomy et doit être en htpps.
+
+cancelUrl	
+string
+Url de retour vers le site marchand si le payeur décide de quiter la page de paiement avant soumission du paiement. ## Ce champ n'est pas fourni alors le returnUrl sera utilisé. Il doit toutefois être en htpps, s'il est fourni.
+
+metadata	
+object
+Ce champs optionnel, permet au marchant d'envoyer des informations qu'il souhaitent récupérer dans les webhooks et/ou quand il demande le status d'un paiement
+- Il doit être au format JSON et ne contenir ni de list, ni de structure imbriquée
+- Ex : { "order_id": "ORD-456", "vip": true, "referrer": "campaign-2026" }
+Responses
+201 Paiement initié avec succès
+400 Données de paiement invalides ou manquantes
+401 Clé API manquante ou invalide
+403 Accès refusé - permissions insuffisantes
+422 Données de paiement non traitables
+429 Limite de taux dépassée
+500 Erreur interne du serveur
+
+post
+/v1/payments
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"paymentMethod": "OM",
+"payerIdentifier": "string",
+"amount": 0,
+"countryCode": "str",
+"description": "string",
+"merchantPaymentReference": "string",
+"returnUrl": "string",
+"cancelUrl": "string",
+"metadata": {
+"property1": { },
+"property2": { }
+}
+}
+Récupérer la liste des paiements
+Cet endpoint permet de récupérer la liste des paiements sur une période donnée
+
+La recherche est effectuée par défaut sur la période depuis le début du mois courant et pour paiements effectués ou en cours Filtres appliqués pour une recherche :
+
+La période de recherche : elle est composée d'une date de début (startDate) et une date de fin (endDate).
+Le/les statut(s) des paiements : le filtre statues, indique le ou les statut(s) des paiements à retourner. Par défaut, seuls paiements au status en cours (PENDING) ou effectués (SUCCESS) sont retournés.
+Règles applicables :
+
+Période de recherche : si une des dates (startDate et endDate) de recherche n'est pas fournie ou la date fin est antérieure à la date de début alors une erreur 404 est retournée. Si aucune date n'est fournie, alors la période allant du début du mois courant jusqu'à la date de la demande est appliquée.
+Le/les statut(s) de paiements, une recherche peut se faire avec un ou plusieurs status séparés par une virgule. À titre d'exemple pour retourner uniquement les paiement effectués (SUCCESS) et échoués (FAILED) la valeur du paramètre sera : SUCCESS,FAILED. Si le paramètre statuses n'est pas fourni ou est vide, alors seuls les paiements aux statuts en cours (PENDING) et effectués (SUCCESS) sont retournés. La liste des statuts est la suivante : CREATED, PENDING, SUCCESS, CANCELLED et FAILED
+⚠️Une liste de 100 éléments (paiements) est retournée à la fois, sous forme de pagination. Vous pouvez dans le cas où il y a plus de 100 éléments vous appuyez sur la/les page(s) suivante(s)
+
+🔒 Sécurité : Cet appel nécessite :
+
+Un en-tête Authorization : Bearer <jwt_token>
+Un en-tête X-API-KEY : clientId:signature
+La signature HMAC-SHA256 est calculée de la façon suivante :
+
+signature = HMAC_SHA256(clientId, clientSecret)
+X-API-KEY = clientId:signature
+Exemple :
+
+X-API-KEY: djomy-merchant-001:ab56b4d92b40713acc5af89985d4b786
+Authorizations:
+(X-API-KEYBearerAuth)
+query Parameters
+statuses	
+string
+Default: "SUCCESS,PENDING"
+startDate	
+string <date>
+Example: startDate=2024-01-01
+Date de début (optionnelle)
+
+endDate	
+string <date>
+Example: endDate=2024-12-31
+Date de fin (optionnelle)
+
+paginationRequest
+required
+object (PaginationRequest)
+Responses
+200 Statut de la transaction récupéré avec succès
+400 Paramètres de requêtes incohérents
+401 Clé API manquante ou invalide
+403 Accès non autorisé à cette transaction
+429 Limite de taux dépassée
+500 Erreur interne du serveur
+
+get
+/v1/payments
+
+Récupérer le détail d'un paiement
+Récupère le statut actuel d'un paiement existant en utilisant sa référence unique. Retourne les informations détaillées sur l'état d'un paiement.
+
+🔒 Sécurité : Cet appel nécessite :
+
+Un en-tête Authorization : Bearer <jwt_token>
+Un en-tête X-API-KEY : clientId:signature
+La signature HMAC-SHA256 est calculée de la façon suivante :
+
+signature = HMAC_SHA256(clientId, clientSecret)
+X-API-KEY = clientId:signature
+Exemple :
+
+X-API-KEY: djomy-merchant-001:ab56b4d92b40713acc5af89985d4b786
+Authorizations:
+(X-API-KEYBearerAuth)
+path Parameters
+transactionId
+required
+string
+Responses
+200 Statut de la transaction récupéré avec succès
+400 Format de référence de transaction invalide
+401 Clé API manquante ou invalide
+403 Accès non autorisé à cette transaction
+404 Transaction introuvable
+429 Limite de taux dépassée
+500 Erreur interne du serveur
+
+get
+/v1/payments/{transactionId}/status
+
+Confirm OTP
+Confirm OTP
+
+Authorizations:
+X-API-KEY
+path Parameters
+transactionReference
+required
+string
+Request Body schema: application/json
+required
+oneTimePin
+required
+string\d{4,6}
+Responses
+200 Success
+400 Bad request
+403 Accès non autorisé à cette transaction
+500 Internal error
+
+post
+/v1/payments/{transactionReference}/confirmOTP
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"oneTimePin": "string"
+}
+Demander un paiement avec redirection vers le portail Djomy
+Cet endpoint permet d’initier un nouveau paiement avec redirection vers le portail Djomy pour la finalisation par le payeur.
+
+Le fonctionnement est le suivant : • L’API retourne une URL de redirection dans la réponse. • Le marchand doit rediriger le payeur vers cette URL. • Le payeur choisit alors son moyen de paiement, saisit ses coordonnées (numéro de téléphone, carte bancaire, IBAN, etc.) et procède au paiement. • Une fois le paiement terminé, Djomy redirige le payeur vers l’URL de retour (returnUrl) fournie lors de la création du paiement.
+
+✅ Tous les moyens de paiement sont autorisés sur cet endpoint, y compris VISA et MasterCard.
+
+🔒 Sécurité : Cet appel nécessite :
+
+Un en-tête Authorization : Bearer <jwt_token>
+Un en-tête X-API-KEY : clientId:signature
+La signature HMAC-SHA256 est calculée de la façon suivante :
+
+signature = HMAC_SHA256(clientId, clientSecret)
+X-API-KEY = clientId:signature
+Exemple :
+
+X-API-KEY: djomy-merchant-001:ab56b4d92b40713acc5af89985d4b786
+Authorizations:
+(X-API-KEYBearerAuth)
+Request Body schema: application/json
+required
+amount
+required
+number
+Motant à payer par le payyer. Il doit être un nombre positif
+
+countryCode
+required
+string [ 2 .. 3 ] characters
+Code du pays, Il doit respecter le standard international. ISO (ex : GN pour la Guinée, CI pour le Côte D'Ivoire)
+
+payerNumber
+required
+string
+   Le numéro de téléphone du payeur. Il est obligatoire et doit être au format international. Ex 00224623707722
+allowedPaymentMethods	
+Array of strings
+Indique la liste des méthodes de paiement qui seront affichées sur la page de page de paiement. Par défaut toutes méthodes seront affichées.
+- **OM** : Orange Money
+- **MOMO** : MTN MoMo
+- **SOUTRA_MONEY** : Soutra money
+- **PAYCARD** : PayCard
+- **CARD** : pour les paiements par carte (VISA & MasterCard)
+- ⚠️ Si vous fournissez une méthode de paiement qui ne figure pas dans la liste ou avec une mauvaise prthographe, celle-ci ne sera pas prise en compte.
+Si la liste fournie n'est pas valide, la liste par défaut sera affichée (c'est à dire toutes les méthodes) sur la page de paiement.
+description	
+string [ 0 .. 255 ] characters
+Description associée au paiement pour donner du contexte
+
+merchantPaymentReference	
+string [ 0 .. 255 ] characters
+Indique la reference fournie par le marchand. Celle-ci peut être liée à une référence de commande chez le marchand. Elle n'est pas obligatoire, mais fortement recommandée
+
+returnUrl	
+string
+Url de retour vers le site marchand si paiement effectué avec succès ou non. ## Ce champ est obligatoire si le payeur est à rédiriger vers le portail de paiement de Djomy et doit être en htpps.
+
+cancelUrl	
+string
+Url de retour vers le site marchand si le payeur décide de quiter la page de paiement avant soumission du paiement. ## Ce champ n'est pas fourni alors le returnUrl sera utilisé. Il doit toutefois être en htpps, s'il est fourni.
+
+metadata	
+object
+Ce champs optionnel, permet au marchant d'envoyer des informations qu'il souhaitent récupérer dans les webhooks et/ou quand il demande le status d'un paiement
+- Il doit être au format JSON et ne contenir ni de list, ni de structure imbriquée
+- Ex : { "order_id": "ORD-456", "vip": true, "referrer": "campaign-2026" }
+Responses
+201 Paiement initié avec succès
+400 Données de paiement invalides ou manquantes
+401 Clé API manquante ou invalide
+403 Accès refusé - permissions insuffisantes
+422 Données de paiement non traitables
+429 Limite de taux dépassée
+500 Erreur interne du serveur
+
+post
+/v1/payments/gateway
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"amount": 0,
+"countryCode": "str",
+"payerNumber": "string",
+"allowedPaymentMethods": [
+"string"
+],
+"description": "string",
+"merchantPaymentReference": "string",
+"returnUrl": "string",
+"cancelUrl": "string",
+"metadata": {
+"property1": { },
+"property2": { }
+}
+}
+Webhooks
+Changement de statut des transactions
+Les webhooks sont des notifications HTTP POST envoyées à votre URL configurée lorsque le statut d'un paiement entrant ou d'un transfert sortant change sur notre plateforme.
+
+Pour assurer l'intégrité et l'authenticité des données envoyées, le payload de chaque webhook sera signé avec la clé secrète, accessible depuis l'espace développeur. ## Le résultat de la signature est placé dans l'entête X-Webhook-Signature de la requête. Se référer à la rubrique ###Comment générer une signature, obtenir des snippet de code. Si la signature fournie dans la requête correspod au résultat de votre sugnature, alors poursuivre le traitement du webhook. Le cas échéant, ignorer le webhook. ## Format de l'entête : X-Webhook-Signature: v1:signature
+
+Types d'événements
+Événement	Description
+payment.created	Paiement créé
+payment.redirected	Paiement rédirigé vers le portail de paiement
+payment.cancelled	Paiement annulé par le client
+payment.pending	Paiement en attente
+payment.timeout	Paiement expiré sans réponse du client
+payment.success	Paiement réussi/capturé
+payment.failed	Paiement échoué
+payment.refunded	Paiement remboursé
+payout.success	Transfert sortant exécuté avec succès
+payout.failed	Transfert sortant échoué ou rejeté
+Versions du payload
+La version est portée par votre configuration webhook, accessible depuis l'espace développeur. Seule la structure du champ data change : l'enveloppe (message, eventType, eventId, data, timestamp) et la signature sont identiques dans les deux versions.
+
+Version	Champ data	Événements reçus
+V1	données du paiement directement dans data	payment.* uniquement
+V2	data.payment pour les paiements, data.payout pour les transferts	payment.* et payout.*
+Les nouvelles configurations sont créées en V2. Les marchands déjà intégrés restent en V1 tant qu'ils n'ont pas demandé la migration : les événements payout.* ne sont donc pas envoyés en V1.
+
+En V2, un seul des deux objets est présent par webhook — data.payment sur un événement payment.*, data.payout sur un événement payout.*. L'autre clé est absente du payload, elle n'est pas envoyée vide.
+
+⚠️ Important : Cette documentation décrit les webhooks envoyés À votre système. Vous devez implémenter cet endpoint côté client pour recevoir nos notifications.
+
+header Parameters
+X-Webhook-Signature
+required
+string
+Example: v1:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0
+Signature HMAC-SHA256 du payload, &nbsp;générée avec la clé secrète du marchand (clientSecret) pour vérifier l'authenticité de la requête
+Request Body schema: application/json
+required
+Données du webhook de changement de statut d'un paiement ou d'un transfert sortant
+
+message	
+string
+Message descriptif de l'événement
+
+eventType	
+string
+Enum: "payment.created" "payment.redirected" "payment.pending" "payment.cancelled" "payment.timeout" "payment.success" "payment.failed" "payment.refunded" "payout.success" "payout.failed"
+Type d'événement
+
+eventId	
+string <uuid>
+data	
+object (WebhookEventData)
+Données de l'événement au format V2
+
+paymentLinkReference	
+string
+Référence du lien de paiement associé
+
+timestamp	
+string <date-time>
+Timestamp de l'événement
+
+metadata	
+object
+Ce champs optionnel, contient des informations envoyées par le marchand à la création/initialisation d'un paiement ou la génération d'un lien
+- Il est au format JSON et ne conteient ni de list, ni de structure imbriquée
+- Ex : { "order_id": "ORD-456", "vip": true, "referrer": "campaign-2026" }
+Responses
+200 Webhook traité avec succès
+400 Erreur dans le traitement du webhook
+500 Erreur serveur côté client
+
+post
+/votre-endpoint-webhook
+
+Request samples
+Payload
+Content type
+application/json
+Example
+
+Webhook V1 pour un paiement réussi : les données occupent directement le champ data
+Webhook V1 pour un paiement réussi : les données occupent directement le champ data
+V1 - Paiement réussi
+
+
+Copy
+Expand allCollapse all
+{
+"message": "Statut du paiement",
+"eventType": "payment.success",
+"eventId": "8bfd5709-737c-4254-99a7-57a3d630b349",
+"data": {
+"transactionId": "123e4567-e89b-12d3-a456-426614174000",
+"status": "SUCCESS",
+"paidAmount": 10000,
+"receivedAmount": 9000,
+"fees": 1000,
+"paymentMethod": "OM",
+"merchantPaymentReference": "merch-ref4246",
+"payerIdentifier": "00224623000001",
+"currency": "GNF",
+"createdAt": "2025-07-13T10:30:00.000Z"
+},
+"paymentLinkReference": "LINK-REF",
+"timestamp": "2025-07-13T10:31:00.000Z"
+}
+Payouts
+Détails d'un payout
+Retourne un payout.
+
+Authorizations:
+X-API-KEY
+path Parameters
+orderId
+required
+string
+Example: 9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+Identifiant de l'order
+
+payoutId
+required
+string <uuid>
+Example: 9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+Identifiant du payout
+
+Responses
+200 Payout récupéré
+401 Clé API manquante ou invalide
+404 Payout introuvable
+500 Erreur interne du serveur
+
+get
+/v1/payout-orders/{orderId}/payout-items/{payoutId}
+
+Response samples
+401404500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Relancer un payout
+Re-soumet au provider un payout en échec.
+
+Authorizations:
+X-API-KEY
+path Parameters
+orderId
+required
+string
+Example: 101c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+Identifiant de l'order
+
+payoutId
+required
+string <uuid>
+Example: 9f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f
+Identifiant du payout
+
+Responses
+200 Payout envoyé en retraitement
+401 Clé API manquante ou invalide
+404 Payout introuvable
+409 Transaction déjà en cours sur ce payout
+422 Payout non éligible ou solde insuffisant
+500 Erreur interne du serveur
+
+post
+/v1/payout-orders/{orderId}/payout-items/{payoutId}/retry
+
+Response samples
+401404409422500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Liste des payouts
+Retourne les payouts d'un order, paginés.
+
+Authorizations:
+X-API-KEY
+path Parameters
+orderId
+required
+string
+Example: D4E5F6
+Identifiant ou référence de l'order
+
+query Parameters
+paginationRequest
+required
+object (PaginationRequest)
+Responses
+200 Liste récupérée avec succès
+401 Clé API manquante ou invalide
+404 Order introuvable
+500 Erreur interne du serveur
+
+get
+/v1/payout-orders/{orderId}/payout-items
+
+Response samples
+401404500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Détails d'un order
+Retourne l'order.
+
+Authorizations:
+X-API-KEY
+path Parameters
+orderId
+required
+string
+Example: D4E5F6
+Identifiant ou référence de l'order
+
+Responses
+200 Order récupéré
+401 Clé API manquante ou invalide
+404 Order introuvable
+500 Erreur interne du serveur
+
+get
+/v1/payout-orders/{orderId}
+
+Response samples
+401404500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Initier un payout
+Crée un order et ses payouts.
+
+Authorizations:
+X-API-KEY
+query Parameters
+dryRun	
+boolean
+Default: false
+Simule la création, rien n'est créé.
+
+Request Body schema: application/json
+required
+description
+required
+string
+Libellé de l'order
+
+items
+required
+Array of objects (InitiatePayoutItem) [ 0 .. 5 ] items
+Payouts de l'order, 5 maximum
+
+Responses
+200 Simulation calculée, rien n'a été créé
+201 Order créé
+400 Données de création invalides
+401 Clé API manquante ou invalide
+422 Données non traitables
+500 Erreur interne du serveur
+
+post
+/v1/payout-orders
+
+Request samples
+Payload
+Content type
+application/json
+Deux bénéficiaires
+
+
+Copy
+Expand allCollapse all
+{
+"description": "Paiement des commissions - août 2026",
+"items": [
+{},
+{}
+]
+}
+Response samples
+400401422500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Liste des orders
+Retourne les orders du marchand, paginés.
+
+Authorizations:
+X-API-KEY
+query Parameters
+paginationRequest
+required
+object (PaginationRequest)
+Responses
+200 Liste récupérée avec succès
+401 Clé API manquante ou invalide
+500 Erreur interne du serveur
+
+get
+/v1/payout-orders
+
+Response samples
+401500
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"success": true,
+"message": "string",
+"data": { },
+"error": {
+"code": 0,
+"message": "string",
+"details": "string",
+"fieldsErrors": []
+},
+"errors": [
+"string"
+],
+"path": "string",
+"eventType": "string",
+"timestamp": "2019-08-24T14:15:22Z",
+"status": 0
+}
+Authentification
+Obtenir un access token (Jeton d'accès)
+Cette API permet d'obtenir un jeton d'accès (Bearer token) requis pour toutes les opérations :
+
+soumettre une demande de paiement,
+générer un lien de paiement,
+consulter le statut d'un paiement,
+récupérer le détail d'un ou plusieurs liens de paiement.
+Pour obtenir le jeton d'accès, vous devez soumettre cette requête avec une en-tête X-API-KEY, dont la valeur est le clientId plus la signature tel que décrite dans la section Génération de la signature HMAC.
+
+header Parameters
+X-API-KEY
+required
+string
+X-API-KEY clientId>:<HMAC-SIGNATURE
+
+Request Body schema: application/json
+object (RequestAuthentication)
+Responses
+201 Jeton d'accès généré avec succès
+400 Données d'identification invalides ou manquantes
+401 Identifiants invalides
+429 Limite de requêtes dépassée
+500 Erreur interne du serveur

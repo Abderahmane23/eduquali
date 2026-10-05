@@ -1,0 +1,39 @@
+# En-tetes de securite, servis par Cloudflare Pages.
+#
+# Un site statique n'a pas de serveur ou poser ces reglages : ce fichier est
+# l'equivalent de Helmet pour Pages. Vite le recopie depuis `public/` vers la
+# racine de `dist/`, ou Pages le lit.
+#
+# --- Les commentaires restent HORS du bloc ------------------------------
+#
+# Premiere version ecrite avec un commentaire indente au-dessus de chaque
+# en-tete : trois des cinq ne sont jamais arrives (verifie sur le site
+# deploye). L'analyseur de Pages n'attend que des lignes `Cle: valeur` sous un
+# chemin. On explique donc ici, et on ne met que des en-tetes la-dessous.
+#
+# --- Ce que Cloudflare refuse de servir ---------------------------------
+#
+#   * `Strict-Transport-Security` : gere par Cloudflare lui-meme
+#     (SSL/TLS > Edge Certificates > HSTS dans le tableau de bord). Mis ici,
+#     il est ignore. Et c'est un reglage a n'activer qu'une fois le domaine
+#     definitif : un navigateur qui l'a recu refuse `http://` pendant toute la
+#     duree annoncee, meme apres retrait.
+#
+#   * `X-Frame-Options` : remplace par `frame-ancestors 'none'` dans la
+#     politique de contenu ci-dessous, qui fait le meme travail et que Pages
+#     sert bien.
+#
+# --- La politique de contenu, volontairement minimale -------------------
+#
+# Seule `frame-ancestors` est posee : elle interdit l'affichage du site dans
+# une iframe, et ne peut rien casser puisque le site ne s'encadre pas
+# lui-meme. Une politique complete (`default-src`, `connect-src`...) demande
+# d'etre verifiee navigateur ouvert : trop stricte, elle ne casse pas la page
+# mais un appel dans la console, sans rien afficher a l'ecran. Le point de
+# depart a eprouver est note dans documentation/ROADMAP.md.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: frame-ancestors 'none'
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
