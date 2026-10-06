@@ -2,12 +2,67 @@
 
 Purpose : ce qui reste à faire, et seulement cela.
 Audience : responsable produit et développeurs.
-Last updated : 04/10/2026 — Owner : équipe Eduquali.
+Last updated : 06/10/2026 — Owner : équipe Eduquali.
 
 > Ce fichier ne liste que le **non fait** ou le **partiellement fait**. Une case
 > cochée se retire à la version suivante. L'historique des décisions, avec leurs
 > raisons, vit dans [DECISIONS.md](DECISIONS.md). La spécification de
 > l'assistant IA vit dans [AI_ASSISTANT.md](AI_ASSISTANT.md).
+
+## Prochaines étapes — ordonnées le 06/10
+
+La chaîne est en service et se parle. Ce qui suit est classé par ce qui
+**empêche quelqu'un de se servir du produit**, pas par difficulté.
+
+### 1. Essayer l'APK 1.15.0 sur un vrai téléphone
+
+C'est le seul maillon qu'aucun contrôle automatique ne couvre. Tout ce qu'il
+rencontrera est vérifié — référentiel lisible, Worker à 200, colonnes de sync
+présentes, authentification joignable — mais personne n'a encore créé un compte
+depuis l'application elle-même.
+
+Ce qu'il faut regarder, dans cet ordre :
+
+1. **créer un compte** et vérifier qu'on peut se reconnecter après
+   déconnexion. C'est le parcours qui a le plus souffert, et la connexion par
+   numéro + mot de passe est la preuve que le compte existe côté Supabase et
+   pas seulement sur le téléphone ;
+2. **le même compte sur le site** : c'est ce que les deux `--dart-define`
+   Supabase servent à rendre vrai ;
+3. **la liste des professeurs** — elle doit montrer les trente.
+
+### 2. Il n'existe aucun parcours de création de cours en direct
+
+Ni sur le téléphone, ni sur le site. Conséquence en chaîne : pas de cours, donc
+pas de séance, donc pas de place payée, donc **aucun groupe de discussion** et
+rien dans « En direct ». Trois fonctions construites et invisibles.
+
+`seed_demo_live.sql` les rend démontrables, pas utilisables : un professeur ne
+peut toujours pas publier son propre cours. C'est le plus gros manque
+fonctionnel du produit aujourd'hui.
+
+### 3. Les entités à valeur d'ensemble ne se synchronisent pas
+
+`teacher_subjects` et `teacher_levels` sont poussées sous la forme
+`{subjectIds: [...]}`, alors que le serveur attend **une ligne par couple**.
+Les compétences d'un professeur restent donc sur son téléphone, même
+maintenant qu'elles sont enregistrées à l'inscription. Voir le trou 15 : il
+faut décider comment une collection se pousse.
+
+### 4. Aucune modération sur les groupes
+
+Ni signalement, ni suppression par un tiers, ni durée de conservation. Les
+messages de groupes d'élèves mineurs restent indéfiniment. À traiter avec
+l'analyse juridique du §52, et **avant** d'ouvrir les groupes plus largement.
+
+### 5. Ce qui peut attendre
+
+* `[env.production]` du Worker — décision commerciale (argent réel), pas
+  technique ;
+* les variables `R2_*` et `CF_*` : rediffusions et encaissement réel ;
+* Vite 5 → 6, pour que l'outillage Cloudflare moderne configure le site ;
+* les trous 4 et 6 ci-dessous : promotions de démonstration qui citent de
+  vraies écoles, et numéros de support encore en gabarit `+224 000 00 00 00`.
 
 ## ⚠ Trous connus — à lire avant d'ajouter une fonction
 
@@ -185,21 +240,32 @@ que sur la machine de compilation.
 tous deux `+224 000 00 00 00`. Affichés tels quels à quelqu'un qui cherche de
 l'aide.
 
-### 7. La base est en service ; Cloudflare et l'API ne le sont pas
+### 7. ✅ La chaîne complète est en service — 06/10
 
-**Mis à jour le 03/10.** Le projet Supabase existe, le schéma y est appliqué et le
-référentiel semé — 25 matières, 16 classes, 8 tests et 282 questions, 348 chapitres
-de programme, vérifiés depuis l'extérieur par `npm run check:supabase`.
+Les trois morceaux se parlent, et chaque maillon est vérifié depuis
+l'extérieur, pas supposé :
 
-Ce qui manque encore pour qu'une personne puisse se servir du produit :
+| Maillon | État | Comment c'est vérifié |
+|---|---|---|
+| Supabase | 28 migrations appliquées | `npm run check:supabase` → « Base en service conforme » |
+| Worker | déployé, `sandbox` | `GET /api/v1/health` → 200 ; `/shop/items` sans jeton → 401 |
+| Site | `https://eduquali.pages.dev` | liens profonds 200, en-têtes de sécurité servis |
+| APK | 1.15.0, branché | les deux adresses présentes dans le binaire |
 
-* **`ALLOWED_ORIGINS` est vide.** Tant qu'elle l'est, le navigateur bloque chaque
-  appel du site vers l'API : la page se charge et rien ne s'affiche.
-* **Les treize variables Cloudflare et Djomy sont absentes de `backend/.env`** —
-  `R2_*`, `CF_*`, `DJOMY_*`. Sans elles, les rediffusions et l'encaissement se
-  taisent proprement, mais ne fonctionnent pas.
-* **Le Worker n'est pas déployé.** `npm run deploy` et les `wrangler secret put`
-  listés en fin de `.env.example` restent à faire.
+**`ALLOWED_ORIGINS` n'est plus vide** : `https://eduquali.pages.dev` est
+autorisée dans l'environnement par défaut — celui qui est réellement déployé.
+Vérifié : cette origine reçoit son en-tête, `evil.example.com` n'en reçoit
+aucun.
+
+⚠ **Le bloc `[env.production]` n'a jamais été déployé, et c'est volontaire.**
+Il porte `DJOMY_ENVIRONMENT = "production"`, c'est-à-dire de l'argent réel.
+Déployer avec `--env production` est une décision commerciale, pas une étape
+technique. Tant qu'elle n'est pas prise, utiliser `npx wrangler deploy` sans
+`--env`.
+
+⚠ **Restent absentes de `backend/.env`** : `R2_*`, `CF_*` et les clés Djomy de
+production. Sans elles les rediffusions et l'encaissement réel se taisent
+proprement — ils ne fonctionnent pas, mais ne cassent rien.
 
 Les capacités, les paliers payants et le moment d'y passer sont dans
 [../eduquali_services_externes.txt](../eduquali_services_externes.txt).
@@ -514,6 +580,55 @@ remplacement en bloc assumé par le serveur.
 `children.subject_ids` manquaient côté serveur sans que rien ne le signale. La
 migration 0026 les ajoute ; le contrôle, lui, reste à étendre aux colonnes.
 
+### 16. ✅ L'APK n'était branché à aucun serveur — corrigé le 06/10
+
+**Le trou :** `AppConstants.apiBaseUrl` vaut
+`String.fromEnvironment('ACALIA_API')`, **vide par défaut**, comme
+`SUPABASE_URL` et `SUPABASE_ANON_KEY`. Les APK 1.13.0 et 1.14.0 ont été
+construits avec un simple `flutter build apk --release`, donc **sans aucune de
+ces trois valeurs**. Ils ont été livrés et annoncés comme la version courante.
+
+**Pourquoi personne ne l'a vu.** Il n'y a aucun symptôme. L'application
+s'ouvre, les écrans se remplissent avec le référentiel semé localement, et
+seuls les comptes partagés, les groupes et les cours en direct manquent — ce
+qu'on met naturellement sur le compte d'une base vide. Mesuré en cherchant les
+adresses dans le binaire :
+
+| | adresse du Worker | adresse Supabase |
+|---|---|---|
+| 1.14.0 | absente | absente |
+| 1.15.0 | présente | présente |
+
+**La correction est un script, pas une consigne.** `tools/build_release.py`
+lit `backend/.env`, **refuse de construire** si les valeurs manquent, écarte
+toute valeur qui ressemble à une clé `service_role`, Gemini ou Djomy, et
+enchaîne l'allègement. Une consigne dans un fichier se réoublie ; un script qui
+refuse, non.
+
+**À faire désormais :** `python tools/build_release.py`, jamais
+`flutter build apk` directement.
+
+### 17. ⚠ Ce que la série du 06/10 dit de la méthode
+
+Trois défauts le même jour, et aucun n'était un bogue de logique :
+
+1. une politique RLS qui se fermait sur elle-même — **zéro ligne, aucune
+   erreur** ;
+2. une inscription qui écrivait des colonnes pas encore migrées — **arrêt
+   silencieux après la dernière question** ;
+3. un APK sans ses valeurs de compilation — **aucun symptôme**.
+
+Les trois partagent la même forme : **l'échec ne se signale pas, il ressemble
+à un état normal.** Une base vide, un formulaire qui ne réagit pas, une
+application locale.
+
+C'est la classe de défaut que ce dépôt attrape le moins bien, et les deux
+contrôles ajoutés le 06/10 visent exactement ça : la section E de
+`check:supabase` (une permission fonctionne-t-elle ?) et le refus de
+`build_release.py` (les valeurs sont-elles là ?). À continuer : pour chaque
+nouveau réglage qui peut être absent, se demander ce qui le dirait — et si la
+réponse est « rien », écrire le contrôle avant la fonction.
+
 ## Les discussions de groupe — écrites le 04/10
 
 **Fait.** Un onglet de discussions dans les quatre profils, en forme de
@@ -599,30 +714,40 @@ ne diffusent rien : le flux *est* le produit vendu, et le jeton LiveKit exige
 une place payée `CONFIRMED`. Un aperçu public demanderait un jeton restreint
 distinct, à décider.
 
-## À faire côté Supabase — avant que les points fonctionnent
+## ✅ Migrations appliquées — 06/10
 
-Trois migrations sont écrites, testées par `check:db`, et **pas encore
-appliquées au projet en service** :
+Toute la chaîne 0001 → 0028 est sur le projet en service, vérifiée objet par
+objet par `npm run check:supabase` : **« Base en service conforme »**, zéro
+échec.
 
-| Fichier | Ce qu'il apporte |
+Les dernières appliquées, et ce qu'elles ont débloqué :
+
+| Fichier | Ce qu'il a débloqué |
 |---|---|
-| `0023_earning.sql` | gagner des points : 100 à l'inscription, 1 par 5 min de séance, 2 par point de contrôle |
-| `0024_raffle.sql` | le tirage au sort, et `redeem_shop_item` réécrite pour les deux genres |
-| `0025_gifts.sql` | `offrir_points`, plafonné à 2 par jour |
-| `0026_onboarding_answers.sql` | les destinations des réponses d'inscription, et les colonnes qui manquaient depuis le début (`teachers.region`, `children.subject_ids`…) |
-| `0027_chat_groups.sql` | les groupes de discussion, leurs messages, et `est_membre_groupe()` qui tient tout le cloisonnement |
+| `0023` → `0025` | gagner des points, le tirage au sort, offrir 2 points par jour |
+| `0026_onboarding_answers.sql` | les 20 colonnes qui manquaient — sans elles l'inscription du site s'arrêtait après la dernière question |
+| `0027_chat_groups.sql` | les groupes de discussion et `est_membre_groupe()` |
+| `0028_public_teacher_read_fix.sql` | les 30 fiches de professeurs, enfin visibles |
 
-À coller dans l'éditeur SQL de Supabase dans l'ordre des numéros, comme toute
-la chaîne : 0024 remplace `redeem_shop_item` créée en 0021, et la rejouer après
-ferait disparaître la branche du tirage. Entre ces trois-là, l'ordre n'est pas
-porteur — chacune ne dépend que de `point_ledger` (0020). Puis recoller
-`seed.sql`, qui compte désormais dix lots au lieu de quatre.
+Reste optionnel : `seed_demo_live.sql`, pour un cours en direct et un groupe
+visibles (il n'existe toujours aucun parcours de création de cours en direct).
 
-Tant que 0023 à 0025 ne sont pas appliquées : la boutique s'affiche, les
-soldes restent à zéro, et aucun compte ne reçoit ses cent points de bienvenue.
-Tant que 0026 ne l'est pas, l'application enregistre bien les réponses
-localement mais leur synchronisation est refusée, colonne par colonne. `npm run check:supabase`
-le dit objet par objet.
+### Ce que 0028 a appris sur les contrôles
+
+La politique de 0009 rendait **zéro** fiche de professeur à la clé publique,
+alors que trente existaient et qu'aucun compte n'était suspendu. Elle vérifiait
+le compte avec `exists (select 1 from profiles ...)` en ligne, et une
+sous-requête dans une politique subit les politiques de la table qu'elle lit :
+`profiles` étant clos à la clé publique, le test ne trouvait jamais rien.
+
+`check:supabase` était vert pendant tout ce temps. Il éprouvait qu'une lecture
+**interdite** rend zéro ligne et qu'une écriture interdite est refusée ; jamais
+qu'une lecture **permise** aboutit. Une politique trop stricte ne lève rien —
+elle rend zéro ligne, ce qui se lit exactement comme une base vide.
+
+La section E du contrôle comble ce trou, et c'est la leçon la plus
+réutilisable de cette série : **vérifier qu'une permission fonctionne, pas
+seulement qu'une interdiction tient.**
 
 ## Livré en v1.11.0 — 02/10/2026
 
