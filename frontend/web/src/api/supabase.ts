@@ -81,6 +81,62 @@ export class SupabaseApi implements VeriprofApi {
    * Les codes valent mieux que les messages : `PGRST301` reste stable quand
    * le texte de l'erreur change de version en version.
    */
+  /**
+   * Insere une ligne, et recommence sans les colonnes facultatives si la base
+   * ne les connait pas encore.
+   *
+   * --- Le defaut que ceci corrige ---------------------------------------
+   *
+   * L'inscription du site a appris a enregistrer des reponses qu'elle jetait
+   * jusque-la : la formule choisie, la region, le quartier, l'apprenant. Les
+   * colonnes correspondantes arrivent avec la migration `0026`.
+   *
+   * Tant qu'elle n'etait pas passee sur la base en service, `profiles` n'avait
+   * pas `pending_plan` — et l'insertion echouait en `42703`, donc `register`
+   * levait, donc `onDone` n'atteignait jamais sa navigation. **Le parcours
+   * d'inscription s'arretait net apres la derniere question, sans message.**
+   * Mesure le 06/10 : vingt colonnes manquantes sur la base deployee.
+   *
+   * --- Pourquoi un repli plutot qu'une exigence -------------------------
+   *
+   * Une preference ne doit jamais empecher la creation d'un compte. Le nom, le
+   * telephone et le role sont indispensables ; savoir que quelqu'un a regarde
+   * la formule PRO ne l'est pas. Le code dit donc lesquelles sont
+   * essentielles, et abandonne le reste plutot que l'inscription.
+   *
+   * Le repli **se signale** dans la console : silencieux, il masquerait une
+   * migration oubliee pendant des semaines.
+   */
+  private async insererTolerant(
+    table: string,
+    ligne: Record<string, unknown>,
+    facultatives: readonly string[],
+  ): Promise<{ error: { code?: string; message: string } | null }> {
+    const { error } = await this.db.from(table).insert(ligne)
+    if (!error) return { error: null }
+
+    // `42703` : colonne inconnue. PostgREST renvoie aussi `PGRST204` quand il
+    // ne trouve pas la colonne dans son cache de schema.
+    const colonneAbsente =
+      error.code === '42703' ||
+      error.code === 'PGRST204' ||
+      /column .* does not exist|could not find the .* column/i.test(
+        error.message,
+      )
+    if (!colonneAbsente) return { error }
+
+    const minimal: Record<string, unknown> = {}
+    for (const [cle, valeur] of Object.entries(ligne)) {
+      if (!facultatives.includes(cle)) minimal[cle] = valeur
+    }
+    console.warn(
+      `[register] ${table} : colonnes facultatives ignorees ` +
+        `(${facultatives.join(', ')}). Appliquer la migration 0026 ` +
+        `— ${error.message}`,
+    )
+    return await this.db.from(table).insert(minimal)
+  }
+
   private fail(error: { code?: string; message: string }): never {
     if (error.code === '23505') {
       throw new ApiError('Vous avez déjà postulé à cette offre.', 409)
@@ -264,46 +320,84 @@ export class SupabaseApi implements VeriprofApi {
       )
     }
 
-    const { error: profileError } = await this.db.from('profiles').insert({
-      id: data.user.id,
-      role: input.role,
-      phone: input.phone,
-      first_name: input.firstName,
-      last_name: input.lastName,
-      city: input.city ?? null,
-      // La formule choisie au dernier écran, et pas encore payée : rien n'est
-      // encaissé à l'inscription, donc l'écrire dans `plan` l'offrirait.
-      pending_plan: input.pendingPlan ?? null,
-    })
+    const { error: profileError } = await this.insererTolerant(
+      'profiles',
+      {
+        id: data.user.id,
+        role: input.role,
+        phone: input.phone,
+        first_name: input.firstName,
+        last_name: input.lastName,
+        city: input.city ?? null,
+        // La formule choisie au dernier écran, et pas encore payée : rien
+        // n'est encaissé à l'inscription, donc l'écrire dans `plan`
+        // l'offrirait.
+        pending_plan: input.pendingPlan ?? null,
+      },
+      ['pending_plan'],
+    )
     if (profileError) this.fail(profileError)
 
     // La fiche du role : c'est elle qui porte les donnees metier, et son
     // identifiant est ce que les ecrans manipulent ensuite.
     if (input.role === 'TEACHER') {
-      await this.db.from('teachers').insert({
-        user_id: data.user.id,
-        city: input.city ?? null,
-        // La région et le quartier étaient collectés par le parcours et
-        // n'arrivaient pas : seule la ville passait, alors que l'étape dit
-        // « Le quartier décide des professeurs qui peuvent venir ».
-        region: input.region ?? null,
-        district: input.district ?? null,
-      })
+      await this.insererTolerant(
+        'teachers',
+        {
+          user_id: data.user.id,
+          city: input.city ?? null,
+          // La région et le quartier étaient collectés par le parcours et
+          // n'arrivaient pas : seule la ville passait, alors que l'étape dit
+          // « Le quartier décide des professeurs qui peuvent venir ».
+          region: input.region ?? null,
+          district: input.district ?? null,
+        },
+        ['region', 'district'],
+      )
     } else if (input.role === 'PARENT' || input.role === 'STUDENT') {
       // Un etudiant majeur partage l'espace de la famille — meme suivi, memes
       // demandes de cours, memes contrats — donc la meme fiche. Sans cette
       // ligne, son compte s'ouvrait sans `parentId` et chaque ecran du
       // parcours famille le trouvait vide.
-      const { data: parent } = await this.db
-        .from('parents')
-        .insert({
+      // `region` arrive avec la migration 0026 ; `district` existe depuis
+      // 0001. Sans repli, une base pas encore migree faisait echouer
+      // l'inscription de toute une famille pour une colonne facultative.
+      let parent: { id?: string } | null = null
+      const essais: Record<string, unknown>[] = [
+        {
           user_id: data.user.id,
           city: input.city ?? null,
           region: input.region ?? null,
           district: input.district ?? null,
-        })
-        .select('id')
-        .maybeSingle()
+        },
+        {
+          user_id: data.user.id,
+          city: input.city ?? null,
+          district: input.district ?? null,
+        },
+      ]
+      for (const ligne of essais) {
+        const essai = await this.db
+          .from('parents')
+          .insert(ligne)
+          .select('id')
+          .maybeSingle()
+        if (!essai.error) {
+          parent = essai.data
+          break
+        }
+        const colonneAbsente =
+          essai.error.code === '42703' ||
+          essai.error.code === 'PGRST204' ||
+          /column .* does not exist|could not find the .* column/i.test(
+            essai.error.message,
+          )
+        if (!colonneAbsente) this.fail(essai.error)
+        console.warn(
+          '[register] parents : region ignoree, migration 0026 a appliquer ' +
+            `— ${essai.error.message}`,
+        )
+      }
 
       // L'apprenant déclaré pendant le parcours.
       //
@@ -315,32 +409,40 @@ export class SupabaseApi implements VeriprofApi {
       // Après le compte et séparément : un échec ici ne doit pas défaire une
       // inscription réussie, l'apprenant restant ajoutable depuis le profil.
       if (parent?.id && input.learner?.firstName) {
-        const { error: learnerError } = await this.db.from('children').insert({
-          parent_id: parent.id,
-          first_name: input.learner.firstName,
-          last_name: input.learner.lastName ?? null,
-          level_id: input.learner.levelId ?? null,
-          filiere_id: input.learner.filiereId ?? null,
-          school_name: input.learner.schoolName ?? null,
-          subject_ids: (input.learner.subjectIds ?? []).join(','),
-        })
+        const { error: learnerError } = await this.insererTolerant(
+          'children',
+          {
+            parent_id: parent.id,
+            first_name: input.learner.firstName,
+            last_name: input.learner.lastName ?? null,
+            level_id: input.learner.levelId ?? null,
+            filiere_id: input.learner.filiereId ?? null,
+            school_name: input.learner.schoolName ?? null,
+            subject_ids: (input.learner.subjectIds ?? []).join(','),
+          },
+          ['last_name', 'subject_ids'],
+        )
         if (learnerError) {
           console.error('[register] apprenant non enregistré', learnerError)
         }
       }
     } else if (input.role === 'INSTITUTION') {
-      await this.db.from('institutions').insert({
-        owner_id: data.user.id,
+      await this.insererTolerant(
+        'institutions',
+        {
+          owner_id: data.user.id,
         // Le nom de l'établissement, et non celui de son responsable : cette
         // ligne prenait `input.firstName`, que l'appelant remplissait avec
         // `manager_name`. Un lycée se retrouvait nommé d'après son directeur.
         name: input.institutionName ?? input.firstName,
         type: input.institutionType ?? 'SCHOOL',
-        city: input.city ?? '',
-        region: input.region ?? null,
-        district: input.district ?? null,
-        manager_name: input.firstName || null,
-      })
+          city: input.city ?? '',
+          region: input.region ?? null,
+          district: input.district ?? null,
+          manager_name: input.firstName || null,
+        },
+        ['region', 'district'],
+      )
     }
 
     return this.sessionOf(data.user.id)

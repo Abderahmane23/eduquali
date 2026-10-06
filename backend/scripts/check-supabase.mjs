@@ -436,6 +436,82 @@ await refuse(
 )
 
 /* ----------------------------------------------------------------------- *
+ * E. Les lectures AUTORISEES aboutissent
+ *
+ * --- Le trou que cette section comble ---------------------------------
+ *
+ * Les sections C et D verifient qu'une lecture interdite rend zero ligne et
+ * qu'une ecriture interdite est refusee. Aucune ne verifiait qu'une lecture
+ * **permise** rend quelque chose.
+ *
+ * Le 06/10, le site deploye affichait « aucun professeur » partout. Trente
+ * fiches existaient, aucun compte n'etait suspendu, et ce controle etait vert.
+ * La politique de 0009 verifiait le compte avec
+ * `exists (select 1 from profiles ...)` en ligne : une sous-requete dans une
+ * politique subit les politiques de la table qu'elle lit, `profiles` est clos
+ * a la cle publique, donc le test ne trouvait jamais rien et rendait faux pour
+ * chaque ligne.
+ *
+ * Une politique trop stricte ne leve pas d'erreur : elle rend zero ligne, ce
+ * qui se lit exactement comme une base vide. C'est la raison d'etre de cette
+ * section — et le seul controle qui aurait attrape le defaut.
+ * ----------------------------------------------------------------------- */
+console.log('')
+console.log('E. Les lectures autorisees aboutissent')
+
+/**
+ * La cle publique doit voir au moins autant de lignes que le serveur en
+ * compte, sur ce qui est public par decision.
+ *
+ * Ignore quand le serveur n'en compte aucune : une table vide ne prouve rien,
+ * et c'est exactement le raisonnement de la section D.
+ */
+const lisiblePubliquement = async (table, pourquoi) => {
+  const { count: cote } = await service
+    .from(table)
+    .select('*', { count: 'exact', head: true })
+  if (!cote) {
+    reserve(`${table} est vide`, 'rien a lire : le controle ne dit rien')
+    return
+  }
+  const { count: vu, error } = await anonyme
+    .from(table)
+    .select('*', { count: 'exact', head: true })
+  if (error) {
+    echec(`${table} illisible publiquement`, `${error.code} ${error.message}`)
+    return
+  }
+  if (!vu) {
+    echec(
+      `${table} ne rend AUCUNE ligne a la cle publique`,
+      `${cote} cote serveur, 0 pour le navigateur. ${pourquoi} ` +
+        'Une politique trop stricte ne leve rien : elle rend zero ligne, ce ' +
+        'qui se lit comme une base vide.',
+    )
+    return
+  }
+  ok(`${table} est lisible publiquement`, `${vu} ligne(s) sur ${cote}`)
+}
+
+await lisiblePubliquement(
+  'teachers',
+  'Sans fiche lisible, la recherche de professeurs est vide sur le site ' +
+    'comme dans l application, et rien ne dit pourquoi.',
+)
+await lisiblePubliquement(
+  'public_teacher_identities',
+  'C est elle qui porte le prenom et la photo : sans elle, des fiches ' +
+    'anonymes.',
+)
+await lisiblePubliquement(
+  'tutoring_services',
+  'Ce sont les offres de cours a domicile : sans elles, aucune famille ne ' +
+    'peut reserver.',
+)
+await lisiblePubliquement('institutions', 'Le catalogue des etablissements.')
+await lisiblePubliquement('jobs', 'Les offres d emploi publiees.')
+
+/* ----------------------------------------------------------------------- *
  * Ce qui reste hors de portee de ce controle
  *
  * Ecrit noir sur blanc, parce qu'un rapport vert laisse croire qu'il a tout

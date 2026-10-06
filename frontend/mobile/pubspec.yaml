@@ -1,7 +1,7 @@
 name: veriprof
 description: Plateforme de recrutement, verification et mise en relation des enseignants.
 publish_to: 'none'
-version: 1.14.0+17
+version: 1.15.0+18
 
 environment:
   sdk: ^3.12.0
