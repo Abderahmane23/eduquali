@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
@@ -9,7 +11,7 @@ import '../../core/security/secure_store.dart';
 import '../../core/utils/validators.dart';
 import '../../domain/usecases/otp_check.dart';
 import '../local/database/app_database.dart';
-import '../sync/sync_engine.dart';
+import '../remote/account_api.dart';
 import '../remote/supabase_auth_api.dart';
 
 /// Session authentifiee courante.
@@ -88,20 +90,31 @@ class AuthException implements Exception {
 class AuthRepository {
   AuthRepository(
     this._db,
-    this._store,
-    this._sync, {
+    this._store, {
     bool Function()? isServerReachable,
     SupabaseAuthApi? identity,
+    AccountApi? account,
     // Un parametre nomme ne peut pas commencer par un souligne en Dart : le
     // champ prive se remplit donc dans la liste d'initialisation, et la regle
     // `prefer_initializing_formals` ne s'applique pas ici.
-    // ignore: prefer_initializing_formals
+    // ignore_for_file: prefer_initializing_formals
   }) : _identity = identity,
+       _account = account,
        _isServerReachable = isServerReachable ?? (() => false);
 
   final AppDatabase _db;
   final SecureStore _store;
-  final SyncEngine _sync;
+  // Le moteur de synchronisation a quitte ce depot le 06/10.
+  //
+  // Les trois inscriptions y mettaient `user`, `institution` et `parent`. Les
+  // deux premieres sont refusees par la file — un profil porte le role, une
+  // fiche d'etablissement se modifie depuis son espace — et la troisieme ne
+  // pouvait pas aboutir : `parents.user_id` est obligatoire et la charge ne le
+  // portait pas. Un compte cree depuis le telephone n'arrivait donc jamais au
+  // serveur.
+  //
+  // Tout passe desormais par `POST /account`, qui lit l'identite dans le
+  // jeton. Ce depot n'a plus rien a mettre en file.
 
   /// L'autorite sur l'identite, quand un projet Supabase est configure.
   ///
@@ -111,6 +124,24 @@ class AuthRepository {
   /// configuration a la compilation — l'application fonctionne exactement comme
   /// avant, entierement en local.
   final SupabaseAuthApi? _identity;
+
+  /// Déclare le compte au serveur. Nul quand aucun serveur n'est configuré à
+  /// la compilation — l'application reste alors entièrement locale.
+  final AccountApi? _account;
+
+  /// Le jeton obtenu à l'inscription, le temps de déclarer le compte.
+  ///
+  /// Aucune session n'est encore ouverte à cet instant : `_reserveAccountId`
+  /// vient de créer l'identité, et c'est le seul moment où ce jeton est
+  /// disponible sans redemander le mot de passe.
+  String? _jetonInscription;
+
+  /// Les comptes créés localement dont le serveur n'a pas encore été informé.
+  ///
+  /// Une inscription réussit hors ligne — c'est tout l'intérêt de la base
+  /// locale — mais le serveur doit l'apprendre. La clé est relue à chaque
+  /// ouverture de session, et l'appel se reprend.
+  static const _aDeclarer = 'compte_a_declarer';
 
   /// Vrai quand l'identite est partagee avec le site.
   bool get sharesIdentity => _identity != null && SupabaseAuthApi.isConfigured;
@@ -191,6 +222,9 @@ class AuthRepository {
     }
     try {
       final compte = await identity.signUp(phone: phone, password: password);
+      // Gardé pour déclarer le compte juste après : c'est le seul instant où
+      // ce jeton existe sans redemander le mot de passe.
+      _jetonInscription = compte.accessToken;
       return compte.userId;
     } on RemoteAuthException catch (erreur) {
       throw AuthException(
@@ -199,6 +233,114 @@ class AuthRepository {
                   'avez du reseau — ensuite l\'application fonctionne hors ligne.'
             : erreur.message,
       );
+    }
+  }
+
+  /// Déclare au serveur un compte qui vient d'être créé localement.
+  ///
+  /// Silencieux à dessein : le compte existe déjà sur le téléphone quand on
+  /// arrive ici, et faire échouer une inscription réussie parce que le réseau
+  /// a coupé serait absurde. On note qu'il reste à déclarer, et
+  /// [rattraperDeclaration] s'en charge à la prochaine ouverture de session.
+  Future<void> _declarerAuServeur({
+    required String userId,
+    required String role,
+    required String phone,
+    String? firstName,
+    String? lastName,
+    String? city,
+    String? region,
+    String? district,
+    String? institutionName,
+    String? institutionType,
+    String? roleId,
+  }) async {
+    final account = _account;
+    final jeton = _jetonInscription;
+    final charge = {
+      'userId': userId,
+      'role': role,
+      'phone': phone,
+      'firstName': firstName,
+      'lastName': lastName,
+      'city': city,
+      'region': region,
+      'district': district,
+      'institutionName': institutionName,
+      'institutionType': institutionType,
+      'roleId': roleId,
+    };
+
+    if (account == null || jeton == null) {
+      // Aucun serveur configuré à la compilation, ou inscription hors ligne :
+      // on garde la demande pour plus tard plutôt que de la perdre.
+      if (account != null) await _db.writeMeta(_aDeclarer, jsonEncode(charge));
+      return;
+    }
+
+    try {
+      await account.provision(
+        accessToken: jeton,
+        role: role,
+        phone: phone,
+        firstName: firstName,
+        lastName: lastName,
+        city: city,
+        region: region,
+        district: district,
+        institutionName: institutionName,
+        institutionType: institutionType,
+        roleId: roleId,
+      );
+      await _db.writeMeta(_aDeclarer, '');
+    } on AccountApiException catch (cause) {
+      // Noté, pas perdu. Sans cette ligne, un compte créé dans une zone sans
+      // réseau n'existerait jamais côté serveur — et rien ne le dirait.
+      await _db.writeMeta(_aDeclarer, jsonEncode(charge));
+      // ignore: avoid_print
+      print('[compte] déclaration différée : ${cause.message}');
+    }
+  }
+
+  /// Reprend une déclaration de compte restée en attente.
+  ///
+  /// Appelée à chaque ouverture de session : c'est le moment où un jeton
+  /// valide existe de nouveau, et où le réseau est souvent revenu.
+  Future<void> rattraperDeclaration() async {
+    final account = _account;
+    if (account == null) return;
+
+    final brut = await _db.readMeta(_aDeclarer);
+    if (brut == null || brut.isEmpty) return;
+
+    final jeton = await _store.accessToken;
+    if (jeton == null || jeton.isEmpty) return;
+
+    try {
+      final charge = jsonDecode(brut) as Map<String, dynamic>;
+      await account.provision(
+        accessToken: jeton,
+        role: (charge['role'] ?? '').toString(),
+        phone: (charge['phone'] ?? '').toString(),
+        firstName: charge['firstName'] as String?,
+        lastName: charge['lastName'] as String?,
+        city: charge['city'] as String?,
+        region: charge['region'] as String?,
+        district: charge['district'] as String?,
+        institutionName: charge['institutionName'] as String?,
+        institutionType: charge['institutionType'] as String?,
+        roleId: charge['roleId'] as String?,
+      );
+      await _db.writeMeta(_aDeclarer, '');
+    } on AccountApiException catch (cause) {
+      // Toujours pas : on réessaiera. Ce n'est pas une erreur à montrer.
+      // ignore: avoid_print
+      print('[compte] déclaration toujours en attente : ${cause.message}');
+    } catch (cause) {
+      // Charge illisible : la jeter vaut mieux que de réessayer sans fin.
+      await _db.writeMeta(_aDeclarer, '');
+      // ignore: avoid_print
+      print('[compte] déclaration abandonnée : $cause');
     }
   }
 
@@ -257,20 +399,19 @@ class AuthRepository {
           );
     });
 
-    await _sync.enqueue(
-      entity: 'user',
-      entityId: userId,
-      operation: SyncOperation.create,
-      payload: {
-        'role': UserRole.teacher.code,
-        'phone': normalized,
-        'firstName': firstName,
-        'lastName': lastName,
-        'email': email,
-        'region': region,
-        'city': city,
-        'district': district,
-      },
+    // La file refuse l'entite `user`, et pour une bonne raison : `profiles`
+    // porte le role. Le compte se declare donc par sa route, qui lit
+    // l'identite dans le jeton.
+    await _declarerAuServeur(
+      userId: userId,
+      role: UserRole.teacher.code,
+      phone: normalized,
+      firstName: firstName,
+      lastName: lastName,
+      city: city,
+      region: region,
+      district: district,
+      roleId: teacherId,
     );
 
     return userId;
@@ -340,19 +481,21 @@ class AuthRepository {
           );
     });
 
-    await _sync.enqueue(
-      entity: 'institution',
-      entityId: institutionId,
-      operation: SyncOperation.create,
-      payload: {
-        'name': name,
-        'type': type.code,
-        'region': region,
-        'city': city,
-        'district': district,
-        'phone': normalized,
-        'managerName': managerName,
-      },
+    // `institution` est refusee par la file : une fiche d'etablissement se
+    // modifie depuis son espace. Le compte, lui, se declare par sa route —
+    // qui cree aussi la fiche, avec le nom de l'etablissement et non celui de
+    // son responsable.
+    await _declarerAuServeur(
+      userId: userId,
+      role: UserRole.institution.code,
+      phone: normalized,
+      firstName: managerName,
+      city: city,
+      region: region,
+      district: district,
+      institutionName: name,
+      institutionType: type.code,
+      roleId: institutionId,
     );
 
     return userId;
@@ -438,17 +581,20 @@ class AuthRepository {
           );
     });
 
-    await _sync.enqueue(
-      entity: 'parent',
-      entityId: parentId,
-      operation: SyncOperation.create,
-      payload: {
-        'firstName': firstName,
-        'lastName': lastName,
-        'phone': normalized,
-        'region': region,
-        'city': city,
-      },
+    // Cet envoi ne pouvait pas aboutir : `parents.user_id` est obligatoire et
+    // la charge ne le portait pas — seules `region` et `city` correspondaient
+    // a une colonne. La route de compte cree la fiche avec le bon compte, et
+    // avec **le meme identifiant** que celui pose ici.
+    await _declarerAuServeur(
+      userId: userId,
+      role: role.code,
+      phone: normalized,
+      firstName: firstName,
+      lastName: lastName,
+      city: city,
+      region: region,
+      district: district,
+      roleId: parentId,
     );
 
     return userId;

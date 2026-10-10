@@ -3416,6 +3416,253 @@ app.post('/tests/:id/submit', async (c) => {
  * Le client sait traiter un resultat par element — c'est la forme qu'il attend
  * (`clientRef`, `status`, `message`).
  */
+const compteSchema = z.object({
+  role: z.enum(['TEACHER', 'INSTITUTION', 'PARENT', 'STUDENT']),
+  phone: z.string().min(8).max(20),
+  firstName: z.string().max(120).optional(),
+  lastName: z.string().max(120).optional(),
+  city: z.string().max(120).optional(),
+  region: z.string().max(60).optional(),
+  district: z.string().max(120).optional(),
+  institutionName: z.string().max(200).optional(),
+  institutionType: z.string().max(40).optional(),
+  pendingPlan: z.enum(['FREE', 'PRO', 'MASTER']).optional(),
+
+  /*
+   * L'identifiant que le telephone a deja donne a la fiche de role.
+   *
+   * Le meme principe que pour `users.id` : « un compte doit porter le meme
+   * identifiant sur le telephone et sur le site, sinon *le meme compte* n'est
+   * qu'une facon de parler ». Ici l'enjeu est concret — les enfants d'une
+   * famille sont pousses avec `parent_id`, et un identifiant different de
+   * chaque cote ferait echouer la cle etrangere.
+   *
+   * Le serveur l'accepte donc a la creation. Il ne permet rien de plus : la
+   * ligne est de toute facon liee a `auth.uid()`, et un identifiant deja pris
+   * fait echouer l'insertion.
+   */
+  roleId: z.string().min(1).max(64).optional(),
+})
+
+/**
+ * Provisionne le profil et la fiche de role d'un compte qui vient de naitre.
+ *
+ * --- Le defaut que cette route corrige ---------------------------------
+ *
+ * L'application mobile creait le compte d'authentification chez Supabase
+ * (`/auth/v1/signup`) puis ecrivait tout le reste dans son SQLite. Pour le
+ * serveur, elle mettait l'entite `user` dans sa file de synchronisation — que
+ * `REFUSED` renvoie avec « un profil se modifie par la route de compte, qui
+ * verifie le role ».
+ *
+ * **Cette route n'existait pas.** Un compte cree depuis le telephone avait
+ * donc une identite chez Supabase et **aucune ligne `profiles`**. Les
+ * consequences se lisaient partout sans jamais nommer la cause :
+ *
+ *   * le site ne voyait pas la personne ;
+ *   * toute politique RLS appuyee sur `profiles` la rejetait ;
+ *   * sa fiche `teachers` ou `parents` n'existait pas cote serveur, donc ni
+ *     ses matieres, ni ses eleves, ni ses contrats ne pouvaient remonter.
+ *
+ * C'est le maillon manquant de « la synchro ne marche pas » : il n'y avait
+ * rien a synchroniser puisque le compte n'existait pas.
+ *
+ * --- Pourquoi le serveur et pas le client ------------------------------
+ *
+ * `profiles` porte le **role**, et le role decide de tout le reste. Ouvrir son
+ * ecriture a un client laisserait n'importe qui se declarer `ADMIN`. La route
+ * lit donc l'identite dans le jeton — jamais dans le corps — et ecrit sous la
+ * cle de service.
+ *
+ * --- Rejouable ---------------------------------------------------------
+ *
+ * Le telephone appelle apres chaque ouverture de session tant qu'il n'a pas eu
+ * de reponse : une inscription interrompue par le reseau se reprend. Les
+ * ecritures sont donc des `upsert`, et une deuxieme passe ne duplique rien.
+ */
+app.post('/account', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const corps = compteSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) {
+    return c.json({ error: 'Demande illisible.', detail: corps.error.issues }, 400)
+  }
+  const entree = corps.data
+  const service = asService()
+
+  // Le role ne se change pas par cette route : un compte deja provisionne
+  // garde le sien. Sans cette garde, un appel rejoue avec un autre role
+  // suffirait a se promouvoir.
+  const { data: existant } = await service
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const role = (existant?.role as string | undefined) ?? entree.role
+
+  const { error: erreurProfil } = await service.from('profiles').upsert(
+    {
+      id: userId,
+      role,
+      phone: entree.phone,
+      first_name: entree.firstName ?? null,
+      last_name: entree.lastName ?? null,
+      city: entree.city ?? null,
+      pending_plan: entree.pendingPlan ?? null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'id' },
+  )
+  if (erreurProfil) {
+    console.error('[account] profil non ecrit', erreurProfil)
+    return c.json({ error: 'Création du profil impossible.' }, 500)
+  }
+
+  // La fiche du role : c'est elle que les ecrans manipulent ensuite, et son
+  // absence est ce qui rendait tout le reste invisible.
+  let roleId: string | null = null
+  if (role === 'TEACHER') {
+    const { data } = await service
+      .from('teachers')
+      .upsert(
+        {
+          ...(entree.roleId ? { id: entree.roleId } : {}),
+          user_id: userId,
+          city: entree.city ?? null,
+          region: entree.region ?? null,
+          district: entree.district ?? null,
+        },
+        { onConflict: 'user_id' },
+      )
+      .select('id')
+      .maybeSingle()
+    roleId = (data?.id as string | undefined) ?? null
+  } else if (role === 'PARENT' || role === 'STUDENT') {
+    // Un etudiant majeur partage l'espace de la famille : meme fiche, role
+    // distinct. Sans cette ligne son compte s'ouvrait sans `parentId`.
+    const { data } = await service
+      .from('parents')
+      .upsert(
+        {
+          ...(entree.roleId ? { id: entree.roleId } : {}),
+          user_id: userId,
+          city: entree.city ?? null,
+          region: entree.region ?? null,
+          district: entree.district ?? null,
+        },
+        { onConflict: 'user_id' },
+      )
+      .select('id')
+      .maybeSingle()
+    roleId = (data?.id as string | undefined) ?? null
+  } else if (role === 'INSTITUTION') {
+    const { data: deja } = await service
+      .from('institutions')
+      .select('id')
+      .eq('owner_id', userId)
+      .maybeSingle()
+    if (deja?.id) {
+      roleId = deja.id as string
+    } else {
+      const { data } = await service
+        .from('institutions')
+        .insert({
+          ...(entree.roleId ? { id: entree.roleId } : {}),
+          owner_id: userId,
+          // Le nom de l'etablissement, jamais celui du responsable : le site
+          // a longtemps envoye `manager_name` ici, et un lycee se retrouvait
+          // nomme d'apres son directeur.
+          name: entree.institutionName ?? 'Établissement',
+          type: entree.institutionType ?? 'SCHOOL',
+          city: entree.city ?? '',
+          region: entree.region ?? null,
+          district: entree.district ?? null,
+          manager_name:
+            [entree.firstName, entree.lastName].filter(Boolean).join(' ') ||
+            null,
+        })
+        .select('id')
+        .maybeSingle()
+      roleId = (data?.id as string | undefined) ?? null
+    }
+  }
+
+  return c.json({ userId, role, roleId })
+})
+
+const competencesSchema = z.object({
+  // Une matiere, et les niveaux ou elle est enseignee. `teacher_levels` est
+  // clee par (professeur, matiere, niveau) : les niveaux se declarent donc
+  // **par matiere**, et c'est cette forme-la que le client doit envoyer.
+  subjects: z
+    .array(
+      z.object({
+        subjectId: z.string().min(1).max(64),
+        levelIds: z.array(z.string().min(1).max(64)).max(40).default([]),
+      }),
+    )
+    .max(40),
+})
+
+/**
+ * Remplace les matieres et niveaux declares d'un professeur, d'un bloc.
+ *
+ * --- Pourquoi une route et non la synchronisation generique -----------
+ *
+ * `planWrite` ecrit **une ligne** a partir d'une charge utile dont les cles
+ * sont des noms de colonnes. Or ces deux tables sont des ensembles : le geste
+ * du professeur est « voila mes matieres », ce qui veut dire en ajouter,
+ * mais aussi **retirer celles qu'il a decochees**. Une synchronisation ligne
+ * par ligne ne sait pas exprimer ce retrait sans envoyer un differentiel
+ * complet.
+ *
+ * Le client poussait donc `{subjectIds: [...]}` sous l'entite
+ * `teacher_subjects`, dont les colonnes autorisees sont `teacher_id` et
+ * `subject_id`. Aucune cle ne correspondait, la charge etait videe, et l'envoi
+ * refuse avec « Aucune colonne reconnue ». Les competences d'un professeur
+ * restaient sur son telephone — et comme `offersInSubjects` rend une liste
+ * vide sans matiere declaree, son onglet d'offres restait vide cote serveur.
+ *
+ * --- Le remplacement est atomique -------------------------------------
+ *
+ * Supprimer puis reinserer en deux appels laisserait, entre les deux, un
+ * professeur sans aucune matiere : visible par les autres, et introuvable dans
+ * toute recherche. La fonction `remplacer_competences` fait les deux dans une
+ * seule instruction.
+ */
+app.post('/teacher/competences', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = competencesSchema.safeParse(
+    await c.req.json().catch(() => ({})),
+  )
+  if (!corps.success) return c.json({ error: 'Demande illisible.' }, 400)
+
+  const { error } = await asService().rpc('remplacer_competences', {
+    prof: teacherId,
+    declaration: corps.data.subjects.map((m) => ({
+      subject_id: m.subjectId,
+      level_ids: m.levelIds,
+    })),
+  })
+
+  if (error) {
+    console.error('[competences] remplacement impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  return c.json({
+    subjects: corps.data.subjects.length,
+    levels: corps.data.subjects.reduce((n, m) => n + m.levelIds.length, 0),
+  })
+})
+
 app.post('/sync/push', async (c) => {
   const userId = c.get('userId')
   if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
@@ -4509,6 +4756,113 @@ async function assurerGroupe(
     console.error('[chat] groupe non ouvert', kind, sourceId, error)
   }
 }
+
+// --- Les promotions d'etablissement (10/10) ---------------------------------
+
+/**
+ * Les promotions a montrer a cette personne, et rien de plus.
+ *
+ * --- Pourquoi une route, alors que RLS les ouvre deja -------------------
+ *
+ * La politique `promotion : visible quand elle est active` laisse n'importe
+ * quel compte lire les promotions actives. Le client pourrait donc les lire en
+ * direct. Deux raisons de passer ici quand meme :
+ *
+ *   * **la formule decide.** Une promotion ne s'affiche qu'aux comptes `FREE`
+ *     — c'est ce qui donne une raison de passer a une formule payante. Lire la
+ *     formule dans le client la rendrait contournable ;
+ *   * **le choix de ce qu'on montre** est une regle produit (la moins vue
+ *     d'abord, pour etaler la diffusion). Dans le client, chaque ecran la
+ *     recopierait.
+ */
+app.get('/promotions/feed', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const service = asService()
+
+  const { data: profil } = await service
+    .from('profiles')
+    .select('plan, role')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const formule = (profil?.plan as string | undefined) ?? 'FREE'
+  if (formule !== 'FREE') {
+    // Payer, c'est ne plus voir de publicite. Le dire franchement plutot que
+    // de rendre une liste vide : l'ecran n'a pas a deviner pourquoi.
+    return c.json({ promotions: [], reason: 'PAID_PLAN' })
+  }
+
+  const { data, error } = await service
+    .from('promotions')
+    .select(
+      'id, title, message, media_paths, views, ' +
+        'institutions!inner ( name, city, type )',
+    )
+    .eq('status', 'ACTIVE')
+    // La moins vue d'abord : une promotion achetee ne doit pas rester derriere
+    // une autre indefiniment. C'est l'etalement le plus simple qui soit juste.
+    .order('views', { ascending: true })
+    .limit(3)
+
+  if (error) {
+    console.error('[promotions] lecture impossible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  return c.json({
+    // Le typage de supabase-js ne traverse pas un `!inner` : il rend
+    // `GenericStringError`. Le meme contournement qu'ailleurs dans ce fichier.
+    promotions: ((data ?? []) as unknown as Record<string, unknown>[]).map((p) => {
+      const lie = p.institutions as unknown
+      const etablissement = (Array.isArray(lie) ? lie[0] : lie) as Record<
+        string,
+        unknown
+      > | null
+      return {
+        id: p.id,
+        title: p.title,
+        message: p.message,
+        // Le premier media seulement : une carte de tableau de bord n'affiche
+        // qu'une image, et envoyer la liste entiere ferait telecharger le
+        // reste pour rien sur une connexion lente.
+        image: ((p.media_paths as string) ?? '').split(',')[0] || null,
+        institutionName: (etablissement?.name as string) ?? 'Établissement',
+        institutionCity: (etablissement?.city as string) ?? null,
+        institutionType: (etablissement?.type as string) ?? null,
+      }
+    }),
+  })
+})
+
+/**
+ * Compte un affichage.
+ *
+ * Une vue par personne et par jour : c'est `enregistrer_affichage` qui tient
+ * l'unicite, et le compteur n'avance que si la vue etait nouvelle. Le
+ * spectateur n'a aucun droit d'ecriture sur `promotions` — la politique le
+ * reserve a l'etablissement — donc la fonction le fait pour lui, sous son
+ * propre jeton pour que `auth.uid()` soit bien le sien.
+ */
+app.post('/promotions/:id/view', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { data, error } = await asUser(tokenOf(c)).rpc(
+    'enregistrer_affichage',
+    { promo: c.req.param('id') },
+  )
+
+  if (error) {
+    console.error('[promotions] affichage non compte', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  // `counted: false` n'est pas une erreur : la personne l'avait deja vue
+  // aujourd'hui, ou la promotion n'est plus active.
+  return c.json({ counted: data === true })
+})
 
 // --- Les groupes de discussion (04/10) --------------------------------------
 //

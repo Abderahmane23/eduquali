@@ -15,6 +15,7 @@ import '../contests/contests_page.dart' show pointsBalanceProvider;
 import '../contests/shop_page.dart' show favoritesProvider;
 import '../live/live_presence_strip.dart';
 import '../live/live_now_section.dart';
+import '../shared/promotion_slot.dart';
 
 /// L'accueil d'un compte universitaire — quelqu'un qui suit sa propre scolarité.
 ///
@@ -103,6 +104,9 @@ class StudentDashboard extends ConsumerWidget {
                 _MesProfesseurs(),
                 Gap(AppSpacing.xl),
                 _MesFavoris(),
+                // L'annonce d'un etablissement : un universitaire est
+                // exactement la cible d'une ecole qui recrute.
+                PromotionSlot(),
                 // Après les trois sections demandées, pour ne pas déranger
                 // leur ordre : elle n'apparaît que lorsqu'elle a quelque chose
                 // à dire. C'est souvent la seule qui en a sur un compte neuf,

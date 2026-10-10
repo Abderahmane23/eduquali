@@ -16,6 +16,7 @@ import '../../widgets/common.dart';
 import '../../widgets/hero.dart';
 import '../../widgets/kit.dart';
 import '../live/live_now_section.dart';
+import '../shared/promotion_slot.dart';
 
 /// L'accueil du parent, d'après les maquettes du 23/09.
 ///
@@ -127,6 +128,9 @@ class ParentDashboard extends ConsumerWidget {
           const Gap(AppSpacing.lg),
           const LiveNowSection(),
           const LivePresenceStrip(),
+          // L'annonce d'un etablissement, pour les comptes en formule FREE.
+          // Le serveur decide qui en voit une : payer, c'est ne plus en voir.
+          const PromotionSlot(),
           const WeeklyStudyCard(),
 
           // Cinq professeurs, en tête : c'est ce qu'une famille vient

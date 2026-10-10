@@ -213,10 +213,17 @@ void main() {
       // Un compte parent n'avait aucune empreinte : il se creait et ne
       // pouvait plus jamais s'ouvrir.
       final parent = auth.substring(auth.indexOf('registerParent'));
+      // La borne etait `_sync.enqueue`, retire le 06/10 : l'inscription ne met
+      // plus rien en file, elle declare le compte par sa route. Le controle
+      // lui-meme est inchange — on verifie qu'une empreinte est bien ecrite
+      // avant que `registerParent` ne rende la main.
+      final borne = parent.indexOf('_declarerAuServeur');
       expect(
-        parent.substring(0, parent.indexOf('_sync.enqueue')),
-        contains('passwordHash'),
+        borne,
+        greaterThan(0),
+        reason: 'registerParent doit declarer le compte au serveur',
       );
+      expect(parent.substring(0, borne), contains('passwordHash'));
     });
 
     test('les trois écrans de session partagent la même table d’accueil', () {

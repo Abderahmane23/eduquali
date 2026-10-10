@@ -9,8 +9,10 @@ import '../../core/security/identity_checks.dart';
 import '../../core/security/secure_store.dart';
 import '../../core/storage/document_pipeline.dart';
 import '../../data/local/database/app_database.dart';
+import '../../data/remote/account_api.dart';
 import '../../data/remote/chat_api.dart';
 import '../../data/remote/live_api.dart';
+import '../../data/remote/promotions_api.dart';
 import '../../data/remote/points_api.dart';
 import '../../data/remote/sync_api.dart';
 import '../../data/remote/supabase_auth_api.dart';
@@ -73,6 +75,16 @@ final liveApiProvider = Provider<LiveApi>(
   (ref) => LiveApi(ref.watch(dioProvider)),
 );
 
+/// Les promotions d'etablissement, telles que le serveur les choisit.
+///
+/// Serveur uniquement, et pour deux raisons : la formule decide qui en voit
+/// (payer, c'est ne plus voir de publicite) et l'ordre est une regle produit
+/// — la moins vue d'abord. Les deux, recopiees dans le client, seraient
+/// contournables ou divergeraient.
+final promotionsApiProvider = Provider<PromotionsApi>(
+  (ref) => PromotionsApi(ref.watch(dioProvider)),
+);
+
 /// Les groupes de discussion : un cours en direct, un contrat.
 ///
 /// Serveur uniquement pour la lecture et l'envoi. L'appartenance est calculee
@@ -120,6 +132,11 @@ final teacherRepositoryProvider = Provider<TeacherRepository>(
   (ref) => TeacherRepository(
     ref.watch(databaseProvider),
     ref.watch(syncEngineProvider),
+    // Les competences passent par leur route : ce sont des ensembles, et la
+    // file generique ecrit une ligne.
+    account: AccountApi.isConfigured
+        ? AccountApi(ref.watch(dioProvider))
+        : null,
   ),
 );
 
@@ -179,8 +196,12 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
     ref.watch(databaseProvider),
     ref.watch(secureStoreProvider),
-    ref.watch(syncEngineProvider),
     isServerReachable: () => network.state == NetworkState.serverAvailable,
+    // Declare le compte au serveur juste apres l'inscription : sans elle, le
+    // telephone creait une identite chez Supabase et aucune ligne `profiles`.
+    account: AccountApi.isConfigured
+        ? AccountApi(ref.watch(dioProvider))
+        : null,
     // L'identite partagee avec le site, quand un projet Supabase a ete
     // configure a la compilation. Sinon `null`, et l'application reste
     // entierement locale comme avant.

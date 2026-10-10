@@ -943,6 +943,155 @@ await invariant('on n’offre pas plus de deux points par jour', async () => {
   await db.exec(`select set_config('request.jwt.claim.sub', '', false);`)
 })
 
+await invariant('une promotion se compte une fois par personne et par jour', async () => {
+  /*
+   * « Affichages » est ce que l'etablissement achete.
+   *
+   * Incrementer a chaque redessin compterait les allers-retours entre deux
+   * onglets, et un tableau de bord se redessine souvent. Le chiffre doit dire
+   * combien de **personnes** ont vu.
+   */
+  const ECOLE = 'cccccccc-0000-4000-8000-cccccccccccc'
+  const VU1 = 'dddddddd-0000-4000-8000-dddddddddddd'
+  const VU2 = 'eeeeeeee-0000-4000-8000-eeeeeeeeeeee'
+
+  await db.exec(`
+    insert into auth.users (id) values ('${ECOLE}'), ('${VU1}'), ('${VU2}');
+    insert into profiles (id, role, phone, first_name) values
+      ('${ECOLE}', 'INSTITUTION', '+224600000940', 'Lycee'),
+      ('${VU1}',   'PARENT',      '+224600000941', 'Aicha'),
+      ('${VU2}',   'STUDENT',     '+224600000942', 'Moussa');
+    insert into institutions (id, owner_id, name, type, city) values
+      ('inst_promo', '${ECOLE}', 'Lycee Excellence', 'HIGH_SCHOOL', 'Conakry');
+    insert into promotions (id, institution_id, title, status) values
+      ('promo_a', 'inst_promo', 'Inscriptions ouvertes', 'ACTIVE'),
+      ('promo_z', 'inst_promo', 'Brouillon', 'DRAFT');
+  `)
+
+  const vues = async (id) =>
+    Number((await un(`select views from promotions where id = '${id}'`)).views)
+
+  // Premiere vue : comptee.
+  await db.exec(`select set_config('request.jwt.claim.sub', '${VU1}', false);`)
+  let compte = await un(`select enregistrer_affichage('promo_a') as ok`)
+  attendu(compte.ok === true, 'la premiere vue devrait compter')
+  attendu((await vues('promo_a')) === 1, `vues = ${await vues('promo_a')}`)
+
+  // La meme personne, le meme jour : pas recomptee.
+  compte = await un(`select enregistrer_affichage('promo_a') as ok`)
+  attendu(compte.ok === false, 'la meme personne ne doit pas recompter')
+  attendu(
+    (await vues('promo_a')) === 1,
+    `le compteur a bouge deux fois pour une personne : ${await vues('promo_a')}`,
+  )
+
+  // Une autre personne : comptee.
+  await db.exec(`select set_config('request.jwt.claim.sub', '${VU2}', false);`)
+  await db.exec(`select enregistrer_affichage('promo_a');`)
+  attendu((await vues('promo_a')) === 2, `vues = ${await vues('promo_a')}`)
+
+  // Une promotion qui n'est pas active ne se compte pas : sinon un ecran garde
+  // en memoire continuerait d'alimenter un chiffre deja facture.
+  const brouillon = await un(`select enregistrer_affichage('promo_z') as ok`)
+  attendu(brouillon.ok === false, 'un brouillon ne doit pas se compter')
+  attendu((await vues('promo_z')) === 0, 'le brouillon a ete compte')
+
+  // Sans session, rien.
+  await db.exec(`select set_config('request.jwt.claim.sub', '', false);`)
+  const anonyme = await un(`select enregistrer_affichage('promo_a') as ok`)
+  attendu(anonyme.ok === false, 'un anonyme ne doit pas compter')
+  attendu((await vues('promo_a')) === 2, `vues = ${await vues('promo_a')}`)
+})
+
+await invariant('remplacer des competences retire aussi', async () => {
+  /*
+   * Le mot qui compte est « remplacer ».
+   *
+   * Ajouter est facile ; c'est le retrait qui manquait. Le professeur decoche
+   * une matiere, et si seule l'insertion fonctionne, elle reste declaree pour
+   * toujours — il apparait dans des recherches qui ne le concernent plus.
+   *
+   * Et le remplacement doit etre atomique : en deux instructions, il existe un
+   * instant sans aucune matiere, ou le professeur est introuvable. Une coupure
+   * entre les deux le rendrait definitif.
+   */
+  const PROF = 'bbbbbbbb-0000-4000-8000-bbbbbbbbbbbb'
+
+  await db.exec(`
+    insert into auth.users (id) values ('${PROF}');
+    insert into profiles (id, role, phone, first_name) values
+      ('${PROF}', 'TEACHER', '+224600000930', 'Ibrahima');
+    insert into teachers (id, user_id) values ('t_comp', '${PROF}');
+    insert into subjects (id, name, code, sort_order) values
+      ('sub_m', 'Mathematiques', 'MATHC', 1),
+      ('sub_p', 'Physique',      'PHYSC', 2);
+    insert into levels (id, name, code, category, sort_order, cycle) values
+      ('lvl_a', 'Terminale', 'TLEC', 'SECONDARY', 1, 'LYCEE'),
+      ('lvl_b', 'Premiere',  'PREC', 'SECONDARY', 2, 'LYCEE');
+  `)
+
+  const etat = async () => {
+    const m = await un(
+      `select count(*)::int as n from teacher_subjects where teacher_id = 't_comp'`,
+    )
+    const n = await un(
+      `select count(*)::int as n from teacher_levels where teacher_id = 't_comp'`,
+    )
+    return { matieres: Number(m.n), niveaux: Number(n.n) }
+  }
+
+  // Deux matieres, chacune avec ses niveaux — la forme par matiere est ce que
+  // `teacher_levels` exige, puisqu'il est cle par (prof, matiere, niveau).
+  await db.exec(`
+    select remplacer_competences('t_comp', '[
+      {"subject_id": "sub_m", "level_ids": ["lvl_a", "lvl_b"]},
+      {"subject_id": "sub_p", "level_ids": ["lvl_a"]}
+    ]'::jsonb);
+  `)
+  let vu = await etat()
+  attendu(
+    vu.matieres === 2 && vu.niveaux === 3,
+    `attendu 2 matieres et 3 niveaux, vu ${vu.matieres} et ${vu.niveaux}`,
+  )
+
+  // On retire la physique : elle doit disparaitre, et son niveau avec elle.
+  await db.exec(`
+    select remplacer_competences('t_comp', '[
+      {"subject_id": "sub_m", "level_ids": ["lvl_a"]}
+    ]'::jsonb);
+  `)
+  vu = await etat()
+  attendu(
+    vu.matieres === 1 && vu.niveaux === 1,
+    `une matiere decochee doit disparaitre : vu ${vu.matieres} matiere(s) et ` +
+      `${vu.niveaux} niveau(x)`,
+  )
+  const reste = await un(
+    `select subject_id from teacher_subjects where teacher_id = 't_comp'`,
+  )
+  attendu(reste.subject_id === 'sub_m', `reste ${reste.subject_id}`)
+
+  // Rejoue a l'identique : rien ne double.
+  await db.exec(`
+    select remplacer_competences('t_comp', '[
+      {"subject_id": "sub_m", "level_ids": ["lvl_a"]}
+    ]'::jsonb);
+  `)
+  vu = await etat()
+  attendu(
+    vu.matieres === 1 && vu.niveaux === 1,
+    `un envoi rejoue ne doit rien doubler : ${vu.matieres} / ${vu.niveaux}`,
+  )
+
+  // Tout decocher vide bien les deux tables.
+  await db.exec(`select remplacer_competences('t_comp', '[]'::jsonb);`)
+  vu = await etat()
+  attendu(
+    vu.matieres === 0 && vu.niveaux === 0,
+    `tout retirer doit vider : ${vu.matieres} / ${vu.niveaux}`,
+  )
+})
+
 await invariant('un groupe n’admet que ceux que la relation lie', async () => {
   /*
    * La règle de sécurité de cette fonction, éprouvée à l'exécution.

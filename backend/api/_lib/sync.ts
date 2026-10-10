@@ -166,16 +166,23 @@ export const WRITABLE: Readonly<Record<string, Writable>> = {
       profile_views: 'compteur tenu par le serveur',
     },
   },
-  teacher_subjects: {
-    table: 'teacher_subjects',
-    columns: ['teacher_id', 'subject_id'],
-    deletable: true,
-  },
-  teacher_levels: {
-    table: 'teacher_levels',
-    columns: ['teacher_id', 'subject_id', 'level_id'],
-    deletable: true,
-  },
+  /*
+   * `teacher_subjects` et `teacher_levels` ne passent plus par ici.
+   *
+   * Ce sont des **ensembles**, et `planWrite` ecrit une ligne. « Voila mes
+   * matieres » veut dire en ajouter *et retirer celles qu'on a decochees* :
+   * une synchronisation ligne par ligne ne sait pas exprimer le retrait.
+   *
+   * Le client poussait `{subjectIds: [...]}` avec, pour `entityId`,
+   * l'identifiant du professeur et non celui d'une ligne. Aucune cle ne
+   * correspondait a une colonne : la charge etait videe puis refusee. Les
+   * competences restaient sur le telephone.
+   *
+   * Elles ont desormais leur route, `POST /teacher/competences`, qui remplace
+   * l'ensemble d'un bloc (`remplacer_competences`, migration 0029). Elles
+   * figurent dans `REFUSED` avec ce renvoi, pour qu'un vieux client recoive un
+   * message qui dit quoi faire plutot qu'un refus muet.
+   */
   /*
    * Les créneaux à domicile, sur la fiche du professeur.
    *
@@ -331,7 +338,22 @@ export const REFUSED: Readonly<Record<string, string>> = {
   recruitment_room:
     'la salle d’un recrutement est ouverte par l’établissement, et son contenu ' +
     'sert de trace à une décision d’embauche.',
-  user: 'un profil se modifie par la route de compte, qui vérifie le rôle.',
+  // Cette raison nommait une route qui n'existait pas, et c'etait tout le
+  // probleme : un compte cree depuis le telephone avait une identite chez
+  // Supabase et aucune ligne `profiles`. La route existe depuis le 06/10.
+  user:
+    'un profil porte le rôle, et le rôle décide de tout le reste : il se crée ' +
+    'par POST /account, qui lit l’identité dans le jeton et jamais dans le ' +
+    'corps. Ouvrir cette table à un client laisserait quelqu’un se déclarer ' +
+    'ADMIN.',
+  teacher_subjects:
+    'les matières sont un ensemble : « voilà les miennes » veut dire en ' +
+    'ajouter ET retirer les autres, ce qu’une écriture ligne par ligne ne sait ' +
+    'pas exprimer. Utiliser POST /teacher/competences, qui remplace tout d’un ' +
+    'bloc.',
+  teacher_levels:
+    'même raison que teacher_subjects, et les niveaux se déclarent par ' +
+    'matière : POST /teacher/competences.',
   video_course:
     'un cours vidéo porte un prix et des fichiers : route dédiée, qui relit le ' +
     'prix côté serveur.',

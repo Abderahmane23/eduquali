@@ -9,6 +9,7 @@ import '../../domain/entities/teacher_profile.dart';
 import '../../domain/usecases/profile_completion.dart';
 import '../../domain/usecases/trust_score.dart';
 import '../local/database/app_database.dart';
+import '../remote/account_api.dart';
 import '../sync/sync_engine.dart';
 
 /// Depot du profil enseignant (§15) — lecture agrégée et ecritures locales.
@@ -17,10 +18,20 @@ import '../sync/sync_engine.dart';
 /// mise a jour immediatement, puis l'operation est empilee dans la file de
 /// synchronisation (§43).
 class TeacherRepository {
-  TeacherRepository(this._db, this._sync);
+  // Un parametre nomme ne peut pas commencer par un souligne en Dart : le
+  // champ prive se remplit donc dans la liste d'initialisation.
+  TeacherRepository(this._db, this._sync, {AccountApi? account})
+    // ignore: prefer_initializing_formals
+    : _account = account;
 
   final AppDatabase _db;
   final SyncEngine _sync;
+
+  /// Envoie les matières et niveaux, qui ne passent pas par la file.
+  ///
+  /// Nul quand aucun serveur n'est configuré à la compilation : l'application
+  /// reste alors entièrement locale, comme avant.
+  final AccountApi? _account;
   static const _uuid = Uuid();
 
   /// Le compte derriere une fiche professeur.
@@ -591,12 +602,7 @@ class TeacherRepository {
       });
     });
 
-    await _sync.enqueue(
-      entity: 'teacher_subjects',
-      entityId: teacherId,
-      operation: SyncOperation.update,
-      payload: {'subjectIds': subjectIds},
-    );
+    await _pousserCompetences(teacherId);
   }
 
   /// Remplace les niveaux declares pour une matière (§9).
@@ -625,12 +631,62 @@ class TeacherRepository {
       });
     });
 
-    await _sync.enqueue(
-      entity: 'teacher_levels',
-      entityId: teacherId,
-      operation: SyncOperation.update,
-      payload: {'subjectId': subjectId, 'levelIds': levelIds},
-    );
+    await _pousserCompetences(teacherId);
+  }
+
+  /// Envoie au serveur l'ensemble des matières et niveaux déclarés.
+  ///
+  /// --- Pourquoi relire la base plutôt que pousser le changement ---------
+  ///
+  /// Ces deux tables sont des **ensembles**, et la route du serveur remplace
+  /// tout d'un bloc. Lui envoyer « j'ai ajouté les maths » ne dirait pas quoi
+  /// retirer ; on lui envoie donc l'état complet, relu localement — qui est de
+  /// toute façon la seule vérité à cet instant.
+  ///
+  /// --- Ce que cela remplace ---------------------------------------------
+  ///
+  /// Les deux envois précédents poussaient `{subjectIds: [...]}` et
+  /// `{subjectId, levelIds: [...]}` sous des entités dont les colonnes sont
+  /// `teacher_id`, `subject_id`, `level_id`. Aucune clé ne correspondait : le
+  /// serveur vidait la charge puis refusait l'envoi. Les compétences d'un
+  /// professeur n'ont jamais quitté son téléphone — et comme une liste d'offres
+  /// est vide sans matière déclarée, son onglet restait vide côté serveur.
+  ///
+  /// Silencieux : une déclaration enregistrée localement ne doit pas échouer
+  /// parce que le réseau a coupé. Le prochain enregistrement renvoie l'état
+  /// complet, donc rien ne se perd durablement.
+  Future<void> _pousserCompetences(String teacherId) async {
+    final account = _account;
+    if (account == null) return;
+
+    final lignes = await _db
+        .customSelect(
+          'SELECT ts.subject_id AS subject_id, tl.level_id AS level_id '
+          'FROM teacher_subjects ts '
+          'LEFT JOIN teacher_levels tl '
+          '  ON tl.teacher_id = ts.teacher_id AND tl.subject_id = ts.subject_id '
+          'WHERE ts.teacher_id = ?1',
+          variables: [Variable<String>(teacherId)],
+          readsFrom: {_db.teacherSubjects, _db.teacherLevels},
+        )
+        .get();
+
+    final parMatiere = <String, List<String>>{};
+    for (final ligne in lignes) {
+      final matiere = ligne.read<String>('subject_id');
+      final niveau = ligne.read<String?>('level_id');
+      // Une matière sans niveau reste déclarée : c'est un état normal entre
+      // le choix des matières et celui des niveaux.
+      final liste = parMatiere.putIfAbsent(matiere, () => <String>[]);
+      if (niveau != null && niveau.isNotEmpty) liste.add(niveau);
+    }
+
+    try {
+      await account.setCompetences(parMatiere);
+    } on AccountApiException catch (cause) {
+      // ignore: avoid_print
+      print('[competences] envoi différé : ${cause.message}');
+    }
   }
 
   Future<String> addExperience({

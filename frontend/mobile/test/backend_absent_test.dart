@@ -118,15 +118,13 @@ void main() {
     final db = AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(db.close);
 
+    // Plus de moteur de synchronisation ici : les trois inscriptions y
+    // mettaient `user`, `institution` et `parent`, et aucun des trois ne
+    // pouvait aboutir. Le compte se declare par `POST /account`, qui lit
+    // l'identite dans le jeton.
     final repo = AuthRepository(
       db,
       SecureStore(),
-      SyncEngine(
-        database: db,
-        network: NetworkStatusService(probeClient: Dio()),
-        api: SyncApi(buildApiClient(() async => null)),
-        deviceId: 'test',
-      ),
       isServerReachable: () => false,
     );
     expect(repo.offlineOtpApplies, isTrue);
