@@ -34,17 +34,22 @@ void main() {
     expect(vus.map((p) => p.nom), ['Diallo']);
   });
 
-  test('un professeur sans cycle déclaré reste visible', () {
+  test('un professeur sans cycle déclaré est écarté', () {
     /*
-     * Décision délibérée, et c'est la plus discutable des trois.
+     * La règle disait l'inverse jusqu'au 11/10, et sa raison était bonne :
+     * l'écarter le faisait disparaître de toutes les familles sans que rien ne
+     * le lui signale.
      *
-     * L'écarter serait « propre » : on ne sait pas s'il convient. Mais il
-     * disparaîtrait alors de la liste de toutes les familles, sans que rien ne
-     * le lui signale — il verrait son profil en ligne et n'aurait aucun contact.
-     * Un profil incomplet se corrige ; une disparition silencieuse ne se
-     * remarque pas.
+     * Elle tenait parce que l'inscription **jetait** les niveaux déclarés — un
+     * professeur avait un profil vide sans y être pour rien. Ce n'est plus le
+     * cas : l'inscription les enregistre et `POST /teacher/competences` les
+     * pousse. Un profil vide veut maintenant dire que l'étape a été sautée, et
+     * la barre de complétion du profil le dit.
+     *
+     * Le garder coûtait plus cher : un parent de CE2 voyait un chargé de cours
+     * de L3 dans la première liste du produit.
      */
-    expect(filtre([sansCycle], 'COLLEGE').map((p) => p.nom), ['Sow']);
+    expect(filtre([sansCycle], 'COLLEGE'), isEmpty);
   });
 
   test('sans palier connu, rien n’est filtré', () {
@@ -63,7 +68,9 @@ void main() {
     // Le classement par compatibilité est calculé en amont ; un filtre qui
     // réordonne le détruirait sans que personne ne s'en aperçoive.
     final vus = filtre([polyvalent, sansCycle, college], 'LYCEE');
-    expect(vus.map((p) => p.nom), ['Barry', 'Sow']);
+    // « Sow » ne déclare aucun cycle : il est désormais écarté, et le
+    // contrôle porte sur ce qui reste — l'ordre d'origine.
+    expect(vus.map((p) => p.nom), ['Barry']);
   });
 
   group('faut-il annoncer le filtre', () {

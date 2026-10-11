@@ -23,7 +23,12 @@ import {
   testForWeek,
   weekWindow,
 } from './_lib/points'
-import { occurrencesFor } from './_lib/scheduling'
+import {
+  occurrencesFor,
+  slotById,
+  SESSION_MINUTES,
+  SLOTS,
+} from './_lib/scheduling'
 import {
   planWrite,
   type SyncPushItem,
@@ -2161,13 +2166,24 @@ const WEEKS_AHEAD = 4
  * `CANCELLED` et ne doit pas reapparaitre au prochain passage — ce que
  * garantit la contrainte d'unicite, pas une logique de suppression.
  */
-async function generateSessions(): Promise<{ created: number; courses: number }> {
+async function generateSessions(
+  /**
+   * Un seul cours, ou tous les cours publies quand c'est nul.
+   *
+   * Le cron passe a 2 h du matin ; un professeur qui vient de publier son
+   * cours ne va pas attendre jusque-la pour voir ses seances apparaitre — il
+   * croirait que la publication a echoue.
+   */
+  coursId?: string,
+): Promise<{ created: number; courses: number }> {
   const service = asService()
 
-  const { data: cours } = await service
+  let requete = service
     .from('live_courses')
     .select('id, slot_ids')
     .eq('status', 'PUBLISHED')
+  if (coursId) requete = requete.eq('id', coursId)
+  const { data: cours } = await requete
 
   if (!cours || cours.length === 0) return { created: 0, courses: 0 }
 
@@ -2229,6 +2245,217 @@ app.post('/live/sessions/generate', async (c) => {
   const liberees = await releaseExpiredSeats()
   return c.json({ ...bilan, seatsReleased: liberees })
 })
+
+// --- Publier un cours en direct --------------------------------------------
+
+const coursSchema = z.object({
+  subjectId: z.string().min(1).max(64),
+  levelId: z.string().min(1).max(64),
+  title: z.string().trim().min(3).max(120).optional(),
+  description: z.string().trim().max(2000).optional(),
+
+  // Les bornes viennent de la contrainte SQL (migration 0014). Les repeter ici
+  // sert a rendre un message lisible plutot qu'une erreur de base : une faute
+  // de frappe a sept chiffres doit se voir a l'ecran.
+  price: z.number().int().min(1000).max(1000000),
+
+  // Quinze au maximum, et c'est la valeur du produit : au-dela, un professeur
+  // ne peut plus repondre a chacun pendant les pauses.
+  seats: z.number().int().min(1).max(15).default(15),
+
+  // Les identifiants de creneaux choisis. La liste fermee vit dans
+  // `shared/scheduling/slots.json` ; un creneau inconnu est refuse ici plutot
+  // que de produire des seances a une heure qui n'existe pas.
+  slotIds: z.array(z.string().min(1).max(32)).min(1).max(6),
+
+  /** Faux pour garder le cours en brouillon. */
+  publish: z.boolean().default(true),
+})
+
+/**
+ * Cree un cours en direct, et ses premieres seances.
+ *
+ * --- Le trou que ceci comble -------------------------------------------
+ *
+ * Il n'existait **aucun parcours de creation**, ni sur le telephone ni sur le
+ * site. Les cours en direct ne pouvaient donc venir que d'un semis manuel, et
+ * la consequence se lisait en chaine :
+ *
+ *   pas de cours -> pas de seance -> pas de place payee -> pas de presence,
+ *   pas de groupe de discussion, rien dans « En direct »
+ *
+ * Trois fonctions terminees et invisibles, pour un formulaire manquant.
+ *
+ * --- Pourquoi les seances sont generees tout de suite -------------------
+ *
+ * Le cron de 2 h du matin les aurait creees de toute facon. Mais un professeur
+ * qui publie son cours et ne voit rien apparaitre croit que la publication a
+ * echoue — et republie. On genere donc pour ce seul cours, immediatement.
+ */
+app.post('/live/courses', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = coursSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) {
+    return c.json(
+      {
+        error: 'Demande incomplete.',
+        detail: corps.error.issues.map(
+          (i) => `${i.path.join('.')}: ${i.message}`,
+        ),
+      },
+      400,
+    )
+  }
+  const entree = corps.data
+
+  // Les creneaux, verifies contre la liste fermee. Un identifiant invente
+  // produirait des seances a une heure qui n'existe pas, et le generateur les
+  // ignorerait en silence — le professeur verrait un cours sans seance.
+  const inconnus = entree.slotIds.filter((id) => !slotById(id))
+  if (inconnus.length > 0) {
+    return c.json({ error: `Créneau inconnu : ${inconnus.join(', ')}.` }, 400)
+  }
+
+  const service = asService()
+
+  // La matiere et la classe doivent exister : la base les refuserait par cle
+  // etrangere, mais avec un message que personne ne peut lire.
+  const [{ data: matiere }, { data: niveau }] = await Promise.all([
+    service
+      .from('subjects')
+      .select('id, name')
+      .eq('id', entree.subjectId)
+      .maybeSingle(),
+    service
+      .from('levels')
+      .select('id, name')
+      .eq('id', entree.levelId)
+      .maybeSingle(),
+  ])
+  if (!matiere) return c.json({ error: 'Matière inconnue.' }, 400)
+  if (!niveau) return c.json({ error: 'Classe inconnue.' }, 400)
+
+  const { data: cours, error } = await service
+    .from('live_courses')
+    .insert({
+      teacher_id: teacherId,
+      subject_id: entree.subjectId,
+      level_id: entree.levelId,
+      title: entree.title ?? `${matiere.name} — ${niveau.name}`,
+      description: entree.description ?? null,
+      price: entree.price,
+      seats: entree.seats,
+      slot_ids: entree.slotIds,
+      status: entree.publish ? 'PUBLISHED' : 'DRAFT',
+    })
+    .select('id, title, status, price, seats, slot_ids')
+    .maybeSingle()
+
+  if (error || !cours) {
+    console.error('[cours] creation impossible', error)
+    return c.json({ error: 'Création impossible.' }, 500)
+  }
+
+  // Les seances, maintenant — pas dans six heures.
+  const bilan = entree.publish
+    ? await generateSessions(cours.id as string)
+    : { created: 0, courses: 0 }
+
+  return c.json({
+    id: cours.id,
+    title: cours.title,
+    status: cours.status,
+    price: cours.price,
+    seats: cours.seats,
+    slotIds: cours.slot_ids,
+    sessionsCreated: bilan.created,
+  })
+})
+
+/**
+ * Les cours du professeur, avec le compte de leurs seances a venir.
+ *
+ * Sans cet ecran, il ne peut pas savoir ce qui existe deja — et republierait
+ * le meme cours.
+ */
+app.get('/live/courses/mine', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const service = asService()
+  const { data: cours, error } = await service
+    .from('live_courses')
+    .select(
+      'id, title, status, price, seats, slot_ids, created_at, ' +
+        'subjects ( name ), levels ( name )',
+    )
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[cours] lecture impossible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  // Le typage de supabase-js ne traverse pas une jointure imbriquee : il rend
+  // `GenericStringError`. Le meme contournement qu ailleurs dans ce fichier.
+  const lignes = (cours ?? []) as unknown as Record<string, unknown>[]
+  const ids = lignes.map((x) => x.id as string)
+  const aVenir = new Map<string, number>()
+  if (ids.length > 0) {
+    const { data: seances } = await service
+      .from('live_sessions')
+      .select('live_course_id')
+      .in('live_course_id', ids)
+      .gte('starts_at', new Date().toISOString())
+      .neq('status', 'CANCELLED')
+    for (const seance of seances ?? []) {
+      const k = seance.live_course_id as string
+      aVenir.set(k, (aVenir.get(k) ?? 0) + 1)
+    }
+  }
+
+  const nomDe = (v: unknown): string | null => {
+    const ligne = Array.isArray(v) ? v[0] : v
+    return (ligne as { name?: string } | null)?.name ?? null
+  }
+
+  return c.json({
+    courses: lignes.map((x) => ({
+      id: x.id,
+      title: x.title,
+      status: x.status,
+      price: x.price,
+      seats: x.seats,
+      slotIds: x.slot_ids,
+      subjectName: nomDe(x.subjects),
+      levelName: nomDe(x.levels),
+      upcomingSessions: aVenir.get(x.id as string) ?? 0,
+    })),
+  })
+})
+
+/** Les creneaux proposables, pour que l'ecran n'en invente aucun. */
+app.get('/live/slots', (c) =>
+  c.json({
+    sessionMinutes: SESSION_MINUTES,
+    slots: SLOTS.map((s) => ({
+      id: s.id,
+      label: s.label,
+      days: s.days,
+      start: s.start,
+      end: s.end,
+    })),
+  }),
+)
 
 // --- S'inscrire a une seance ------------------------------------------------
 

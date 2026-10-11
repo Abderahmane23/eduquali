@@ -144,8 +144,11 @@ class _TeacherLivePageState extends ConsumerState<TeacherLivePage> {
                   title: 'Aucune séance programmée',
                   message:
                       _erreur ??
-                      'Vos séances apparaissent ici dès qu’un cours en direct '
-                          'est publié et programmé.',
+                      'Publiez votre premier cours : choisissez la matière, la '
+                          'classe, le prix et vos créneaux. Les séances se '
+                          'programment ensuite toutes seules.',
+                  actionLabel: 'Publier un cours',
+                  onAction: () => context.push(Routes.publishCourse),
                 ),
               )
             : ListView(
@@ -243,6 +246,15 @@ class _TeacherLivePageState extends ConsumerState<TeacherLivePage> {
                   ],
 
                   const Gap(AppSpacing.lg),
+                  // Publier un cours : la porte qui manquait. Sans elle, un
+                  // professeur ne pouvait pas creer son propre cours, et la
+                  // grille restait vide faute d'offre.
+                  OutlinedButton.icon(
+                    onPressed: () => context.push(Routes.publishCourse),
+                    icon: const Icon(Icons.add_circle_outline),
+                    label: const Text('Publier un nouveau cours'),
+                  ),
+                  const Gap(AppSpacing.sm),
                   OutlinedButton.icon(
                     onPressed: _ouvrirRepertoire,
                     icon: const Icon(Icons.contacts_outlined),

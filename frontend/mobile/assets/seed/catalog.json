@@ -307,11 +307,65 @@
       "grouping": true
     },
     {
+      "id": "lvl_1",
+      "name": "1ère année",
+      "code": "AN1",
+      "category": "PRIMARY",
+      "order": 2,
+      "cycle": "PRIMAIRE",
+      "grouping": false
+    },
+    {
+      "id": "lvl_2",
+      "name": "2ème année",
+      "code": "AN2",
+      "category": "PRIMARY",
+      "order": 3,
+      "cycle": "PRIMAIRE",
+      "grouping": false
+    },
+    {
+      "id": "lvl_3",
+      "name": "3ème année",
+      "code": "AN3",
+      "category": "PRIMARY",
+      "order": 4,
+      "cycle": "PRIMAIRE",
+      "grouping": false
+    },
+    {
+      "id": "lvl_4",
+      "name": "4ème année",
+      "code": "AN4",
+      "category": "PRIMARY",
+      "order": 5,
+      "cycle": "PRIMAIRE",
+      "grouping": false
+    },
+    {
+      "id": "lvl_5",
+      "name": "5ème année",
+      "code": "AN5",
+      "category": "PRIMARY",
+      "order": 6,
+      "cycle": "PRIMAIRE",
+      "grouping": false
+    },
+    {
+      "id": "lvl_6",
+      "name": "6ème année",
+      "code": "AN6",
+      "category": "PRIMARY",
+      "order": 7,
+      "cycle": "PRIMAIRE",
+      "grouping": false
+    },
+    {
       "id": "lvl_college",
       "name": "Collège",
       "code": "COLLEGE",
       "category": "SECONDARY",
-      "order": 2,
+      "order": 8,
       "cycle": "COLLEGE",
       "grouping": true
     },
@@ -320,7 +374,7 @@
       "name": "7ème année",
       "code": "AN7",
       "category": "SECONDARY",
-      "order": 3,
+      "order": 9,
       "cycle": "COLLEGE"
     },
     {
@@ -328,7 +382,7 @@
       "name": "8ème année",
       "code": "AN8",
       "category": "SECONDARY",
-      "order": 4,
+      "order": 10,
       "cycle": "COLLEGE"
     },
     {
@@ -336,7 +390,7 @@
       "name": "9ème année",
       "code": "AN9",
       "category": "SECONDARY",
-      "order": 5,
+      "order": 11,
       "cycle": "COLLEGE"
     },
     {
@@ -344,7 +398,7 @@
       "name": "10ème année",
       "code": "AN10",
       "category": "SECONDARY",
-      "order": 6,
+      "order": 12,
       "cycle": "COLLEGE"
     },
     {
@@ -352,7 +406,7 @@
       "name": "Lycée",
       "code": "LYCEE",
       "category": "SECONDARY",
-      "order": 7,
+      "order": 13,
       "cycle": "LYCEE",
       "grouping": true
     },
@@ -361,7 +415,7 @@
       "name": "11ème année",
       "code": "AN11",
       "category": "SECONDARY",
-      "order": 8,
+      "order": 14,
       "cycle": "LYCEE"
     },
     {
@@ -369,7 +423,7 @@
       "name": "12ème année",
       "code": "AN12",
       "category": "SECONDARY",
-      "order": 9,
+      "order": 15,
       "cycle": "LYCEE"
     },
     {
@@ -377,7 +431,7 @@
       "name": "Terminale",
       "code": "TLE",
       "category": "SECONDARY",
-      "order": 10,
+      "order": 16,
       "cycle": "LYCEE"
     },
     {
@@ -385,7 +439,7 @@
       "name": "L1",
       "code": "L1",
       "category": "UNIVERSITY",
-      "order": 11,
+      "order": 17,
       "cycle": "SUPERIEUR"
     },
     {
@@ -393,7 +447,7 @@
       "name": "L2",
       "code": "L2",
       "category": "UNIVERSITY",
-      "order": 12,
+      "order": 18,
       "cycle": "SUPERIEUR"
     },
     {
@@ -401,7 +455,7 @@
       "name": "L3",
       "code": "L3",
       "category": "UNIVERSITY",
-      "order": 13,
+      "order": 19,
       "cycle": "SUPERIEUR"
     },
     {
@@ -409,7 +463,7 @@
       "name": "Master 1",
       "code": "M1",
       "category": "UNIVERSITY",
-      "order": 14,
+      "order": 20,
       "cycle": "SUPERIEUR"
     },
     {
@@ -417,7 +471,7 @@
       "name": "Master 2",
       "code": "M2",
       "category": "UNIVERSITY",
-      "order": 15,
+      "order": 21,
       "cycle": "SUPERIEUR"
     },
     {
@@ -425,7 +479,7 @@
       "name": "Diplômé",
       "code": "DIPL",
       "category": "GRADUATE",
-      "order": 16,
+      "order": 22,
       "cycle": "DIPLOME",
       "grouping": true
     }

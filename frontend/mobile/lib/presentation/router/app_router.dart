@@ -62,6 +62,7 @@ import '../screens/live/live_grid_page.dart';
 import '../screens/live/live_room_page.dart';
 import '../screens/chat/chat_groups_page.dart';
 import '../screens/chat/chat_room_page.dart';
+import '../screens/live/publish_course_page.dart';
 import '../screens/live/session_replay_page.dart';
 import '../screens/live/teacher_live_page.dart';
 import '../screens/catalog/promotion_form_page.dart';
@@ -171,6 +172,10 @@ abstract final class Routes {
   /// Un seul ecran pour les quatre profils : la liste ne montre que les
   /// groupes dont on est membre, et l'appartenance se deduit de la relation.
   static const chatGroups = '/discussions';
+
+  /// Publier un cours en direct. Le parcours manquait entierement : sans lui,
+  /// aucun cours n'existait, donc aucune seance, aucune place, aucun groupe.
+  static const publishCourse = '/direct/publier';
 
   /// Un groupe ouvert.
   static String chatGroup(String id) => '/discussions/$id';
@@ -463,6 +468,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: Routes.teacherLive,
         builder: (_, _) => const TeacherLivePage(),
+      ),
+      GoRoute(
+        path: Routes.publishCourse,
+        builder: (_, _) => const PublishCoursePage(),
       ),
       // Apres `/direct`, pour la meme raison que `/cours/nouveau` ci-dessus :
       // go_router prend la premiere route qui correspond.

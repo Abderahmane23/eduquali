@@ -2,67 +2,101 @@
 
 Purpose : ce qui reste à faire, et seulement cela.
 Audience : responsable produit et développeurs.
-Last updated : 06/10/2026 — Owner : équipe Eduquali.
+Last updated : 11/10/2026 — Owner : équipe Eduquali.
 
 > Ce fichier ne liste que le **non fait** ou le **partiellement fait**. Une case
 > cochée se retire à la version suivante. L'historique des décisions, avec leurs
 > raisons, vit dans [DECISIONS.md](DECISIONS.md). La spécification de
 > l'assistant IA vit dans [AI_ASSISTANT.md](AI_ASSISTANT.md).
 
-## Prochaines étapes — ordonnées le 06/10
+## Prochaines étapes — ordonnées le 11/10
 
-La chaîne est en service et se parle. Ce qui suit est classé par ce qui
-**empêche quelqu'un de se servir du produit**, pas par difficulté.
+Quatre des cinq points du 06/10 sont clos. Ce qui suit est classé par ce qui
+**empêche quelqu'un de se servir du produit**.
 
-### 1. Essayer l'APK 1.15.0 sur un vrai téléphone
+### 1. Essayer l'APK 1.17.0 sur un vrai téléphone
 
-C'est le seul maillon qu'aucun contrôle automatique ne couvre. Tout ce qu'il
-rencontrera est vérifié — référentiel lisible, Worker à 200, colonnes de sync
-présentes, authentification joignable — mais personne n'a encore créé un compte
-depuis l'application elle-même.
+C'est le seul maillon qu'aucun contrôle automatique ne couvre, et il le reste.
+Tout ce que l'application rencontrera est vérifié — référentiel lisible,
+Worker à 200, colonnes de synchronisation présentes, authentification
+joignable, clés Cloudflare éprouvées — mais **personne n'a encore créé un
+compte depuis l'application elle-même**.
 
-Ce qu'il faut regarder, dans cet ordre :
+À regarder dans cet ordre :
 
-1. **créer un compte** et vérifier qu'on peut se reconnecter après
-   déconnexion. C'est le parcours qui a le plus souffert, et la connexion par
-   numéro + mot de passe est la preuve que le compte existe côté Supabase et
-   pas seulement sur le téléphone ;
-2. **le même compte sur le site** : c'est ce que les deux `--dart-define`
+1. **créer un compte, se déconnecter, se reconnecter.** La reconnexion est la
+   preuve que le compte existe chez Supabase et pas seulement sur le téléphone.
+   Repère utile : la base compte aujourd'hui 32 profils, dont deux créés depuis
+   le **site** le 06/10 (un parent, un professeur), chacun avec sa fiche de
+   rôle. Un troisième doit apparaître de la même façon ;
+2. **le même compte sur le site** — c'est ce que les deux `--dart-define`
    Supabase servent à rendre vrai ;
-3. **la liste des professeurs** — elle doit montrer les trente.
+3. **publier un cours** depuis l'écran du professeur, et vérifier que les
+   séances apparaissent tout de suite ;
+4. **la liste des professeurs** : elle doit montrer ceux du palier de
+   l'apprenant, et eux seuls.
 
-### 2. Il n'existe aucun parcours de création de cours en direct
+### 2. ⚠ Aucun professeur n'enseigne le primaire
 
-Ni sur le téléphone, ni sur le site. Conséquence en chaîne : pas de cours, donc
-pas de séance, donc pas de place payée, donc **aucun groupe de discussion** et
-rien dans « En direct ». Trois fonctions construites et invisibles.
+Les six années du primaire existent depuis le 11/10 (1ère à 6ème, la
+numérotation guinéenne continue qui donne ensuite la 7ème au collège), et
+l'étape « quelle classe » s'affiche enfin pour elles. Mais sur les 97 niveaux
+déclarés en base — 9 collège, 25 lycée, 63 supérieur — **aucun n'est du
+primaire**.
 
-`seed_demo_live.sql` les rend démontrables, pas utilisables : un professeur ne
-peut toujours pas publier son propre cours. C'est le plus gros manque
-fonctionnel du produit aujourd'hui.
+Un parent de 1ère année verra donc une liste vide. Le filtre fonctionne ; c'est
+l'offre qui manque. À traiter au recrutement, pas dans le code.
 
-### 3. Les entités à valeur d'ensemble ne se synchronisent pas
-
-`teacher_subjects` et `teacher_levels` sont poussées sous la forme
-`{subjectIds: [...]}`, alors que le serveur attend **une ligne par couple**.
-Les compétences d'un professeur restent donc sur son téléphone, même
-maintenant qu'elles sont enregistrées à l'inscription. Voir le trou 15 : il
-faut décider comment une collection se pousse.
-
-### 4. Aucune modération sur les groupes
+### 3. Aucune modération sur les groupes
 
 Ni signalement, ni suppression par un tiers, ni durée de conservation. Les
 messages de groupes d'élèves mineurs restent indéfiniment. À traiter avec
 l'analyse juridique du §52, et **avant** d'ouvrir les groupes plus largement.
 
+### 4. Passer Supabase au plan payant au premier utilisateur payant
+
+Pas avant, et pas pour la raison qu'on croit. **La mise en pause n'est pas le
+problème** : le cron du Worker interroge la base chaque nuit à 2 h, donc elle
+ne peut pas atteindre les 7 jours d'inactivité qui la suspendraient. C'est un
+effet de bord, mais il tient.
+
+Le vrai motif est **l'absence de sauvegardes** sur le plan gratuit. Tant qu'on
+teste avec des comptes de démonstration, une base perdue coûte une après-midi
+de re-semis. Dès qu'un parent a payé 45 000 GNF, elle coûte sa confiance.
+
+⚠ Risque silencieux en attendant : si le Worker est dépublié ou si son cron
+échoue sept jours de suite, la base se met en pause et l'application tombe sans
+message — tous les écrans vides, aucune erreur claire.
+
 ### 5. Ce qui peut attendre
 
+* **Les entités à valeur d'ensemble** sont corrigées pour les compétences
+  (`POST /teacher/competences`, migration 0029), mais le principe reste à
+  reprendre si d'autres ensembles arrivent ;
 * `[env.production]` du Worker — décision commerciale (argent réel), pas
   technique ;
-* les variables `R2_*` et `CF_*` : rediffusions et encaissement réel ;
+* `CF_STREAM_CUSTOMER_CODE` : vide jusqu'à la première vidéo ingérée. À
+  remplir, puis `npm run secrets`, sinon la lecture ne saura pas sur quel
+  sous-domaine pointer ;
+* les clés Djomy de production, pour l'encaissement réel ;
 * Vite 5 → 6, pour que l'outillage Cloudflare moderne configure le site ;
-* les trous 4 et 6 ci-dessous : promotions de démonstration qui citent de
-  vraies écoles, et numéros de support encore en gabarit `+224 000 00 00 00`.
+* le domaine Hostinger : changer les serveurs de noms, ajouter le domaine
+  personnalisé dans Pages, **et ajouter l'origine à `ALLOWED_ORIGINS`** — sans
+  quoi le site se charge et chaque appel échoue en silence ;
+* les trous 4 et 6 ci-dessous : promotions de démonstration citant de vraies
+  écoles, et numéros de support encore en gabarit `+224 000 00 00 00`.
+
+### Clos depuis le 06/10
+
+| Point | État |
+|---|---|
+| Parcours de création de cours en direct | ✅ `POST /live/courses` + écran mobile, séances générées immédiatement |
+| Synchronisation du compte | ✅ `POST /account` — un compte créé sur téléphone n'avait aucune ligne `profiles` |
+| Ensembles (matières, niveaux) | ✅ `remplacer_competences`, migration 0029 |
+| Promotions invisibles | ✅ affichées aux comptes FREE, une vue par personne et par jour (0030) |
+| Classes du primaire absentes | ✅ six années au référentiel et en base (22 niveaux) |
+| Professeurs sans niveau montrés à tous | ✅ règle inversée : la tolérance n'avait de sens que quand l'inscription jetait les niveaux |
+| Clés Cloudflare | ✅ Stream et R2 éprouvées contre les vrais services, 14 secrets sur le Worker |
 
 ## ⚠ Trous connus — à lire avant d'ajouter une fonction
 

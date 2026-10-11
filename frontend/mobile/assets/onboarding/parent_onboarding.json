@@ -133,6 +133,7 @@
           "showIf": {
             "field": "child_level_stage",
             "equals": [
+              "PRIMAIRE",
               "COLLEGE",
               "LYCEE",
               "SUPERIEUR"

@@ -238,6 +238,70 @@ class LiveApi {
     return (corps['notified'] as num?)?.toInt() ?? 0;
   }
 
+  /// Les créneaux proposables, tels que le serveur les connaît.
+  ///
+  /// Jamais une liste écrite dans l'écran : un créneau inventé produirait des
+  /// séances à une heure qui n'existe pas, et le générateur les ignorerait en
+  /// silence — le professeur verrait un cours sans aucune séance.
+  Future<List<LiveSlot>> slots() async {
+    final corps = await _appel(
+      () => _dio.get<Map<String, dynamic>>('/live/slots'),
+    );
+    return [
+      for (final ligne
+          in (corps['slots'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>())
+        LiveSlot.fromJson(ligne),
+    ];
+  }
+
+  /// Publie un cours en direct, et rend le nombre de séances créées.
+  ///
+  /// Les séances arrivent tout de suite : le cron de 2 h du matin les aurait
+  /// créées de toute façon, mais un professeur qui publie et ne voit rien
+  /// croirait que la publication a échoué.
+  Future<CreatedCourse> createCourse({
+    required String subjectId,
+    required String levelId,
+    required int price,
+    required List<String> slotIds,
+    String? title,
+    String? description,
+    int seats = 15,
+    bool publish = true,
+  }) async {
+    final corps = await _appel(
+      () => _dio.post<Map<String, dynamic>>(
+        '/live/courses',
+        data: {
+          'subjectId': subjectId,
+          'levelId': levelId,
+          'price': price,
+          'seats': seats,
+          'slotIds': slotIds,
+          'publish': publish,
+          if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
+          if (description != null && description.trim().isNotEmpty)
+            'description': description.trim(),
+        },
+      ),
+    );
+    return CreatedCourse.fromJson(corps);
+  }
+
+  /// Mes cours déjà publiés, pour ne pas republier le même.
+  Future<List<MyCourse>> myCourses() async {
+    final corps = await _appel(
+      () => _dio.get<Map<String, dynamic>>('/live/courses/mine'),
+    );
+    return [
+      for (final ligne
+          in (corps['courses'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>())
+        MyCourse.fromJson(ligne),
+    ];
+  }
+
   /// Le repertoire : les familles que je connais deja.
   Future<List<TeacherContact>> teacherContacts() async {
     final corps = await _appel(
@@ -433,4 +497,120 @@ class TeacherContact {
   String get origin => sources.contains('CONTRACT')
       ? 'Sous contrat avec vous'
       : 'A suivi vos séances';
+}
+
+/// Un créneau de la liste fermée du serveur.
+class LiveSlot {
+  const LiveSlot({
+    required this.id,
+    required this.label,
+    required this.days,
+    required this.start,
+    required this.end,
+  });
+
+  factory LiveSlot.fromJson(Map<String, dynamic> json) => LiveSlot(
+    id: (json['id'] ?? '').toString(),
+    label: (json['label'] ?? '').toString(),
+    days: [
+      for (final j in (json['days'] as List<dynamic>? ?? const []))
+        j.toString(),
+    ],
+    start: (json['start'] ?? '').toString(),
+    end: (json['end'] ?? '').toString(),
+  );
+
+  final String id;
+
+  /// « 18 h – 19 h 30 », tel que le serveur le libelle.
+  final String label;
+
+  /// Les jours où ce créneau existe : `MON`, `SAT`…
+  final List<String> days;
+  final String start;
+  final String end;
+
+  /// « Lun–Ven · 18 h – 19 h 30 » : ce qu'une case à cocher doit afficher.
+  String get resume {
+    const noms = {
+      'MON': 'Lun',
+      'TUE': 'Mar',
+      'WED': 'Mer',
+      'THU': 'Jeu',
+      'FRI': 'Ven',
+      'SAT': 'Sam',
+      'SUN': 'Dim',
+    };
+    // Cinq jours d'affilée se lisent mieux en intervalle qu'en énumération.
+    final libelles = [for (final j in days) noms[j] ?? j];
+    final jours = libelles.length >= 4
+        ? '${libelles.first}–${libelles.last}'
+        : libelles.join(', ');
+    return '$jours · $label';
+  }
+}
+
+/// Ce que le serveur rend après une publication.
+class CreatedCourse {
+  const CreatedCourse({
+    required this.id,
+    required this.title,
+    required this.status,
+    required this.sessionsCreated,
+  });
+
+  factory CreatedCourse.fromJson(Map<String, dynamic> json) => CreatedCourse(
+    id: (json['id'] ?? '').toString(),
+    title: (json['title'] ?? 'Cours en direct').toString(),
+    status: (json['status'] ?? 'DRAFT').toString(),
+    sessionsCreated: (json['sessionsCreated'] as num?)?.toInt() ?? 0,
+  );
+
+  final String id;
+  final String title;
+  final String status;
+
+  /// Combien de séances ont été posées dans les quatre semaines à venir.
+  final int sessionsCreated;
+
+  bool get published => status == 'PUBLISHED';
+}
+
+/// Un cours que j'ai publié.
+class MyCourse {
+  const MyCourse({
+    required this.id,
+    required this.title,
+    required this.status,
+    required this.price,
+    required this.seats,
+    required this.upcomingSessions,
+    this.subjectName,
+    this.levelName,
+  });
+
+  factory MyCourse.fromJson(Map<String, dynamic> json) => MyCourse(
+    id: (json['id'] ?? '').toString(),
+    title: (json['title'] ?? 'Cours en direct').toString(),
+    status: (json['status'] ?? 'DRAFT').toString(),
+    price: (json['price'] as num?)?.toInt() ?? 0,
+    seats: (json['seats'] as num?)?.toInt() ?? 15,
+    upcomingSessions: (json['upcomingSessions'] as num?)?.toInt() ?? 0,
+    subjectName: json['subjectName']?.toString(),
+    levelName: json['levelName']?.toString(),
+  );
+
+  final String id;
+  final String title;
+  final String status;
+  final int price;
+  final int seats;
+
+  /// Les séances à venir. Zéro sur un cours publié veut dire que les créneaux
+  /// n'ont rien produit — c'est ce qu'il faut pouvoir voir.
+  final int upcomingSessions;
+  final String? subjectName;
+  final String? levelName;
+
+  bool get published => status == 'PUBLISHED';
 }

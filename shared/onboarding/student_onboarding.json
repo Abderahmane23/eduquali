@@ -90,6 +90,7 @@
           "showIf": {
             "field": "level_stage",
             "equals": [
+              "PRIMAIRE",
               "COLLEGE",
               "LYCEE",
               "SUPERIEUR"

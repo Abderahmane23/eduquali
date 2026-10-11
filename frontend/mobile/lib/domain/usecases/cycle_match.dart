@@ -22,10 +22,21 @@ library;
 ///     niveau enregistré verrait sinon une liste vide, et conclurait qu'il n'y a
 ///     aucun professeur dans sa ville. Ne rien savoir n'autorise pas à cacher.
 ///
-///   * **Professeur sans cycle déclaré** : on garde. Son profil est incomplet,
-///     pas inadapté — et le cacher le priverait de toutes les familles sans que
-///     rien ne le lui dise. Un profil vide se corrige ; une disparition
-///     silencieuse ne se remarque pas.
+///   * **Professeur sans cycle déclaré** : on écarte, depuis le 11/10.
+///
+///     La règle disait l'inverse, et sa raison était juste : « le cacher le
+///     priverait de toutes les familles sans que rien ne le lui dise ». Elle
+///     tenait parce que l'inscription **jetait** les niveaux déclarés — un
+///     professeur avait un profil vide sans y être pour rien, et le punir
+///     aurait été injuste.
+///
+///     Ce n'est plus le cas : l'inscription enregistre les matières et les
+///     niveaux, et `POST /teacher/competences` les pousse. Un profil vide
+///     signifie désormais que le professeur a sauté l'étape, et la barre de
+///     complétion de son profil le lui dit.
+///
+///     Le garder coûtait plus cher que l'écarter : un parent de CE2 voyait un
+///     chargé de cours de L3 dans la première liste du produit.
 ///
 ///   * **Cycles déclarés sans recouvrement** : on écarte. C'est le cas que la
 ///     règle vise, et le seul où l'on dispose vraiment de l'information.
@@ -39,9 +50,7 @@ List<T> teachersForCycle<T>(
 
   return [
     for (final teacher in teachers)
-      if (cyclesOf(teacher) case final cycles
-          when cycles.isEmpty || cycles.contains(palier))
-        teacher,
+      if (cyclesOf(teacher).contains(palier)) teacher,
   ];
 }
 

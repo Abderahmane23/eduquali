@@ -219,23 +219,39 @@ void main() {
     });
 
     test('un palier sans classe masque l’étape de la classe', () {
-      // Le primaire et « diplômé » n'ont pas de classe à choisir : le
-      // référentiel ne détaille pas les six années du primaire, et un diplômé
-      // n'est dans aucune classe. Poser la question obligerait à inventer une
-      // réponse.
+      /*
+       * « Diplômé » n'est dans aucune classe : poser la question obligerait à
+       * inventer une réponse.
+       *
+       * Le primaire était dans le même cas jusqu'au 11/10, pour une autre
+       * raison — le référentiel ne détaillait pas ses six années, donc la
+       * question n'avait rien à proposer. Les six années existent maintenant
+       * (1ère à 6ème, la numérotation guinéenne continue qui donne ensuite la
+       * 7ème au collège), et la classe se demande comme ailleurs.
+       */
       final spec = load('parent_onboarding');
-      for (final palier in ['PRIMAIRE', 'DIPLOME']) {
-        final ids = spec
-            .visibleSteps({'child_level_stage': palier})
-            .map((s) => s.id);
-        expect(
-          ids,
-          isNot(contains('child_level_class')),
-          reason: 'le palier $palier n’a pas de classe à demander',
-        );
-        // Les matières, elles, se demandent toujours.
-        expect(ids, contains('child_subjects'));
-      }
+
+      final diplome = spec
+          .visibleSteps({'child_level_stage': 'DIPLOME'})
+          .map((s) => s.id);
+      expect(
+        diplome,
+        isNot(contains('child_level_class')),
+        reason: 'un diplômé n’est dans aucune classe',
+      );
+      expect(diplome, contains('child_subjects'));
+
+      final primaire = spec
+          .visibleSteps({'child_level_stage': 'PRIMAIRE'})
+          .map((s) => s.id);
+      expect(
+        primaire,
+        contains('child_level_class'),
+        reason:
+            'le primaire a ses six années depuis le 11/10 : sans cette étape, '
+            'un parent de CE2 ne pouvait pas dire la classe de son enfant',
+      );
+      expect(primaire, contains('child_subjects'));
     });
 
     test('une condition sans réponse masque l’étape', () {
@@ -318,15 +334,36 @@ void main() {
         answers: const {'child_level_stage': 'COLLEGE'},
       );
 
-      // Les deux branches ne comptent pas le même nombre d'écrans : le primaire
-      // n'a pas de classe à demander. Annoncer « étape 4 sur 10 » à une famille
-      // qui n'en verra que 9 fait douter d'avoir sauté quelque chose.
-      expect(primaire.total, lessThan(spec.steps.length));
-      expect(college.total, greaterThan(primaire.total));
-      expect(
-        college.visible.map((s) => s.id),
-        isNot(primaire.visible.map((s) => s.id)),
+      /*
+       * Le compteur doit suivre ce qu'on voit, pas ce que le fichier contient :
+       * annoncer « étape 4 sur 10 » à une famille qui n'en verra que 9 fait
+       * douter d'avoir sauté quelque chose.
+       *
+       * Le repère a changé le 11/10. Le primaire comptait un écran de moins que
+       * le collège, faute de classes au référentiel ; il en a six désormais, et
+       * les deux branches comptent pareil. Ce qui les sépare encore est la
+       * filière, demandée en 12ème et en Terminale seulement — donc le lycée
+       * reste la branche la plus longue.
+       */
+      final lycee = OnboardingFlowState(
+        spec: spec,
+        answers: const {
+          'child_level_stage': 'LYCEE',
+          'child_level_id': 'lvl_terminale',
+        },
       );
+
+      // Aucune branche ne montre tous les écrans du fichier : c'est tout
+      // l'intérêt des étapes conditionnelles.
+      expect(primaire.total, lessThan(spec.steps.length));
+      expect(college.total, lessThan(spec.steps.length));
+
+      // Le primaire demande sa classe comme le collège.
+      expect(primaire.total, college.total);
+      expect(primaire.visible.map((s) => s.id), contains('child_level_class'));
+
+      // Et la filière allonge la branche du lycée.
+      expect(lycee.total, greaterThan(college.total));
     });
 
     test('un rang au-delà de la liste ne sort jamais du tableau', () {
