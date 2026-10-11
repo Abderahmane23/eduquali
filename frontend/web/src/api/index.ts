@@ -42,15 +42,23 @@ export const isSupabaseBackend = supabase !== null
 /**
  * Vrai quand le backend actif sait corriger un test.
  *
- * Faux en acces direct a Supabase, et ce n'est pas un manque a combler :
- * corriger dans le navigateur demanderait de lui livrer les bonnes reponses,
- * et une note qu'on peut calculer soi-meme ne certifie rien. `submitTest` leve
- * donc un 501 dans ce mode.
+ * --- Ce qui a change le 11/10 ------------------------------------------
  *
- * L'ecran s'en sert pour ne pas laisser repondre a vingt questions avant
- * d'annoncer que rien ne sera enregistre.
+ * Ce drapeau valait `!isSupabaseBackend`, et le raisonnement etait juste :
+ * corriger dans le navigateur demanderait de lui livrer les bonnes reponses,
+ * et une note qu'on peut recalculer soi-meme ne certifie rien.
+ *
+ * Mais la conclusion ne suivait plus. Corriger **n'a jamais eu besoin** de se
+ * faire dans le navigateur : la route `POST /tests/:id/submit` lit les bonnes
+ * reponses sous la cle de service et rend la note. Ce qui manquait n'etait pas
+ * la regle, c'etait l'appel — et un candidat pouvait repondre a soixante
+ * questions sans jamais etre note.
+ *
+ * La vraie condition est donc : y a-t-il un serveur a qui demander ? Sans
+ * `VITE_API_BASE_URL`, `callApi` leve, et l'ecran doit le dire avant la
+ * premiere question plutot qu'apres la derniere.
  */
-export const canGradeTests = !isSupabaseBackend
+export const canGradeTests = !isSupabaseBackend || Boolean(configured)
 
 export type { VeriprofApi } from './client'
 export { ApiError } from './client'

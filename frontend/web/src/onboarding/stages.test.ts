@@ -241,8 +241,25 @@ describe('les parcours parent et étudiant', () => {
         (e) => (e.optionsFilter as { field?: string })?.field === champ,
       ) as { optionsSource: string; showIf: { equals: string[] } } | undefined
       expect(classe?.optionsSource).toBe('levels')
-      // La classe ne se demande que pour les paliers qui en ont.
-      expect(classe?.showIf.equals).toEqual(['COLLEGE', 'LYCEE', 'SUPERIEUR'])
+
+      /*
+       * La classe ne se demande que pour les paliers qui en ont.
+       *
+       * Le primaire a rejoint la liste le 11/10. Il en etait absent pour une
+       * raison concrete : le referentiel ne detaillait pas ses six annees,
+       * donc la question n'avait rien a proposer. Elles existent desormais
+       * (1ere a 6eme annee, la numerotation guineenne continue qui donne
+       * ensuite la 7eme au college).
+       *
+       * « Diplome » reste dehors, et le restera : il n'est dans aucune classe.
+       */
+      expect(classe?.showIf.equals).toEqual([
+        'PRIMAIRE',
+        'COLLEGE',
+        'LYCEE',
+        'SUPERIEUR',
+      ])
+      expect(classe?.showIf.equals).not.toContain('DIPLOME')
 
       // Et le palier vient AVANT la classe, sinon le filtre n'a rien à lire.
       expect(liste.indexOf(palier as never)).toBeLessThan(

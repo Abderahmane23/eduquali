@@ -1128,33 +1128,52 @@ export class SupabaseApi implements VeriprofApi {
    * garantit qu'un professeur n'ecrit que ses cours. Pas besoin du serveur ici —
    * aucun argent ne bouge, et RLS exprime exactement la regle.
    */
+  /**
+   * Publie un cours en direct, par le serveur.
+   *
+   * --- Le defaut que ceci corrige ---------------------------------------
+   *
+   * Cette methode ecrivait directement dans `live_courses` : l'insertion
+   * reussissait, le cours existait, et **aucune seance n'etait creee**. Le
+   * generateur ne passe qu'a 2 h du matin, donc un professeur publiait son
+   * cours, ne voyait rien apparaitre, et concluait que ca n'avait pas marche —
+   * puis republiait.
+   *
+   * La route du serveur fait les deux dans le meme appel, et rend le nombre de
+   * seances posees : c'est cette confirmation qui manquait. « Cours publie »
+   * sans seance ne veut rien dire, personne ne pourrait s'y inscrire.
+   *
+   * Elle verifie aussi les creneaux contre la liste fermee et les bornes de
+   * prix, avec des messages lisibles — l'insertion directe rendait une erreur
+   * de contrainte SQL que personne ne peut lire.
+   */
   async createLiveCourse(input: LiveCourseInput): Promise<LiveCourse> {
+    const corps = await this.callApi('/live/courses', {
+      method: 'POST',
+      body: {
+        subjectId: input.subjectId,
+        levelId: input.levelId,
+        price: input.price,
+        slotIds: input.slotIds,
+        publish: input.publish ?? true,
+        ...(input.title ? { title: input.title } : {}),
+        ...(input.description ? { description: input.description } : {}),
+      },
+    })
+
+    const id = String(corps.id ?? '')
+    if (!id) throw new ApiError('Cours créé mais introuvable.', 500)
+
+    // La fiche complete, telle que l'ecran l'affiche ensuite. On la relit
+    // plutot que de la reconstruire : deux facons de la composer finiraient
+    // par diverger.
     const { data: session } = await this.db.auth.getSession()
     const userId = session.session?.user.id
-    if (!userId) throw new ApiError('Connectez-vous.', 401)
-
-    const teacherId = await this.ownRowId('teachers', 'user_id', userId)
-    if (!teacherId) throw new ApiError('Profil enseignant introuvable.', 403)
-
-    const { data, error } = await this.db
-      .from('live_courses')
-      .insert({
-        teacher_id: teacherId,
-        subject_id: input.subjectId,
-        level_id: input.levelId,
-        title: input.title ?? null,
-        description: input.description ?? null,
-        price: input.price,
-        slot_ids: input.slotIds,
-        status: input.publish ? 'PUBLISHED' : 'DRAFT',
-      })
-      .select('id')
-      .single()
-
-    if (error || !data) this.fail(error ?? new Error('insertion refusée'))
-
-    const miens = await this.myLiveCourses(teacherId)
-    const cree = miens.find((c) => c.id === data!.id)
+    const teacherId = userId
+      ? await this.ownRowId('teachers', 'user_id', userId)
+      : null
+    const miens = teacherId ? await this.myLiveCourses(teacherId) : []
+    const cree = miens.find((c) => c.id === id)
     if (!cree) throw new ApiError('Cours créé mais introuvable.', 500)
     return cree
   }
@@ -1703,15 +1722,36 @@ export class SupabaseApi implements VeriprofApi {
    * Tant qu'elle n'existe pas, le refus est explicite : rendre un score
    * calcule ici laisserait croire a une certification qui n'en est pas une.
    */
+  /**
+   * Fait corriger un test par le serveur.
+   *
+   * --- Pourquoi le serveur, et pas le navigateur -----------------------
+   *
+   * Cette methode levait un 501 : « la correction arrive avec la prochaine
+   * mise a jour ». Le refus etait juste — corriger dans le navigateur
+   * demanderait de lui livrer les bonnes reponses, et une note qu'on peut
+   * recalculer soi-meme ne certifie rien. C'est aussi pourquoi
+   * `test_questions` est ferme a la cle publique et que la vue publique ne
+   * sert pas la colonne `correct_key`.
+   *
+   * Ce qui manquait n'etait donc pas la regle, c'etait l'appel : la route
+   * existe (`POST /tests/:id/submit`), elle lit les bonnes reponses sous la
+   * cle de service et rend la note. Un candidat pouvait repondre a soixante
+   * questions sur le site et n'etait jamais note.
+   */
   async submitTest(
-    _testId: string,
-    _answers: Record<string, string>,
+    testId: string,
+    answers: Record<string, string>,
   ): Promise<TestResult> {
-    throw new ApiError(
-      'La correction des tests arrive avec la prochaine mise à jour du '
-        + 'serveur. Vos réponses n’ont pas été enregistrées.',
-      501,
+    const corps = await this.callApi(
+      `/tests/${encodeURIComponent(testId)}/submit`,
+      { method: 'POST', body: { answers } },
     )
+    // La route rend exactement la forme de `TestResult` — meme champs, meme
+    // noms (`scoreTest` cote serveur). On la laisse passer plutot que de la
+    // recopier champ par champ : une projection a la main finirait par
+    // s'ecarter de la source.
+    return corps as unknown as TestResult
   }
 }
 
