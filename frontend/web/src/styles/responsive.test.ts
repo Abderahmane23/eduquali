@@ -79,10 +79,23 @@ describe('les cibles tactiles', () => {
   })
 
   it('le plancher de 44 px est toujours déclaré', () => {
+    /*
+     * Le jeton s'appelait `--tap`. Il s'appelle `--cible` depuis que la
+     * charte EduQuali est en place, et il vaut 48 px — le choix de la charte,
+     * au-dessus du plancher de 44 px du critère WCAG 2.5.5. Un second jeton,
+     * `--cible-principale`, porte le bouton principal à 56.
+     *
+     * Ce que le test tient reste le plancher, pas le nom : une cible tactile
+     * ne descend jamais sous 44 px.
+     */
     const tokens = readFileSync('src/styles/tokens.css', 'utf-8')
-    const tap = tokens.match(/--tap:\s*(\d+)px/)
-    expect(tap).not.toBeNull()
-    expect(Number(tap![1])).toBeGreaterThanOrEqual(44)
+    const cible = tokens.match(/--cible:\s*(\d+)px/)
+    expect(cible, '--cible introuvable').not.toBeNull()
+    expect(Number(cible![1])).toBeGreaterThanOrEqual(44)
+
+    const principale = tokens.match(/--cible-principale:\s*(\d+)px/)
+    expect(principale, '--cible-principale introuvable').not.toBeNull()
+    expect(Number(principale![1])).toBeGreaterThan(Number(cible![1]))
   })
 })
 
@@ -184,23 +197,27 @@ describe('le cadre cesse d’être un téléphone', () => {
     expect(app.slice(i, app.indexOf('}', i))).not.toContain('max-width')
   })
 
-  it('le dégradé de l’accueil touche les bords', () => {
+  it('le fond de l’accueil touche les bords', () => {
     /*
-     * Il débordait de `--s-5` en dur alors que la gouttière passe à 40 px :
-     * deux bandes blanches encadraient le bleu dès 640 px.
+     * Il débordait de `--espace-5` en dur alors que la gouttière passe à
+     * 40 px : deux bandes blanches encadraient le bleu dès 640 px.
      *
-     * Depuis le 11/10 l'accueil n'est plus un bloc bleu dans une page
-     * blanche : le dégradé tient toute la page (`.hero-page`), comme sur
-     * `landing_screen.dart`. Il n'y a donc plus de débordement à calculer.
-     * Ce qu'il faut vérifier à la place : que la page porte bien le dégradé.
+     * Depuis le 11/10 l'accueil n'est plus un bloc posé dans une page : son
+     * fond tient toute la page (`.hero-page`). Et depuis le 12/10, ce fond
+     * n'est plus un dégradé mais un aplat de `marque-violette` — la charte
+     * EduQuali n'en laisse aucun, et la violette fixe garde une affiche
+     * identique sur les deux thèmes.
+     *
+     * Ce que le test tient : la page porte un fond de marque, et la bande de
+     * section sait toujours sortir de la colonne de contenu.
      */
     const app = readFileSync('src/styles/app.css', 'utf-8')
     const i = app.indexOf('.hero-page {')
     expect(i, '.hero-page introuvable').toBeGreaterThan(-1)
-    expect(app.slice(i, app.indexOf('}', i))).toContain('var(--hero-gradient)')
+    expect(app.slice(i, app.indexOf('}', i))).toContain(
+      'var(--marque-violette)',
+    )
 
-    // La bande de section, elle, déborde toujours : elle vit à l'intérieur de
-    // la colonne et doit en sortir.
     const j = app.indexOf('.band {')
     expect(app.slice(j, app.indexOf('}', j))).toContain(
       'margin-inline: calc(-1 * var(--gutter))',

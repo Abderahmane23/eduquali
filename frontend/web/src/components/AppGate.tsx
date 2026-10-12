@@ -45,7 +45,7 @@ export function AppGate({
           l’application avec le même numéro.
         </p>
       ) : (
-        <div className="row" style={{ gap: 'var(--s-2)' }}>
+        <div className="row" style={{ gap: 'var(--espace-2)' }}>
           <Link className="btn btn--primary" to="/inscription">
             Créer un compte
           </Link>

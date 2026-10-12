@@ -95,7 +95,7 @@ export function Courses() {
                   <div className="muted small">{course.teacherName}</div>
                   <div
                     className="row"
-                    style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}
+                    style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}
                   >
                     {course.subject ? <Chip>{course.subject.name}</Chip> : null}
                     {course.levels.length > 0 ? (
@@ -107,7 +107,7 @@ export function Courses() {
                   {/* Le volume dit ce qu'on achete mieux que le prix seul :
                       « 75 000 GNF » ne se compare a rien, « 3 chapitres,
                       6 videos » si. */}
-                  <div className="row faint micro" style={{ gap: 'var(--s-2)' }}>
+                  <div className="row faint micro" style={{ gap: 'var(--espace-2)' }}>
                     <Icon name="play" size={12} />
                     {volume(course.chapterCount, course.videoCount)}
                     {course.totalSeconds > 0
@@ -184,7 +184,7 @@ export function CourseDetail() {
           <div className="stack stack--tight">
             <h1 className="page-title">{c.title}</h1>
             <p className="muted small">Par {c.teacherName}</p>
-            <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+            <div className="row" style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}>
               <Chip tone="accent">{money(c.price)}</Chip>
               {c.subject ? <Chip>{c.subject.name}</Chip> : null}
               {c.levels.length > 0 ? (
@@ -203,7 +203,7 @@ export function CourseDetail() {
         <section className="detail__main stack stack--tight">
           <h2 className="section-title">
             Programme
-            <span className="faint micro" style={{ marginLeft: 'var(--s-2)' }}>
+            <span className="faint micro" style={{ marginLeft: 'var(--espace-2)' }}>
               {volume(c.chapterCount, c.videoCount)}
             </span>
           </h2>
@@ -239,7 +239,7 @@ function Chapitre({ chapitre }: { chapitre: CourseChapterPreview }) {
 
         {chapitre.items.map((item) => (
           <div className="row row--between small" key={item.id}>
-            <span className="row" style={{ gap: 'var(--s-2)' }}>
+            <span className="row" style={{ gap: 'var(--espace-2)' }}>
               <Icon
                 name={item.kind === 'VIDEO' ? 'play' : 'file'}
                 size={14}
@@ -480,7 +480,7 @@ function BuyCourse({ course }: { course: VideoCourse }) {
       {/* Deux boutons plutot qu'une liste deroulante : il n'y a que deux
           operateurs, et un choix a deux options ne se cache pas derriere un
           menu. */}
-      <div className="row" style={{ gap: 'var(--s-2)' }}>
+      <div className="row" style={{ gap: 'var(--espace-2)' }}>
         <Button block disabled={envoi} onClick={() => payer('OM')}>
           {envoi && method === 'OM' ? 'Envoi…' : 'Orange Money'}
         </Button>

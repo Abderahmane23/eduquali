@@ -115,11 +115,11 @@ function OfferCard({
       <div className="stack stack--tight">
         <strong>{offer.title}</strong>
         <span className="muted small">{offer.institution.name}</span>
-        <div className="row small faint" style={{ gap: 'var(--s-2)' }}>
+        <div className="row small faint" style={{ gap: 'var(--espace-2)' }}>
           <Icon name="place" size={14} />
           {offer.city}
         </div>
-        <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+        <div className="row" style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}>
           <Chip tone="accent">{offer.levels.map((l) => l.name).join(' · ')}</Chip>
           <Chip>{contractLabel(offer.contractType)}</Chip>
           {offer.requiresCertification ? (
@@ -186,7 +186,7 @@ export function OfferDetail() {
       <div className="screen stack stack--loose">
         <div className="stack stack--tight">
           <h1 className="page-title">{job.title}</h1>
-          <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+          <div className="row" style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}>
             <Chip tone="accent">{job.subject.name}</Chip>
             <Chip>{job.levels.map((l) => l.name).join(' · ')}</Chip>
             <Chip>{contractLabel(job.contractType)}</Chip>

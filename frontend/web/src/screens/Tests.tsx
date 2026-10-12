@@ -83,12 +83,12 @@ export function Tests() {
                     <Chip tone="success">{test.certification.score} %</Chip>
                   ) : null}
                 </div>
-                <div className="row muted small" style={{ gap: 'var(--s-4)' }}>
-                  <span className="row" style={{ gap: 'var(--s-1)' }}>
+                <div className="row muted small" style={{ gap: 'var(--espace-4)' }}>
+                  <span className="row" style={{ gap: 'var(--espace-1)' }}>
                     <Icon name="clipboard" size={14} />
                     {test.questionCount} questions
                   </span>
-                  <span className="row" style={{ gap: 'var(--s-1)' }}>
+                  <span className="row" style={{ gap: 'var(--espace-1)' }}>
                     <Icon name="clock" size={14} />
                     {test.durationMinutes} min
                   </span>
@@ -255,7 +255,7 @@ function Result({ test, result }: { test: string; result: TestResult }) {
               fontSize: '3.5rem',
               fontWeight: 700,
               letterSpacing: '-0.03em',
-              color: result.passed ? 'var(--c-success)' : 'var(--c-warning)',
+              color: result.passed ? 'var(--vert-fonce)' : 'var(--bon-point-fonce)',
             }}
           >
             {result.score} %

@@ -143,7 +143,12 @@ export function Dossier() {
   return (
     <>
       <AppBar title="Mon dossier" onBack />
-      <div className="screen screen--narrow stack stack--loose">
+      {/* La progression et les pastilles a droite, les pieces a gauche :
+          on depose en regardant ce qui manque encore. Empilees, il fallait
+          remonter apres chaque depot pour savoir ou l'on en etait. */}
+      <div className="screen stack stack--loose">
+        <div className="pagegrid">
+        <aside className="pagegrid__aside">
         {fiche.data ? (
           <section className="card card--accent">
             <div className="stack stack--tight">
@@ -176,7 +181,7 @@ export function Dossier() {
               <div className="row small" key={nom}>
                 <span
                   style={{
-                    color: acquis ? 'var(--c-success)' : 'var(--c-ink-faint)',
+                    color: acquis ? 'var(--vert-fonce)' : 'var(--crayon)',
                   }}
                 >
                   <Icon name={acquis ? 'check' : 'shield'} size={16} />
@@ -192,6 +197,9 @@ export function Dossier() {
           </section>
         ) : null}
 
+        </aside>
+
+        <div className="pagegrid__main">
         {erreur ? <Banner tone="warning">{erreur}</Banner> : null}
 
         <section className="stack">
@@ -217,6 +225,8 @@ export function Dossier() {
           privé — c’est la règle posée pour toutes les pièces d’identité du
           produit.
         </p>
+        </div>
+        </div>
       </div>
     </>
   )

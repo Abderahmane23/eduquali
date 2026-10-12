@@ -2,7 +2,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { prof, revenus, serveurDisponible } from '../api/server'
 import { useSession } from '../app/session'
-import { BigButton, PageHead, RowItem, StatStrip, gnf } from '../components/kit'
+import {
+  BigButton,
+  PageHead,
+  RowItem,
+  StatStrip,
+  gnf,
+  gnfCourt,
+} from '../components/kit'
 import { Banner, Card, Chip, EmptyState, Icon, Skeleton } from '../components/ui'
 import { useAsync } from '../lib/useAsync'
 import { longDayLabel, loadSlots, timeLabel } from '../lib/slots'
@@ -91,7 +98,9 @@ export function Dashboard() {
             ? [
                 { value: places, label: 'places vendues' },
                 {
-                  value: (argent.data.earned.total / 1000).toFixed(0) + ' k',
+                  // Abrege : la cellule fait un tiers du bandeau, soit
+                  // environ 74 px sur un telephone.
+                  value: gnfCourt(argent.data.earned.total),
                   label: 'gagnés (GNF)',
                 },
                 {
@@ -123,6 +132,20 @@ export function Dashboard() {
         </BigButton>
       )}
 
+      {/*
+        --- Pourquoi deux colonnes a partir de 1 024 px -------------------
+
+        Les seances se parcourent ; les quatre actions et les revenus se
+        decident. Sur une seule colonne de 1 120 px, une rangee « Deposer un
+        cours video » portait son chevron a mille pixels de son libelle, et il
+        fallait defiler sous six cartes de seance pour atteindre la premiere
+        action.
+
+        L'ordre du DOM reste celui du telephone : les seances d'abord. Un
+        professeur ouvre cette page pour faire cours.
+      */}
+      <div className="pagegrid">
+        <div className="pagegrid__main">
       {seances.loading ? (
         <Skeleton height={88} count={2} />
       ) : seances.error ? (
@@ -197,10 +220,14 @@ export function Dashboard() {
         </section>
       )}
 
+        </div>
+
+        <aside className="pagegrid__aside">
       {/* Ce qui se décide. Des rangées et non des cartes : six actions en
           cartes font six objets à comparer, alors qu'il s'agit d'une liste. */}
       <section className="stack">
         <h2 className="section-title">Développer mon activité</h2>
+        <div className="rows">
         <RowItem
           icon="play"
           title="Déposer un cours vidéo"
@@ -232,6 +259,7 @@ export function Dashboard() {
           }
           onClick={() => navigate('/profil/dossier')}
         />
+        </div>
       </section>
 
       {/* Les chiffres, en dernier : ils s'observent, ils ne se décident pas. */}
@@ -241,16 +269,32 @@ export function Dashboard() {
           <StatStrip
             plain
             stats={[
-              { value: gnf(argent.data.earned.live), label: 'cours en direct' },
-              { value: gnf(argent.data.earned.videos), label: 'cours vidéo' },
-              { value: gnf(argent.data.available), label: 'à retirer' },
+              {
+                value: gnfCourt(argent.data.earned.live),
+                label: 'cours en direct',
+              },
+              {
+                value: gnfCourt(argent.data.earned.videos),
+                label: 'cours vidéo',
+              },
+              {
+                value: gnfCourt(argent.data.available),
+                label: 'à retirer',
+              },
             ]}
           />
+          {/* Le montant exact ici, en toutes lettres : le bandeau donne
+              l'ordre de grandeur, cette ligne donne le chiffre. */}
+          <span className="faint micro">
+            {gnf(argent.data.earned.total)} gagnés en tout.
+          </span>
           <Link className="block-link" to="/revenus">
             Voir le détail et demander un retrait
           </Link>
         </section>
       ) : null}
+        </aside>
+      </div>
     </div>
   )
 }

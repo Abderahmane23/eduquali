@@ -297,7 +297,7 @@ function StepBody({
 
     case 'boolean':
       return (
-        <div className="row" style={{ gap: 'var(--s-3)' }}>
+        <div className="row" style={{ gap: 'var(--espace-3)' }}>
           {[true, false].map((option) => (
             <button
               key={String(option)}
@@ -321,7 +321,7 @@ function StepBody({
               style={{
                 fontSize: '2.5rem',
                 fontWeight: 700,
-                color: 'var(--c-accent)',
+                color: 'var(--violette)',
                 letterSpacing: '-0.02em',
               }}
             >
@@ -342,7 +342,7 @@ function StepBody({
             step={step.step ?? 1}
             value={value}
             onChange={(e) => setAnswer(step.fieldId!, Number(e.target.value))}
-            style={{ width: '100%', marginTop: 'var(--s-4)' }}
+            style={{ width: '100%', marginTop: 'var(--espace-4)' }}
             aria-label={step.title}
           />
         </div>
@@ -360,7 +360,7 @@ function StepBody({
               onClick={() => setAnswer(step.fieldId!, plan.value)}
             >
               <span>
-                <span className="row" style={{ gap: 'var(--s-2)' }}>
+                <span className="row" style={{ gap: 'var(--espace-2)' }}>
                   <strong>{plan.name}</strong>
                   {plan.recommended ? <Chip>Conseillé</Chip> : null}
                 </span>
@@ -454,7 +454,7 @@ function Uploads({
               }}
             />
             {refus[slot.id] ? (
-              <span className="small" role="alert" style={{ color: 'var(--danger)' }}>
+              <span className="small" role="alert" style={{ color: 'var(--rouge)' }}>
                 {refus[slot.id]}
               </span>
             ) : fichier ? (
@@ -575,7 +575,7 @@ function DayHours({
             </button>
 
             {actif && ouvert === jour.code ? (
-              <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+              <div className="row" style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}>
                 {MOMENTS.map((moment) => (
                   <button
                     key={moment.code}
@@ -873,7 +873,7 @@ function PasswordField({
       hint={manque ? undefined : field.hint}
       error={manque ? `Encore ${minimum - value.length} caractère(s).` : undefined}
     >
-      <div className="row" style={{ gap: 'var(--s-2)' }}>
+      <div className="row" style={{ gap: 'var(--espace-2)' }}>
         <TextInput
           type={visible ? 'text' : 'password'}
           // `new-password` dit au gestionnaire du navigateur d'en proposer un

@@ -481,7 +481,7 @@ export function ContenuCours() {
                   : undefined
                 return (
                   <div className="row row--between small" key={item.id}>
-                    <span className="row" style={{ gap: 'var(--s-2)' }}>
+                    <span className="row" style={{ gap: 'var(--espace-2)' }}>
                       <Icon name="play" size={16} />
                       {item.title}
                     </span>

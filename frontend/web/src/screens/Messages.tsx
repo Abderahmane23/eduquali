@@ -96,7 +96,13 @@ export function Messages() {
   const choisi = id ?? liste[0]?.id
 
   return (
-    <div className="screen screen--narrow chat">
+    /*
+      `data-ouvert` dit au CSS laquelle des deux colonnes se voit sous
+      1 024 px. Le JSX rend toujours les deux — un rendu conditionnel sur la
+      largeur de la fenetre se trompe au premier redimensionnement — et c'est
+      la requete media qui decide.
+    */
+    <div className="screen chat" data-ouvert={id ? 'true' : undefined}>
       <div className="chat__list">
         {liste.map((groupe) => (
           <GroupeLigne
@@ -112,6 +118,7 @@ export function Messages() {
         <Fil
           key={choisi}
           groupe={liste.find((g) => g.id === choisi) ?? liste[0]}
+          onBack={() => navigate('/messages')}
         />
       ) : null}
     </div>
@@ -135,7 +142,7 @@ function GroupeLigne({
       aria-current={actif ? 'true' : undefined}
       style={
         actif
-          ? { borderColor: 'var(--c-accent)', background: 'var(--c-accent-soft)' }
+          ? { borderColor: 'var(--violette)', background: 'var(--violette-pale)' }
           : undefined
       }
     >
@@ -163,7 +170,7 @@ function GroupeLigne({
  * bas, et l'on remonte. Cinquante à la fois — assez pour remplir un écran
  * deux fois, pas assez pour faire attendre sur un réseau lent.
  */
-function Fil({ groupe }: { groupe: Groupe }) {
+function Fil({ groupe, onBack }: { groupe: Groupe; onBack: () => void }) {
   const { session } = useSession()
   const [messages, setMessages] = useState<MessageGroupe[]>()
   const [erreur, setErreur] = useState<string>()
@@ -241,6 +248,17 @@ function Fil({ groupe }: { groupe: Groupe }) {
   return (
     <section className="chat__room">
       <header className="chat__head">
+        {/* La fleche n'existe que sur un telephone, ou le fil a remplace la
+            liste. Sur un ordinateur les deux sont visibles et elle ne menerait
+            nulle part : c'est le CSS qui la retire. */}
+        <button
+          type="button"
+          className="iconbtn chat__back"
+          onClick={onBack}
+          aria-label="Revenir aux discussions"
+        >
+          <Icon name="back" size={20} />
+        </button>
         <Tile icon={groupe.kind === 'COURSE' ? 'clock' : 'briefcase'} size={18} />
         <div className="stack stack--tight" style={{ gap: 0 }}>
           <strong>{groupe.name}</strong>

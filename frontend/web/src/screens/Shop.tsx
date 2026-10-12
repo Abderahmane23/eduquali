@@ -184,8 +184,8 @@ export function Shop() {
                     aria-pressed={lot.favorite}
                     style={{
                       color: lot.favorite
-                        ? 'var(--c-accent)'
-                        : 'var(--c-ink-faint)',
+                        ? 'var(--violette)'
+                        : 'var(--crayon)',
                     }}
                   >
                     <Icon name={lot.favorite ? 'check' : 'plus'} size={18} />

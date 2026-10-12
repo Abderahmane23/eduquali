@@ -25,7 +25,7 @@
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--c-surface);
+  background: var(--papier);
 }
 
 .screen {
@@ -33,7 +33,7 @@
   width: 100%;
   max-width: var(--col);
   margin: 0 auto;
-  padding: var(--s-5) var(--gutter) var(--s-9);
+  padding: var(--espace-5) var(--gutter) var(--espace-9);
 }
 
 /* Une page de lecture : un formulaire, un article, un fil. Au-delà de 720 px
@@ -56,21 +56,21 @@
 .stack {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: var(--espace-4);
 }
 
 .stack--loose {
-  gap: var(--s-6);
+  gap: var(--espace-6);
 }
 
 .stack--tight {
-  gap: var(--s-2);
+  gap: var(--espace-2);
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--espace-3);
 }
 
 .row--between {
@@ -94,15 +94,15 @@
 .appbar {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-4) var(--gutter);
-  background: var(--c-bar);
+  gap: var(--espace-3);
+  padding: var(--espace-4) var(--gutter);
+  background: var(--feuille);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: var(--trait-fin) solid var(--ligne);
 }
 
 .appbar__title {
-  font-size: var(--t-heading);
+  font-size: var(--t-titre-carte);
   font-weight: 600;
   letter-spacing: -0.01em;
 }
@@ -111,28 +111,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: var(--tap);
-  min-height: var(--tap);
+  min-width: var(--cible);
+  min-height: var(--cible);
   border: 0;
-  border-radius: var(--r-md);
+  border-radius: var(--rayon-champ);
   background: transparent;
-  color: var(--c-ink);
+  color: var(--encre);
 }
 
 .iconbtn:hover {
-  background: var(--c-surface);
+  background: var(--papier);
 }
 
 /* --- Titres d'ecran -------------------------------------------------- */
 
 .page-title {
-  font-size: var(--t-display);
-  margin-bottom: var(--s-2);
+  font-size: var(--t-titre-ecran);
+  margin-bottom: var(--espace-2);
 }
 
 .page-lede {
-  color: var(--c-ink-muted);
-  margin-bottom: var(--s-6);
+  color: var(--crayon);
+  margin-bottom: var(--espace-6);
   max-width: var(--measure);
 }
 
@@ -143,40 +143,47 @@
 }
 
 .section-title {
-  font-size: var(--t-small);
+  font-size: var(--t-secondaire);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--c-ink-faint);
-  margin-bottom: var(--s-3);
+  color: var(--crayon);
+  margin-bottom: var(--espace-3);
 }
 
 /* --- Carte ----------------------------------------------------------- */
 
 .card {
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  padding: var(--s-5);
-  background: var(--c-bg);
-  /* Detache la carte du fond : une bordure fine seule disparait en plein
-     soleil sur un ecran de telephone. */
-  box-shadow: var(--shadow-sm);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-carte);
+  padding: var(--espace-5);
+  background: var(--feuille);
 }
 
 .card--tap {
   display: block;
   width: 100%;
   text-align: left;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--motion-fast) ease;
 }
 
+/*
+ * Une carte qu'on peut toucher, au survol.
+ *
+ * Le trait passe de `trait-fin` en `ligne` a `trait-fort` en `encre` : c'est
+ * la meme distinction que la charte emploie pour la carte du prochain cours,
+ * et elle se voit sans ombre.
+ */
 .card--tap:hover {
-  border-color: var(--c-border-strong);
-  box-shadow: var(--shadow-md);
+  border-width: var(--trait-fort);
+  border-color: var(--encre);
+  /* Le contour s'epaissit vers l'interieur : sans cela, la carte grandit
+     d'un pixel au survol et la rangee entiere sursaute. */
+  padding: calc(var(--espace-5) - 1px);
 }
 
 .card--accent {
-  background: var(--c-accent-soft);
+  background: var(--violette-pale);
   border-color: transparent;
 }
 
@@ -184,49 +191,63 @@
 /* Rapport 2:1 entre remplissage horizontal et vertical : le texte se lit
    horizontalement, il lui faut de l'air sur les cotes. */
 
+/*
+ * Un bouton : un verbe, puis l'objet. « Reserver ma place », « Payer
+ * 45 000 GNF », « Entrer dans la salle » — jamais « Commencer », qui ne dit
+ * pas ce qui va se passer.
+ *
+ * Le contour fait `trait-fort`, transparent sur un bouton plein : sans lui,
+ * le bouton plein et le bouton contour n'ont pas la meme hauteur et une
+ * rangee de deux boutons est de travers.
+ */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--s-2);
-  min-height: var(--tap);
-  padding: var(--s-3) var(--s-6);
-  border: 1px solid transparent;
-  border-radius: var(--r-md);
-  font-size: var(--t-body);
+  gap: var(--espace-3);
+  min-height: var(--cible);
+  padding: 0 18px;
+  border: var(--trait-fort) solid transparent;
+  border-radius: var(--rayon-bouton);
+  font-size: 17px;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  line-height: 1.2;
+  text-align: center;
+  transition: background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
 }
 
+/* Un seul bouton `violette` par ecran, et il mesure `cible-principale`. */
 .btn--primary {
-  background: var(--c-accent);
-  color: var(--c-on-accent);
-  box-shadow: var(--shadow-md);
+  background: var(--violette);
+  color: var(--sur-violette);
+  min-height: var(--cible-principale);
 }
 
 .btn--primary:hover:not(:disabled) {
-  background: var(--c-accent-strong);
+  background: var(--violette-appuyee);
 }
 
+/* Le bouton second : cerne d'encre sur `feuille`, jamais une seconde
+   couleur de marque. */
 .btn--ghost {
-  background: transparent;
-  border-color: var(--c-border-strong);
-  color: var(--c-ink);
+  background: var(--feuille);
+  border-color: var(--encre);
+  color: var(--encre);
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: var(--c-surface);
+  background: var(--papier);
 }
 
 .btn--quiet {
   background: transparent;
-  color: var(--c-ink-muted);
-  padding-inline: var(--s-3);
+  color: var(--crayon);
+  padding-inline: var(--espace-3);
 }
 
 .btn--quiet:hover:not(:disabled) {
-  color: var(--c-ink);
+  color: var(--encre);
 }
 
 .btn--block {
@@ -243,40 +264,39 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--espace-2);
 }
 
 .field__label {
-  font-size: var(--t-small);
+  font-size: var(--t-secondaire);
   font-weight: 500;
-  color: var(--c-ink-muted);
+  color: var(--crayon);
 }
 
 .field__input {
-  min-height: var(--tap);
-  padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-md);
-  background: var(--c-bg);
-  box-shadow: var(--shadow-sm);
+  min-height: var(--cible);
+  padding: var(--espace-3) var(--espace-4);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-champ);
+  background: var(--feuille);
   transition: border-color 0.15s ease;
 }
 
 .field__input:focus-visible {
-  border-color: var(--c-accent);
+  border-color: var(--violette);
   outline: none;
-  box-shadow: var(--focus-ring);
+  outline: var(--focus-ring);
 }
 
 /* Aide en ligne : elle previent l'erreur au lieu de la sanctionner. */
 .field__hint {
-  font-size: var(--t-small);
-  color: var(--c-ink-faint);
+  font-size: var(--t-secondaire);
+  color: var(--crayon);
 }
 
 .field__error {
-  font-size: var(--t-small);
-  color: var(--c-danger);
+  font-size: var(--t-secondaire);
+  color: var(--rouge);
 }
 
 /* --- Etiquettes ------------------------------------------------------ */
@@ -284,54 +304,54 @@
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-3);
+  gap: var(--espace-3);
 }
 
 .tag {
-  min-height: var(--tap);
-  padding: var(--s-2) var(--s-5);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-pill);
-  background: var(--c-surface);
-  font-size: var(--t-small);
+  min-height: var(--cible);
+  padding: var(--espace-2) var(--espace-5);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-pastille);
+  background: var(--papier);
+  font-size: var(--t-secondaire);
   font-weight: 500;
-  color: var(--c-ink);
+  color: var(--encre);
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .tag[aria-pressed='true'] {
-  background: var(--c-accent);
-  border-color: var(--c-accent);
-  color: var(--c-on-accent);
+  background: var(--violette);
+  border-color: var(--violette);
+  color: var(--sur-violette);
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-1);
-  padding: var(--s-1) var(--s-3);
-  border-radius: var(--r-pill);
-  font-size: var(--t-micro);
+  gap: var(--espace-1);
+  padding: var(--espace-1) var(--espace-3);
+  border-radius: var(--rayon-pastille);
+  font-size: var(--t-secondaire);
   font-weight: 600;
-  background: var(--c-surface);
-  color: var(--c-ink-muted);
+  background: var(--papier);
+  color: var(--crayon);
 }
 
 .chip--success {
-  background: var(--c-success-soft);
-  color: var(--c-success);
+  background: var(--surligneur-pale);
+  color: var(--vert-fonce);
 }
 .chip--warning {
-  background: var(--c-warning-soft);
-  color: var(--c-warning);
+  background: var(--bon-point-pale);
+  color: var(--bon-point-fonce);
 }
 .chip--danger {
-  background: var(--c-danger-soft);
-  color: var(--c-danger);
+  background: var(--rouge-pale);
+  color: var(--rouge);
 }
 .chip--accent {
-  background: var(--c-accent-soft);
-  color: var(--c-accent);
+  background: var(--violette-pale);
+  color: var(--violette);
 }
 
 /* --- Choix pleine largeur -------------------------------------------- */
@@ -339,42 +359,42 @@
 .choice {
   display: flex;
   align-items: center;
-  gap: var(--s-4);
+  gap: var(--espace-4);
   width: 100%;
-  padding: var(--s-4) var(--s-5);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  background: var(--c-bg);
+  padding: var(--espace-4) var(--espace-5);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-carte);
+  background: var(--feuille);
   text-align: left;
   font-weight: 500;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .choice[aria-pressed='true'] {
-  border-color: var(--c-accent);
-  background: var(--c-accent-soft);
-  color: var(--c-accent-strong);
+  border-color: var(--violette);
+  background: var(--violette-pale);
+  color: var(--violette-appuyee);
   font-weight: 600;
 }
 
 .choice__check {
   margin-left: auto;
-  color: var(--c-accent);
+  color: var(--violette);
 }
 
 /* --- Progression ----------------------------------------------------- */
 
 .progress {
   height: 4px;
-  border-radius: var(--r-pill);
-  background: var(--c-border);
+  border-radius: var(--rayon-pastille);
+  background: var(--ligne);
   overflow: hidden;
 }
 
 .progress__bar {
   height: 100%;
-  background: var(--c-accent);
-  border-radius: var(--r-pill);
+  background: var(--violette);
+  border-radius: var(--rayon-pastille);
   transition: width 0.3s ease;
 }
 
@@ -398,8 +418,8 @@
 .flow__head {
   display: flex;
   align-items: center;
-  gap: var(--s-4);
-  padding: var(--s-4) var(--gutter);
+  gap: var(--espace-4);
+  padding: var(--espace-4) var(--gutter);
 }
 
 .flow__body {
@@ -409,15 +429,15 @@
      la page : l'en-tete et le bouton restent visibles. */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: var(--s-5) var(--gutter) var(--s-5);
+  padding: var(--espace-5) var(--gutter) var(--espace-5);
 }
 
 .flow__question {
-  font-size: var(--t-display);
+  font-size: var(--t-titre-ecran);
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: var(--lh-tight);
-  margin-bottom: var(--s-5);
+  line-height: var(--lh-titre);
+  margin-bottom: var(--espace-5);
 }
 
 /* L'action principale reste toujours en bas a droite. */
@@ -426,14 +446,22 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: var(--s-2);
-  padding: var(--s-4) var(--gutter) var(--s-6);
-  background: linear-gradient(to top, var(--c-bg) 70%, var(--c-bar-fade));
+  gap: var(--espace-2);
+  padding: var(--espace-4) var(--gutter) var(--espace-6);
+  /*
+   * Un aplat et un trait, pas un fondu.
+   *
+   * C'etait un degrade vers le fond, pour suggerer que le contenu continue
+   * derriere le pied. La charte ne laisse pas de degrade, et le trait dit la
+   * meme chose plus franchement : il y a une barre, elle est posee la.
+   */
+  background: var(--feuille);
+  border-top: var(--trait-fin) solid var(--ligne);
 }
 
 .flow__counter {
-  font-size: var(--t-small);
-  color: var(--c-ink-faint);
+  font-size: var(--t-secondaire);
+  color: var(--crayon);
   font-variant-numeric: tabular-nums;
 }
 
@@ -442,26 +470,26 @@
 .highlight {
   display: flex;
   align-items: center;
-  gap: var(--s-4);
-  margin-bottom: var(--s-4);
+  gap: var(--espace-4);
+  margin-bottom: var(--espace-4);
 }
 
 .highlight__value {
   min-width: 104px;
-  font-size: var(--t-title);
+  font-size: var(--t-titre-carte);
   font-weight: 700;
-  color: var(--c-accent);
+  color: var(--violette);
   letter-spacing: -0.02em;
 }
 
 .highlight__label {
-  color: var(--c-ink-muted);
+  color: var(--crayon);
 }
 
 .numbered {
   display: flex;
-  gap: var(--s-4);
-  margin-bottom: var(--s-4);
+  gap: var(--espace-4);
+  margin-bottom: var(--espace-4);
 }
 
 .numbered__index {
@@ -470,10 +498,10 @@
   height: 28px;
   display: grid;
   place-items: center;
-  border-radius: var(--r-pill);
-  background: var(--c-accent-soft);
-  color: var(--c-accent);
-  font-size: var(--t-small);
+  border-radius: var(--rayon-pastille);
+  background: var(--violette-pale);
+  color: var(--violette);
+  font-size: var(--t-secondaire);
   font-weight: 700;
 }
 
@@ -482,23 +510,23 @@
 .plan {
   display: flex;
   align-items: center;
-  gap: var(--s-4);
+  gap: var(--espace-4);
   width: 100%;
-  padding: var(--s-5);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  background: var(--c-bg);
+  padding: var(--espace-5);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-carte);
+  background: var(--feuille);
   text-align: left;
 }
 
 .plan[aria-pressed='true'] {
-  border-color: var(--c-accent);
-  background: var(--c-accent-soft);
+  border-color: var(--violette);
+  background: var(--violette-pale);
 }
 
 .plan__price {
   margin-left: auto;
-  font-size: var(--t-title);
+  font-size: var(--t-titre-carte);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -525,9 +553,9 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--c-bar);
+  background: var(--feuille);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: var(--trait-fin) solid var(--ligne);
 }
 
 .topbar__inner {
@@ -536,7 +564,7 @@
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: var(--s-4);
+  gap: var(--espace-4);
   padding: 0 var(--gutter);
   min-height: 60px;
 }
@@ -545,11 +573,11 @@
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
-  color: var(--c-accent);
-  font-family: var(--font-heading);
+  gap: var(--espace-2);
+  color: var(--violette);
+  font-family: var(--font-titre);
   font-size: 1.1875rem;
-  font-weight: var(--w-heading);
+  font-weight: 800;
   letter-spacing: -0.03em;
   text-decoration: none;
 }
@@ -566,7 +594,7 @@
   min-width: 0;
   display: flex;
   align-items: stretch;
-  gap: var(--s-1);
+  gap: var(--espace-1);
   overflow-x: auto;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
@@ -577,27 +605,52 @@
   display: none;
 }
 
+/*
+ * L'indice de defilement.
+ *
+ * Sept onglets, quatre visibles sur un telephone, et rien ne disait que les
+ * trois autres existaient : un libelle tranche net au bord de l'ecran se lit
+ * comme un defaut d'affichage, pas comme une invitation a faire glisser.
+ *
+ * Un fondu en masque plutot qu'un degrade pose par-dessus : le masque suit la
+ * couleur de la barre, y compris en mode sombre, alors qu'un degrade aurait
+ * demande de redeclarer sa teinte dans les deux themes.
+ *
+ * `animation-timeline: scroll()` retire les deux fondus quand il n'y a rien
+ * a defiler, la ou c'est pris en charge ; ailleurs ils restent, et un fondu
+ * de 20 px sur une rangee qui tient entiere ne gene personne.
+ */
+.navlinks {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 20px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
+}
+
 .navlinks__item {
   flex: none;
   scroll-snap-align: start;
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  min-height: var(--tap);
-  border-radius: var(--r-pill);
+  gap: var(--espace-2);
+  padding: var(--espace-2) var(--espace-3);
+  min-height: var(--cible);
+  border-radius: var(--rayon-pastille);
   border: 0;
   background: transparent;
-  font-size: var(--t-small);
-  font-weight: var(--w-medium);
-  color: var(--c-ink-muted);
+  font-size: var(--t-secondaire);
+  font-weight: 600;
+  color: var(--crayon);
   white-space: nowrap;
   transition: background var(--motion-fast) ease, color var(--motion-fast) ease;
 }
 
 .navlinks__item:hover {
-  background: var(--c-neutral-surface);
-  color: var(--c-ink);
+  background: var(--papier);
+  color: var(--encre);
 }
 
 /*
@@ -607,9 +660,9 @@
  */
 .navlinks__item[aria-current='page'],
 .navlinks__item:has([aria-current='page']) {
-  background: var(--c-accent-soft);
-  color: var(--c-accent-strong);
-  font-weight: var(--w-strong);
+  background: var(--violette-pale);
+  color: var(--violette-appuyee);
+  font-weight: 700;
 }
 
 /* L'icône ne sert qu'à reconnaître un onglet d'un coup d'œil ; sur un
@@ -624,20 +677,20 @@
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: var(--espace-2);
   min-height: 38px;
-  padding: 0 var(--s-4);
-  border-radius: var(--r-pill);
-  background: var(--c-accent);
-  color: var(--c-on-accent);
-  font-size: var(--t-small);
-  font-weight: var(--w-strong);
+  padding: 0 var(--espace-4);
+  border-radius: var(--rayon-pastille);
+  background: var(--violette);
+  color: var(--sur-violette);
+  font-size: var(--t-secondaire);
+  font-weight: 700;
   white-space: nowrap;
 }
 
 .topbar__account--quiet {
-  background: var(--c-neutral-surface);
-  color: var(--c-ink);
+  background: var(--papier);
+  color: var(--encre);
 }
 
 /* --- Divers ---------------------------------------------------------- */
@@ -648,28 +701,28 @@
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--r-pill);
-  background: var(--c-accent-soft);
-  color: var(--c-accent);
+  border-radius: var(--rayon-pastille);
+  background: var(--violette-pale);
+  color: var(--violette);
   font-weight: 700;
-  font-size: var(--t-small);
+  font-size: var(--t-secondaire);
   object-fit: cover;
 }
 
 .muted {
-  color: var(--c-ink-muted);
+  color: var(--crayon);
 }
 
 .faint {
-  color: var(--c-ink-faint);
+  color: var(--crayon);
 }
 
 .small {
-  font-size: var(--t-small);
+  font-size: var(--t-secondaire);
 }
 
 .micro {
-  font-size: var(--t-micro);
+  font-size: var(--t-secondaire);
 }
 
 .strong {
@@ -677,44 +730,48 @@
 }
 
 .empty {
-  padding: var(--s-8) var(--s-5);
+  padding: var(--espace-8) var(--espace-5);
   text-align: center;
-  color: var(--c-ink-muted);
+  color: var(--crayon);
 }
 
 .empty__icon {
   font-size: 2rem;
-  margin-bottom: var(--s-4);
+  margin-bottom: var(--espace-4);
 }
 
 .banner {
   display: flex;
-  gap: var(--s-3);
-  padding: var(--s-4);
-  border-radius: var(--r-md);
-  background: var(--c-surface);
-  font-size: var(--t-small);
+  gap: var(--espace-3);
+  padding: var(--espace-4);
+  border-radius: var(--rayon-champ);
+  background: var(--papier);
+  font-size: var(--t-secondaire);
 }
 
 .banner--accent {
-  background: var(--c-accent-soft);
-  color: var(--c-accent-strong);
+  background: var(--violette-pale);
+  color: var(--violette-appuyee);
 }
 .banner--warning {
-  background: var(--c-warning-soft);
-  color: var(--c-warning);
+  background: var(--bon-point-pale);
+  color: var(--bon-point-fonce);
 }
 
 .skeleton {
-  border-radius: var(--r-md);
-  background: linear-gradient(
-    90deg,
-    var(--c-surface) 25%,
-    var(--c-border) 37%,
-    var(--c-surface) 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
+  /*
+   * Un aplat, pas un reflet qui balaye.
+   *
+   * C'etait un degrade anime de gauche a droite. Deux raisons de le retirer,
+   * et la seconde est la plus concrete : la charte ne laisse aucun degrade,
+   * et elle limite le mouvement a trois gestes nommes — « ne rien animer qui
+   * coute des donnees », sur un telephone modeste.
+   *
+   * Un bloc de `violette-pale` dit « ca charge » aussi bien, et il garde la
+   * forme de la page pendant l'attente, ce qui est tout ce qu'on lui demande.
+   */
+  border-radius: var(--rayon-champ);
+  background: var(--violette-pale);
 }
 
 @keyframes shimmer {
@@ -728,10 +785,10 @@
 
 .scroller {
   display: flex;
-  gap: var(--s-4);
+  gap: var(--espace-4);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding-bottom: var(--s-3);
+  padding-bottom: var(--espace-3);
   margin-inline: calc(var(--gutter) * -1);
   padding-inline: var(--gutter);
   scrollbar-width: none;
@@ -748,15 +805,8 @@
 
 /* --- Preuve sur l'accueil -------------------------------------------- */
 
-
-
-
-
 /* La puce ne porte aucune information : elle est decorative et masquee
    aux lecteurs d'ecran par `aria-hidden` via ::before. */
-
-
-
 
 .block-link {
   display: block;
@@ -784,9 +834,8 @@
 .navlinks__item:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-  border-radius: var(--r-md);
+  outline: var(--focus-ring);
+  outline-offset: 3px;
 }
 
 /* Le lien d'evitement : premier element tabulable de chaque page. */
@@ -795,10 +844,10 @@ a:focus-visible,
   left: var(--gutter);
   top: 0;
   z-index: 100;
-  padding: var(--s-3) var(--s-5);
-  border-radius: 0 0 var(--r-md) var(--r-md);
-  background: var(--c-accent);
-  color: var(--c-on-accent);
+  padding: var(--espace-3) var(--espace-5);
+  border-radius: 0 0 var(--rayon-champ) var(--rayon-champ);
+  background: var(--violette);
+  color: var(--sur-violette);
   font-weight: 600;
   text-decoration: none;
   transform: translateY(-120%);
@@ -824,7 +873,7 @@ a:focus-visible,
 
 /* Les onglets restent atteignables au pouce. */
 .navlinks__item {
-  min-height: var(--tap);
+  min-height: var(--cible);
 }
 
 /*
@@ -845,7 +894,7 @@ a:focus-visible,
 /* Contraste renforce : on laisse le systeme epaissir les bordures. */
 @media (prefers-contrast: more) {
   :root {
-    --c-border: var(--c-border-strong);
+    --ligne: var(--ligne);
   }
 }
 
@@ -855,10 +904,10 @@ a:focus-visible,
   position: sticky;
   top: 0;
   z-index: 20;
-  padding: var(--s-2) var(--gutter);
-  background: var(--c-warning-soft);
-  color: var(--c-warning);
-  font-size: var(--t-small);
+  padding: var(--espace-2) var(--gutter);
+  background: var(--bon-point-pale);
+  color: var(--bon-point-fonce);
+  font-size: var(--t-secondaire);
   font-weight: 600;
   text-align: center;
 }
@@ -872,8 +921,8 @@ a:focus-visible,
  */
 .flow__illustration,
 .hero-illustration {
-  margin: 0 0 var(--s-5);
-  border-radius: var(--r-lg);
+  margin: 0 0 var(--espace-5);
+  border-radius: var(--rayon-carte);
   background: #f2f6fd;
   overflow: hidden;
   display: flex;
@@ -907,7 +956,7 @@ a:focus-visible,
 /* Sur l'accueil, le visuel accompagne la promesse sans la dominer : il reste
    sous le titre et la preuve, jamais au-dessus. */
 .hero-illustration {
-  margin-block: var(--s-2) var(--s-4);
+  margin-block: var(--espace-2) var(--espace-4);
 }
 
 .hero-illustration img {
@@ -925,51 +974,51 @@ a:focus-visible,
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--s-1);
+  gap: var(--espace-1);
   width: 100%;
   min-height: 72px;
-  padding: var(--s-4) var(--s-5);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-lg);
-  background: var(--c-bg);
+  padding: var(--espace-4) var(--espace-5);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-carte);
+  background: var(--feuille);
   text-align: left;
   transition: border-color var(--motion-fast) ease,
     background var(--motion-fast) ease;
 }
 
 .rolebtn:hover {
-  border-color: var(--c-accent);
+  border-color: var(--violette);
 }
 
 .rolebtn[aria-checked='true'] {
-  border-color: var(--c-accent);
-  background: var(--c-accent-soft);
-  box-shadow: inset 0 0 0 1px var(--c-accent);
+  border-color: var(--violette);
+  background: var(--violette-pale);
+  box-shadow: inset 0 0 0 1px var(--violette);
 }
 
 .rolebtn__label {
-  font-size: var(--t-heading);
+  font-size: var(--t-titre-carte);
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: var(--c-ink);
+  color: var(--encre);
 }
 
 .rolebtn[aria-checked='true'] .rolebtn__label {
-  color: var(--c-accent-strong);
+  color: var(--violette-appuyee);
 }
 
 .rolebtn__hint {
-  font-size: var(--t-small);
-  color: var(--c-ink-muted);
+  font-size: var(--t-secondaire);
+  color: var(--crayon);
   line-height: 1.4;
 }
 
 /* Paragraphe d'explication sous le titre d'une etape. */
 .flow__body-text {
   max-width: var(--measure);
-  margin-top: calc(var(--s-5) * -1);
-  margin-bottom: var(--s-5);
-  color: var(--c-ink-muted);
+  margin-top: calc(var(--espace-5) * -1);
+  margin-bottom: var(--espace-5);
+  color: var(--crayon);
   max-width: var(--measure);
 }
 
@@ -980,20 +1029,20 @@ a:focus-visible,
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--r-md);
-  background: var(--c-accent-soft);
-  color: var(--c-accent);
+  border-radius: var(--rayon-champ);
+  background: var(--violette-pale);
+  color: var(--violette);
 }
 
 /* Avec pictogramme, la valeur n'a plus besoin d'une colonne large. */
 .highlight:has(.highlight__icon) .highlight__value {
   min-width: 0;
-  font-size: var(--t-body);
+  font-size: var(--t-corps);
 }
 
 /* Carte resserree : une pile de profils doit tenir dans un ecran. */
 .card--compact {
-  padding: var(--s-4);
+  padding: var(--espace-4);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1005,15 +1054,11 @@ a:focus-visible,
  * ------------------------------------------------------------------------ */
 
 .hero {
-  background: linear-gradient(
-    135deg,
-    var(--c-hero-start),
-    var(--c-hero-end)
-  );
-  color: #fff;
-  padding: var(--s-6) var(--s-5) var(--s-8);
+  background: var(--marque-violette);
+  color: var(--marque-papier);
+  padding: var(--espace-6) var(--espace-5) var(--espace-8);
   /* Deborde de la gouttiere de `.screen`, et non d'une valeur figee : avec
-     `--s-5` en dur, le degrade s'arretait a 16 px des bords des que la
+     `--espace-5` en dur, le degrade s'arretait a 16 px des bords des que la
      gouttiere passait a 40 px, et deux bandes blanches encadraient le bleu. */
   margin-inline: calc(-1 * var(--gutter));
 }
@@ -1026,32 +1071,45 @@ a:focus-visible,
   margin: 0;
 }
 
-/* Le mot accentue. Un seul par titre : deux se neutralisent. */
+/*
+ * Le mot mis en avant dans un titre. Un seul par titre : deux se
+ * neutralisent.
+ *
+ * C'etait une couleur de texte. La charte l'interdit — « jamais du texte » —
+ * et pour une raison lisible : du vert clair sur du violet ne passe pas le
+ * plancher de contraste d'un corps de texte, alors que du texte sombre sur
+ * un aplat de surligneur atteint 11:1.
+ *
+ * C'est donc le surlignage lui-meme, avec son biseau.
+ */
 .hero__accent {
-  color: var(--c-highlight);
+  display: inline-block;
+  padding: 0 0.3em;
+  background: var(--surligneur);
+  color: var(--sur-surligneur);
+  clip-path: polygon(0.2em 0, 100% 0, calc(100% - 0.2em) 100%, 0 100%);
 }
 
 .hero__lede {
-  color: var(--c-on-hero-muted);
-  font-size: var(--t-body);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: var(--t-corps);
   line-height: 1.55;
-  margin: var(--s-3) 0 0;
+  margin: var(--espace-3) 0 0;
 }
 
 /* La boite de premiere action, qui chevauche l'en-tete : la page commence
  * par ce qu'on peut faire. */
 
-
 /* La mise en garde des donnees de demonstration. Au-dessus de tout, lisible,
  * et sans bouton pour la fermer : elle doit rester vraie tant que le serveur
  * n'est pas branche. */
 .demo-note {
-  background: var(--c-warning-soft);
-  color: var(--c-ink);
+  background: var(--bon-point-pale);
+  color: var(--encre);
   font-size: 13px;
   line-height: 1.45;
   margin: 0;
-  padding: var(--s-2) var(--s-4);
+  padding: var(--espace-2) var(--espace-4);
   text-align: center;
 }
 
@@ -1063,7 +1121,7 @@ a:focus-visible,
  * personne. */
 .room {
   background: #0b0b10;
-  border-radius: var(--r-lg);
+  border-radius: var(--rayon-carte);
   display: flex;
   flex-wrap: wrap;
   gap: 2px;
@@ -1074,7 +1132,7 @@ a:focus-visible,
 
 .room__video {
   background: #000;
-  border-radius: var(--r-md);
+  border-radius: var(--rayon-champ);
   /* La premiere prend toute la largeur, les autres se partagent le reste. */
   flex: 1 1 140px;
   max-height: 60vh;
@@ -1088,7 +1146,7 @@ a:focus-visible,
 
 .room__preview {
   background: #0b0b10;
-  border-radius: var(--r-md);
+  border-radius: var(--rayon-champ);
   max-height: 220px;
   object-fit: cover;
   width: 100%;
@@ -1109,11 +1167,11 @@ a:focus-visible,
  * ferait croire a un probleme a chaque cours.
  */
 .presence {
-  background: var(--c-accent-soft);
+  background: var(--violette-pale);
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--s-2) var(--gutter);
+  padding: var(--espace-2) var(--gutter);
 }
 
 .presence__ligne {
@@ -1121,7 +1179,7 @@ a:focus-visible,
   color: inherit;
   display: flex;
   font-size: 13px;
-  gap: var(--s-2);
+  gap: var(--espace-2);
   line-height: 1.4;
   min-height: 28px;
   text-decoration: none;
@@ -1129,7 +1187,7 @@ a:focus-visible,
 
 .presence__ligne:focus-visible {
   border-radius: 8px;
-  outline: 2px solid var(--c-accent);
+  outline: 2px solid var(--violette);
   outline-offset: 2px;
 }
 
@@ -1139,7 +1197,7 @@ a:focus-visible,
  * pour eteindre. */
 .presence__point {
   animation: presence-pouls 2.4s ease-in-out infinite;
-  background: var(--c-accent);
+  background: var(--violette);
   border-radius: 50%;
   flex: 0 0 auto;
   height: 8px;
@@ -1179,14 +1237,14 @@ a:focus-visible,
 
 .field__prefix {
   align-items: center;
-  background: var(--c-bg-soft, var(--c-accent-soft));
-  border: 1px solid var(--c-border);
+  background: var(--violette-pale);
+  border: var(--trait-fin) solid var(--ligne);
   border-radius: 10px 0 0 10px;
   border-right: 0;
-  color: var(--c-ink-soft, inherit);
+  color: inherit;
   display: flex;
   font-variant-numeric: tabular-nums;
-  padding: 0 var(--s-3);
+  padding: 0 var(--espace-3);
   white-space: nowrap;
 }
 
@@ -1211,7 +1269,7 @@ a:focus-visible,
 .checkpoint {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-2);
+  gap: var(--espace-2);
 }
 
 /*
@@ -1242,7 +1300,7 @@ a:focus-visible,
  */
 .replay {
   background: #0b0b10;
-  border-radius: var(--r-lg);
+  border-radius: var(--rayon-carte);
   overflow: hidden;
 }
 
@@ -1266,7 +1324,7 @@ a:focus-visible,
 .liste-nue {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--espace-2);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1282,7 +1340,7 @@ a:focus-visible,
 
 .card-link:focus-visible {
   border-radius: 14px;
-  outline: 2px solid var(--c-accent);
+  outline: 2px solid var(--violette);
   outline-offset: 2px;
 }
 
@@ -1290,14 +1348,14 @@ a:focus-visible,
  * Teinte plutot que grise — ce n'est pas une action desactivee, c'est une
  * action qui se fait ailleurs. */
 .gate {
-  background: var(--c-accent-soft);
-  border: 1px solid var(--c-accent-soft);
+  background: var(--violette-pale);
+  border: 1px solid var(--violette-pale);
   border-radius: 14px;
-  padding: var(--s-4);
+  padding: var(--espace-4);
 }
 
 .gate__title {
-  color: var(--c-accent-strong);
+  color: var(--violette-appuyee);
   font-size: 15px;
   line-height: 1.4;
 }
@@ -1305,22 +1363,20 @@ a:focus-visible,
 .action-card__suggestions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-2);
-  margin-top: var(--s-3);
+  gap: var(--espace-2);
+  margin-top: var(--espace-3);
 }
-
-
 
 .door {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--espace-3);
   width: 100%;
   text-align: left;
-  background: var(--c-bg);
-  border: 1px solid var(--c-border);
+  background: var(--feuille);
+  border: var(--trait-fin) solid var(--ligne);
   border-radius: 14px;
-  padding: var(--s-3) var(--s-4);
+  padding: var(--espace-3) var(--espace-4);
   cursor: pointer;
   min-height: 48px;
   /* Sert de bouton sur l'accueil et de lien dans les resultats de
@@ -1330,17 +1386,17 @@ a:focus-visible,
 }
 
 .door:hover {
-  border-color: var(--c-accent);
+  border-color: var(--violette);
 }
 
 .door__title {
   font-weight: 700;
-  color: var(--c-ink);
+  color: var(--encre);
 }
 
 .door__sub {
-  font-size: var(--t-small);
-  color: var(--c-ink-muted);
+  font-size: var(--t-secondaire);
+  color: var(--crayon);
 }
 
 /* Au-dela du telephone, la boite d'action reste centree et bornee : une
@@ -1349,14 +1405,14 @@ a:focus-visible,
 /* Un raccourci de recherche : l'etiquette devient cliquable. */
 .chip--action {
   cursor: pointer;
-  border: 1px solid var(--c-border);
-  background: var(--c-bg);
+  border: var(--trait-fin) solid var(--ligne);
+  background: var(--feuille);
   min-height: 36px;
 }
 
 .chip--action:hover {
-  border-color: var(--c-accent);
-  color: var(--c-accent);
+  border-color: var(--violette);
+  color: var(--violette);
 }
 
 /* Les titres passent en Poppins, comme sur mobile. Le corps reste sur Inter,
@@ -1365,11 +1421,10 @@ h1,
 h2,
 .page-title,
 .hero__title {
-  font-family: var(--font-heading);
+  font-family: var(--font-titre);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
-
 
 /* ======================================================================
  * Points de rupture
@@ -1417,12 +1472,39 @@ h2,
  */
 
 .hero-page {
-  min-height: 100%;
+  /*
+   * --- Le defaut que ceci corrige ---------------------------------------
+   *
+   * `min-height: 100%` ne resolvait rien. Un pourcentage de hauteur se
+   * calcule sur la hauteur du parent, et le parent est `<main>`, qui n'a
+   * aucune hauteur declaree : la regle retombait donc sur `auto`. Le degrade
+   * faisait la hauteur de son contenu, et le fond clair reprenait en dessous
+   * a une hauteur qui ne correspondait a rien — exactement le defaut que
+   * cette page devait corriger.
+   *
+   * `dvh` et non `vh` : sur un navigateur de telephone, `vh` compte la
+   * fenetre **barre d'adresse masquee**, donc 100vh depasse l'ecran visible
+   * de la hauteur de cette barre, et les deux pastilles du bas tombent
+   * dessous. `dvh` suit la fenetre reellement affichee.
+   *
+   * Moins la barre de navigation (60 px) : sans cette soustraction, la page
+   * depasse d'exactement sa hauteur et le premier ecran se termine par une
+   * amorce de defilement que rien ne justifie.
+   */
+  min-height: calc(100dvh - 60px);
   display: flex;
   flex-direction: column;
-  background: var(--hero-gradient);
-  color: #fff;
-  padding: var(--s-4) var(--gutter) var(--s-6);
+  /*
+   * Un aplat, pas un degrade.
+   *
+   * « Le degrade violet est le decor par defaut de milliers d'applications.
+   * Un aplat s'imprime, pese moins et vieillit mieux. » La violette fixe de
+   * la marque, celle qui ne change pas avec le theme : une affiche reste la
+   * meme sur un tableau noir.
+   */
+  background: var(--marque-violette);
+  color: var(--marque-papier);
+  padding: var(--espace-4) var(--gutter) var(--espace-6);
 }
 
 .hero-page__inner {
@@ -1432,21 +1514,21 @@ h2,
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--s-5);
+  gap: var(--espace-5);
 }
 
 .hero-page__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-3);
+  gap: var(--espace-3);
   min-height: 44px;
 }
 
 .hero-page__brand {
-  font-family: var(--font-heading);
+  font-family: var(--font-titre);
   font-size: 1.375rem;
-  font-weight: var(--w-heading);
+  font-weight: 800;
   letter-spacing: -0.03em;
   color: #fff;
 }
@@ -1460,8 +1542,8 @@ h2,
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: var(--s-5);
-  padding-block: var(--s-5);
+  gap: var(--espace-5);
+  padding-block: var(--espace-5);
 }
 
 /* Une pastille posée sur le dégradé : du blanc transparent, pas une teinte
@@ -1469,15 +1551,15 @@ h2,
 .pill-ghost {
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: var(--espace-2);
   min-height: 40px;
-  padding: 0 var(--s-4);
-  border-radius: var(--r-pill);
-  border: 1px solid var(--c-on-hero-border);
-  background: var(--c-on-hero-surface);
+  padding: 0 var(--espace-4);
+  border-radius: var(--rayon-pastille);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
-  font-size: var(--t-small);
-  font-weight: var(--w-strong);
+  font-size: var(--t-secondaire);
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -1491,21 +1573,6 @@ h2,
  * Un seul mot en jaune, et rien d'autre : jamais un fond, jamais un statut.
  * C'est le seul procédé qui fasse lire un titre de trois lignes en entier.
  */
-.two-tone {
-  font-family: var(--font-heading);
-  font-size: var(--t-hero);
-  font-weight: var(--w-heading);
-  line-height: var(--lh-tight);
-  letter-spacing: var(--ls-hero);
-  color: #fff;
-  margin: 0;
-  max-width: 24ch;
-}
-
-.two-tone em {
-  color: var(--c-highlight);
-  font-style: normal;
-}
 
 /* Les deux portes du compte, posées sur le bleu.
  *
@@ -1514,7 +1581,7 @@ h2,
  * de décor, et personne ne saurait qu'il se clique. */
 .pill-row {
   display: flex;
-  gap: var(--s-3);
+  gap: var(--espace-3);
 }
 
 .pill-row > * {
@@ -1527,14 +1594,14 @@ h2,
   align-items: center;
   justify-content: center;
   min-height: 52px;
-  border-radius: var(--r-pill);
-  font-size: var(--t-body);
-  font-weight: var(--w-strong);
+  border-radius: var(--rayon-pastille);
+  font-size: var(--t-corps);
+  font-weight: 700;
 }
 
 .pill-solid {
   background: #fff;
-  color: var(--c-hero-start);
+  color: var(--marque-violette);
   border: 0;
 }
 
@@ -1551,13 +1618,19 @@ h2,
 /* --- La feuille blanche posée sur le dégradé --------------------------- */
 
 .sheet {
-  background: var(--c-bg);
-  border-radius: var(--r-xl);
-  padding: var(--s-5);
-  box-shadow: var(--shadow-lg);
+  background: var(--feuille);
+  border-radius: var(--rayon-carte);
+  /*
+   * Elle tenait par une ombre portee. Sans ombre, rien ne disait ou la
+   * feuille commence : le trait fort en encre la detache de l'aplat de
+   * violette, et c'est le meme procede que la charte emploie pour la carte
+   * du prochain cours.
+   */
+  border: var(--trait-fort) solid var(--encre);
+  padding: var(--espace-5);
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: var(--espace-4);
   /* La boîte de recherche ne prend pas toute la largeur sur un grand écran :
    * un champ de 900 px pour y taper « maths » se lit comme une erreur de
    * mise en page. */
@@ -1574,29 +1647,28 @@ h2,
  */
 .segmented {
   display: flex;
-  gap: var(--s-1);
-  padding: var(--s-1);
-  border-radius: var(--r-pill);
-  background: var(--c-neutral-surface);
+  gap: var(--espace-1);
+  padding: var(--espace-1);
+  border-radius: var(--rayon-pastille);
+  background: var(--papier);
 }
 
 .segmented__item {
   flex: 1;
   min-height: 40px;
   border: 0;
-  border-radius: var(--r-pill);
+  border-radius: var(--rayon-pastille);
   background: transparent;
-  color: var(--c-ink-muted);
-  font-size: var(--t-small);
-  font-weight: var(--w-medium);
+  color: var(--crayon);
+  font-size: var(--t-secondaire);
+  font-weight: 600;
   transition: background var(--motion-fast) ease, color var(--motion-fast) ease;
 }
 
 .segmented__item[aria-pressed='true'] {
-  background: var(--c-bg);
-  color: var(--c-accent-strong);
-  font-weight: var(--w-strong);
-  box-shadow: var(--shadow-sm);
+  background: var(--feuille);
+  color: var(--violette-appuyee);
+  font-weight: 700;
 }
 
 /* --- Le bouton d'action majeur ----------------------------------------
@@ -1609,24 +1681,25 @@ h2,
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--s-3);
+  gap: var(--espace-3);
   width: 100%;
   min-height: 56px;
-  padding: 0 var(--s-5);
-  border: 0;
-  border-radius: var(--r-pill);
-  background: var(--c-accent);
-  color: var(--c-on-accent);
-  font-size: var(--t-small);
+  padding: 0 var(--espace-5);
+  /* Transparent, mais present : sans lui, un bouton plein et un bouton
+     cerne n'ont pas la meme hauteur dans une rangee. */
+  border: var(--trait-fort) solid transparent;
+  border-radius: var(--rayon-pastille);
+  background: var(--violette);
+  color: var(--sur-violette);
+  font-size: var(--t-secondaire);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  box-shadow: var(--shadow-md);
   transition: background var(--motion-fast) ease;
 }
 
 .bigbtn:hover:not(:disabled) {
-  background: var(--c-accent-strong);
+  background: var(--violette-appuyee);
 }
 
 .bigbtn:disabled {
@@ -1641,28 +1714,35 @@ h2,
  * dire en un écran « voici où vous en êtes » avant « voici quoi faire ».
  */
 .pagehead {
-  background: var(--hero-gradient);
-  color: #fff;
-  border-radius: var(--r-xl);
-  padding: var(--s-5);
+  /*
+   * Un aplat, pas un degrade.
+   *
+   * « Le degrade violet est le decor par defaut de milliers d'applications.
+   * Un aplat s'imprime, pese moins et vieillit mieux. » La violette fixe de
+   * la marque, celle qui ne change pas avec le theme : une affiche reste la
+   * meme sur un tableau noir.
+   */
+  background: var(--marque-violette);
+  color: var(--marque-papier);
+  border-radius: var(--rayon-carte);
+  padding: var(--espace-5);
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
+  gap: var(--espace-4);
 }
 
 .pagehead__title {
-  font-family: var(--font-heading);
-  font-size: var(--t-display);
-  font-weight: var(--w-heading);
-  letter-spacing: var(--ls-hero);
-  line-height: var(--lh-tight);
+  font-family: var(--font-titre);
+  font-size: var(--t-titre-ecran);
+  font-weight: 800;
+  line-height: var(--lh-titre);
   margin: 0;
   color: #fff;
 }
 
 .pagehead__lede {
-  color: var(--c-on-hero-muted);
-  font-size: var(--t-small);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: var(--t-secondaire);
   margin: 0;
   max-width: 52ch;
 }
@@ -1676,52 +1756,68 @@ h2,
  */
 .statstrip {
   display: flex;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--c-on-hero-border);
-  background: var(--c-on-hero-surface);
+  border-radius: var(--rayon-carte);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.14);
   overflow: hidden;
 }
 
 .statstrip__cell {
   flex: 1;
-  padding: var(--s-3) var(--s-2);
+  padding: var(--espace-3) var(--espace-2);
   text-align: center;
   min-width: 0;
 }
 
 .statstrip__cell + .statstrip__cell {
-  border-left: 1px solid var(--c-on-hero-border);
+  border-left: 1px solid rgba(255, 255, 255, 0.34);
 }
 
+/*
+ * --- Le defaut que ceci corrige ---------------------------------------
+ *
+ * Une cellule fait un tiers du bandeau. Sur un ecran de 360 px, le bandeau
+ * en fait 272 une fois les gouttieres et le remplissage de l'en-tete
+ * retires, soit 74 px de texte utile par cellule. « 1 200 000 GNF » en
+ * Poppins 22 gras en demande environ 140 : le chiffre debordait de sa
+ * cellule ou se cassait sur trois lignes.
+ *
+ * Deux corrections, et la seconde compte davantage : la taille suit la
+ * largeur, **et** les montants passent par `gnfCourt()` qui rend « 1,2 M ».
+ * Une cellule de bandeau porte un chiffre qu'on lit d'un coup d'oeil ; le
+ * montant exact a sa place dans `.money`, qui a toute la largeur.
+ */
 .statstrip__value {
   display: block;
-  font-family: var(--font-heading);
-  font-size: 1.375rem;
-  font-weight: var(--w-heading);
+  font-family: var(--font-titre);
+  font-size: clamp(1.0625rem, 0.85rem + 1.2vw, 1.375rem);
+  font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.02em;
+  /* Le filet de securite : meme avec un libelle imprevu, rien ne sort de la
+   * cellule. */
+  overflow-wrap: anywhere;
 }
 
 .statstrip__label {
   display: block;
-  margin-top: var(--s-1);
-  font-size: var(--t-micro);
-  color: var(--c-on-hero-muted);
+  margin-top: var(--espace-1);
+  font-size: var(--t-secondaire);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 /* La même bande, posée sur du blanc plutôt que sur le dégradé. */
 .statstrip--plain {
-  border-color: var(--c-border);
-  background: var(--c-bg);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--ligne);
+  background: var(--feuille);
 }
 
 .statstrip--plain .statstrip__cell + .statstrip__cell {
-  border-left-color: var(--c-border);
+  border-left-color: var(--ligne);
 }
 
 .statstrip--plain .statstrip__label {
-  color: var(--c-ink-faint);
+  color: var(--crayon);
 }
 
 /* --- La tuile d'icône teintée -----------------------------------------
@@ -1737,26 +1833,26 @@ h2,
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: var(--r-md);
-  background: var(--c-accent-soft);
-  color: var(--c-accent-strong);
+  border-radius: var(--rayon-champ);
+  background: var(--violette-pale);
+  color: var(--violette-appuyee);
 }
 
 .tile--success {
-  background: var(--c-success-soft);
-  color: var(--c-success);
+  background: var(--surligneur-pale);
+  color: var(--vert-fonce);
 }
 .tile--warning {
-  background: var(--c-warning-soft);
-  color: var(--c-warning);
+  background: var(--bon-point-pale);
+  color: var(--bon-point-fonce);
 }
 .tile--danger {
-  background: var(--c-danger-soft);
-  color: var(--c-danger);
+  background: var(--rouge-pale);
+  color: var(--rouge);
 }
 .tile--neutral {
-  background: var(--c-neutral-surface);
-  color: var(--c-ink-muted);
+  background: var(--papier);
+  color: var(--crayon);
 }
 
 /* --- La rangée d'action : tuile, texte, chevron ------------------------ */
@@ -1764,12 +1860,12 @@ h2,
 .rowitem {
   display: flex;
   align-items: center;
-  gap: var(--s-4);
+  gap: var(--espace-4);
   width: 100%;
-  padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  background: var(--c-bg);
+  padding: var(--espace-3) var(--espace-4);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-carte);
+  background: var(--feuille);
   text-align: left;
   color: inherit;
   transition: border-color var(--motion-fast) ease,
@@ -1777,8 +1873,7 @@ h2,
 }
 
 .rowitem:hover {
-  border-color: var(--c-border-strong);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--ligne);
 }
 
 .rowitem__body {
@@ -1788,7 +1883,7 @@ h2,
 
 .rowitem__title {
   display: block;
-  font-weight: var(--w-medium);
+  font-weight: 600;
   /* Un nom long ne doit pas repousser le chevron hors de la carte. */
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1797,8 +1892,8 @@ h2,
 
 .rowitem__sub {
   display: block;
-  font-size: var(--t-small);
-  color: var(--c-ink-faint);
+  font-size: var(--t-secondaire);
+  color: var(--crayon);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1806,10 +1901,10 @@ h2,
 
 .rowitem__end {
   flex: none;
-  color: var(--c-ink-faint);
+  color: var(--crayon);
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: var(--espace-2);
 }
 
 /* --- Un montant --------------------------------------------------------
@@ -1819,20 +1914,19 @@ h2,
  * l'impression que la page saute.
  */
 .money {
-  font-family: var(--font-heading);
+  font-family: var(--font-titre);
   font-size: clamp(2rem, 1.5rem + 2.5vw, 2.75rem);
-  font-weight: var(--w-heading);
-  letter-spacing: var(--ls-hero);
+  font-weight: 800;
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
 
 .money__unit {
   font-size: 0.45em;
-  font-weight: var(--w-strong);
+  font-weight: 700;
   letter-spacing: 0.04em;
   margin-left: 0.25em;
-  color: var(--c-ink-faint);
+  color: var(--crayon);
 }
 
 /* --- La bande de section ----------------------------------------------
@@ -1841,10 +1935,338 @@ h2,
  * une page longue sans tracer une seule ligne de séparation.
  */
 .band {
-  background: var(--c-band-soft);
-  padding-block: var(--s-6);
+  background: var(--violette-pale);
+  padding-block: var(--espace-6);
   margin-inline: calc(-1 * var(--gutter));
   padding-inline: var(--gutter);
+}
+
+/* ===========================================================================
+ * Les signes de la marque
+ * ===========================================================================
+ *
+ * Une marque se reconnait a quelques signes repetes pendant des annees.
+ * EduQuali en a cinq, et trois vivent ici. Ne pas en ajouter.
+ */
+
+/* --- 1. Le surlignage --------------------------------------------------
+ *
+ * Un trait `surligneur`, horizontal, aux bouts coupes en biseau comme la
+ * pointe d'un surligneur.
+ *
+ * **Deux ou trois mots, ceux qu'il faut retenir.** Un seul passage par
+ * phrase, un seul par ecran. Ne pas surligner un bouton, un titre entier, un
+ * paragraphe, un prix : un surlignage partout ne dit plus rien.
+ *
+ * Le texte pose dessus est toujours `sur-surligneur`, dans les deux themes —
+ * c'est pourquoi cette regle ne lit pas `--encre`, qui s'eclaircit sur le
+ * theme Tableau et deviendrait illisible sur le vert.
+ */
+.surlignage {
+  display: inline-block;
+  padding: 0 0.3em;
+  background: var(--surligneur);
+  color: var(--sur-surligneur);
+  /* Le biseau : la trace d'une pointe tenue de travers. */
+  clip-path: polygon(0.2em 0, 100% 0, calc(100% - 0.2em) 100%, 0 100%);
+}
+
+/*
+ * Le surlignage se trace de gauche a droite en 300 ms, quand la preuve de
+ * presence s'ouvre. Rien d'autre ne bouge.
+ */
+@keyframes surligner {
+  from {
+    clip-path: polygon(0.2em 0, 0.2em 0, 0 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0.2em 0, 100% 0, calc(100% - 0.2em) 100%, 0 100%);
+  }
+}
+
+.surlignage--anime {
+  animation: surligner var(--motion-surlignage) ease-out;
+}
+
+/* --- 2. L'annotation ---------------------------------------------------
+ *
+ * L'ecriture du cahier, pour un mot ou deux : « Present ! », « Vu »,
+ * « Bravo ». Jamais une phrase, jamais un bouton, une seule fois par ecran.
+ */
+.annotation {
+  font-family: var(--font-annotation);
+  font-weight: 400;
+  font-size: var(--t-annotation);
+  line-height: 1.3;
+  color: var(--violette);
+  /* Legerement penche, comme une note dans la marge. */
+  transform: rotate(-3deg);
+  display: inline-block;
+}
+
+.annotation--rouge {
+  color: var(--rouge);
+}
+
+/* --- 3. La classe de quinze --------------------------------------------
+ *
+ * Quinze places, trois rangs de cinq. Jamais plus, jamais moins.
+ *
+ * Toujours une phrase a cote : « Il reste 3 places », « 14 presents sur 15 ».
+ * Un carre de couleur seul ne dit pas combien.
+ */
+.quinze {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--espace-2);
+}
+
+.quinze i {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--rayon-place);
+  border: var(--trait-fin) solid var(--ligne);
+}
+
+/* Place prise. */
+.quinze i.prise {
+  background: var(--violette);
+  border-color: var(--violette);
+}
+
+/* Votre place, ou un eleve present : cernee d'encre pour qu'on la retrouve
+   parmi les autres. */
+.quinze i.mienne {
+  background: var(--surligneur);
+  border-color: var(--encre);
+}
+
+/* La version qui tient a cote d'une phrase, sur une carte de cours. */
+.quinze--mini {
+  gap: 3px;
+  width: 86px;
+  flex: none;
+}
+
+.quinze--mini i {
+  border-radius: 4px;
+}
+
+/* --- La pastille de statut ---------------------------------------------
+ *
+ * Une couleur, une forme et **un mot**. La couleur seule ne suffit jamais :
+ * c'est la regle de la charte, et c'est aussi celle de l'accessibilite.
+ */
+.statut {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-1);
+  padding: 4px 12px 4px 8px;
+  border-radius: var(--rayon-pastille);
+  font-size: var(--t-secondaire);
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Present, Paye, Disponible. */
+.statut--ok {
+  background: var(--surligneur-pale);
+  color: var(--vert-fonce);
+}
+
+/* Absent, erreur. */
+.statut--ko {
+  background: var(--rouge-pale);
+  color: var(--rouge-fonce);
+}
+
+/* En attente, arrive en retard. */
+.statut--attente {
+  background: var(--violette-pale);
+  color: var(--encre);
+}
+
+/* Les points et les recompenses, et rien d'autre : `bon-point` n'est pas une
+   couleur d'alerte. */
+.statut--point {
+  background: var(--bon-point);
+  color: var(--sur-bon-point);
+}
+
+/*
+ * « En direct ».
+ *
+ * Le seul emploi de `rouge` en aplat. Il ne decore jamais : s'il est a
+ * l'ecran, la camera tourne.
+ */
+.en-direct {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-1);
+  padding: 4px 10px;
+  border-radius: var(--rayon-pastille);
+  background: var(--rouge);
+  color: var(--sur-rouge);
+  font-size: var(--t-etiquette);
+  font-weight: 600;
+  letter-spacing: var(--ls-etiquette);
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.en-direct::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: currentColor;
+}
+
+/* --- La ligne du temps d'un cours --------------------------------------
+ *
+ * Les minutes ou l'eleve etait la, surlignees sur l'heure entiere, avec un
+ * trait toutes les quinze minutes : ce sont les points de controle.
+ */
+.ligne-temps {
+  position: relative;
+  height: 44px;
+}
+
+.ligne-temps__base {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 11px;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--ligne);
+  opacity: 0.45;
+}
+
+.ligne-temps__presence {
+  position: absolute;
+  top: 4px;
+  height: 20px;
+  background: var(--surligneur);
+  clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+}
+
+.ligne-temps__controle {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 28px;
+  background: var(--encre);
+  transform: translateX(-1px);
+}
+
+.ligne-temps__libelle {
+  position: absolute;
+  top: 30px;
+  font-size: var(--t-etiquette);
+  line-height: 1;
+  color: var(--crayon);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* --- Le sur-titre en capitales -----------------------------------------
+ *
+ * Le seul style autorise sous 14 px, et le seul en capitales continues.
+ * Quatre mots au plus.
+ */
+.etiquette {
+  font-size: var(--t-etiquette);
+  font-weight: 600;
+  letter-spacing: var(--ls-etiquette);
+  text-transform: uppercase;
+  line-height: 1.3;
+  color: var(--crayon);
+}
+
+/* --- Les chiffres ------------------------------------------------------ */
+
+/* Le nombre que l'on lit d'abord : minutes de presence, revenu du mois. */
+.chiffre {
+  font-family: var(--font-titre);
+  font-weight: 800;
+  font-size: var(--t-chiffre);
+  line-height: 1;
+}
+
+/* Un prix. Toujours avec « GNF » et une espace entre les milliers. */
+.prix {
+  font-family: var(--font-titre);
+  font-weight: 700;
+  font-size: var(--t-prix);
+  line-height: 1.1;
+}
+
+/* --- L'affiche ---------------------------------------------------------
+ *
+ * Une phrase courte, un seul mot surligne. Ecrans d'accueil, couvertures.
+ */
+.affiche {
+  font-family: var(--font-titre);
+  font-weight: 800;
+  font-size: var(--t-affiche);
+  line-height: 1.05;
+  margin: 0;
+  max-width: 20ch;
+}
+
+/* --- La structure d'une page connectee --------------------------------
+ *
+ * --- Ce qui manquait --------------------------------------------------
+ *
+ * Les neuf ecrans etaient une colonne unique de 1 120 px. Sur un ordinateur,
+ * une rangee « Deposer un cours video » faisait donc 1 120 px de large, avec
+ * son chevron a mille pixels de son libelle, et un champ pour taper « maths »
+ * en faisait autant. C'est la definition d'un telephone agrandi.
+ *
+ * Deux structures suffisent, et aucune des deux n'existe sous 1 024 px —
+ * l'ordre du DOM est celui du telephone, et c'est lui qui decide quand il n'y
+ * a qu'une colonne.
+ *
+ *   `.pagegrid`  deux colonnes : ce qu'on parcourt, ce sur quoi on agit.
+ *   `.rows`      une liste qui se met en deux colonnes quand il y a la place.
+ *
+ * L'aside est **second dans le DOM** et non premier : sur un telephone, un
+ * professeur veut voir ses seances avant le detail de ses revenus. C'est
+ * l'inverse de `.detail`, ou l'identite et l'action passent devant — une
+ * fiche se decide, un tableau de bord se consulte.
+ */
+
+.pagegrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-6);
+}
+
+.pagegrid__main,
+.pagegrid__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-6);
+  min-width: 0;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-2);
+}
+
+/*
+ * Un formulaire garde une largeur de saisie.
+ *
+ * Au-dela d'environ 520 px, un champ de texte donne l'impression qu'on
+ * attend un paragraphe la ou l'on attend un prenom — et l'oeil doit traverser
+ * tout l'ecran entre le libelle et la fin du champ.
+ */
+.form-col {
+  width: 100%;
+  max-width: 520px;
 }
 
 /* --- La discussion ----------------------------------------------------
@@ -1853,22 +2275,70 @@ h2,
  * seule sur un téléphone, où l'on entre dans un fil et l'on en sort. C'est
  * la forme de Discord, et elle tient parce qu'un fil se lit par le bas.
  */
+/*
+ * --- Le defaut que ceci corrige ----------------------------------------
+ *
+ * Le commentaire de `Messages.tsx` annoncait : « sur un telephone, ouvrir un
+ * fil remplace la liste ». Le CSS ne le faisait pas. Les deux etaient
+ * toujours rendus, dans une colonne de 580 px : avec huit groupes, la liste
+ * et le fil se disputaient la hauteur, et il restait deux cents pixels pour
+ * lire une discussion.
+ *
+ * Desormais une seule chose a l'ecran sur un telephone. C'est le JSX qui
+ * rend les deux — un rendu conditionnel sur la largeur de la fenetre se
+ * trompe au premier redimensionnement — et le CSS qui decide lequel se voit,
+ * d'apres `data-ouvert`.
+ */
 .chat {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
-  /* La hauteur de la fenêtre moins la barre de navigation : un fil qui
-   * déborde la page fait défiler la page entière, et l'on perd le champ de
-   * saisie. */
-  height: calc(100dvh - 60px - var(--s-9));
+  gap: var(--espace-4);
+
+  /*
+   * La hauteur exacte de ce qui reste.
+   *
+   * Un fil qui déborde la page fait défiler la page entière, et l'on perd le
+   * champ de saisie en bas — c'est le seul endroit de l'écran où l'on va.
+   *
+   * Le calcul doit donc être juste : la fenêtre, moins la barre de
+   * navigation (60 px), moins le propre remplissage de cet écran. C'est
+   * `.chat` lui-même qui porte `.screen`, donc ses marges comptent — et le
+   * remplissage bas est ramené à `--espace-5` ici, parce que les 96 px de
+   * `--espace-9` laissaient la page défiler d'une douzaine de pixels sans rien
+   * montrer de plus.
+   */
+  padding-bottom: var(--espace-5);
+  height: calc(100dvh - 60px - var(--espace-5) - var(--espace-5));
   min-height: 420px;
 }
 
+/* Au repos : la liste **est** la page. */
+.chat:not([data-ouvert='true']) .chat__room {
+  display: none;
+}
+
+/* Un fil ouvert : il prend tout, et l'on en sort par la fleche de retour. */
+.chat[data-ouvert='true'] .chat__list {
+  display: none;
+}
+
 .chat__list {
+  /* `flex: 1` et non la hauteur du contenu : sans elle, la liste prend sa
+   * taille naturelle et se dispute la hauteur avec le fil au lieu de
+   * defiler dans la sienne. */
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
+  gap: var(--espace-2);
   overflow-y: auto;
+}
+
+/* La fleche de retour du fil : elle n'existe que sur un telephone, ou le fil
+ * a remplace la liste. Sur un ordinateur les deux sont visibles, et un
+ * bouton « retour » ne menerait nulle part. */
+.chat__back {
+  display: inline-flex;
 }
 
 .chat__room {
@@ -1876,9 +2346,9 @@ h2,
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  background: var(--c-bg);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-carte);
+  background: var(--feuille);
   overflow: hidden;
 }
 
@@ -1886,29 +2356,29 @@ h2,
   flex: none;
   display: flex;
   align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-3) var(--s-4);
-  border-bottom: 1px solid var(--c-border);
-  background: var(--c-surface);
+  gap: var(--espace-3);
+  padding: var(--espace-3) var(--espace-4);
+  border-bottom: var(--trait-fin) solid var(--ligne);
+  background: var(--papier);
 }
 
 .chat__thread {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--s-4);
+  padding: var(--espace-4);
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--espace-3);
 }
 
 .chat__compose {
   flex: none;
   display: flex;
-  gap: var(--s-2);
-  padding: var(--s-3);
-  border-top: 1px solid var(--c-border);
-  background: var(--c-surface);
+  gap: var(--espace-2);
+  padding: var(--espace-3);
+  border-top: var(--trait-fin) solid var(--ligne);
+  background: var(--papier);
 }
 
 .chat__compose .field__input {
@@ -1925,12 +2395,12 @@ h2,
  */
 .bubble {
   max-width: 78%;
-  padding: var(--s-3) var(--s-4);
-  border-radius: var(--r-lg);
-  background: var(--c-neutral-surface);
-  color: var(--c-ink);
+  padding: var(--espace-3) var(--espace-4);
+  border-radius: var(--rayon-carte);
+  background: var(--papier);
+  color: var(--encre);
   align-self: flex-start;
-  border-bottom-left-radius: var(--s-1);
+  border-bottom-left-radius: var(--espace-1);
   /* Un message collé sans espace doit garder ses retours à la ligne. */
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -1938,25 +2408,25 @@ h2,
 
 .bubble--mine {
   align-self: flex-end;
-  background: var(--c-accent);
-  color: var(--c-on-accent);
-  border-bottom-left-radius: var(--r-lg);
-  border-bottom-right-radius: var(--s-1);
+  background: var(--violette);
+  color: var(--sur-violette);
+  border-bottom-left-radius: var(--rayon-carte);
+  border-bottom-right-radius: var(--espace-1);
 }
 
 .bubble__author {
   display: block;
-  font-size: var(--t-micro);
-  font-weight: var(--w-strong);
-  color: var(--c-accent-strong);
-  margin-bottom: var(--s-1);
+  font-size: var(--t-secondaire);
+  font-weight: 700;
+  color: var(--violette-appuyee);
+  margin-bottom: var(--espace-1);
 }
 
 .bubble__time {
   display: block;
-  font-size: var(--t-micro);
-  color: var(--c-ink-faint);
-  margin-top: var(--s-1);
+  font-size: var(--t-secondaire);
+  color: var(--crayon);
+  margin-top: var(--espace-1);
 }
 
 .bubble--mine .bubble__time {
@@ -1969,13 +2439,13 @@ h2,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-6) var(--s-4);
-  border: 1.5px dashed var(--c-border-strong);
-  border-radius: var(--r-lg);
-  background: var(--c-surface);
+  gap: var(--espace-2);
+  padding: var(--espace-6) var(--espace-4);
+  border: 1.5px dashed var(--ligne);
+  border-radius: var(--rayon-carte);
+  background: var(--papier);
   text-align: center;
-  color: var(--c-ink-muted);
+  color: var(--crayon);
   width: 100%;
   transition: border-color var(--motion-fast) ease,
     background var(--motion-fast) ease;
@@ -1983,29 +2453,30 @@ h2,
 
 .dropzone:hover,
 .dropzone[data-over='true'] {
-  border-color: var(--c-accent);
-  background: var(--c-accent-soft);
+  border-color: var(--violette);
+  background: var(--violette-pale);
 }
 
 /* --- La grille de la boutique ----------------------------------------- */
 
 .shopgrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--s-4);
+  /* 160 px : deux colonnes sur un ecran de 360 px, ce qui est la bonne
+     densite pour une vignette de lot avec son nom et son prix. */
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--espace-4);
 }
 
 .shopitem {
   display: flex;
   flex-direction: column;
-  gap: var(--s-2);
-  padding: var(--s-3);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  background: var(--c-bg);
+  gap: var(--espace-2);
+  padding: var(--espace-3);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-carte);
+  background: var(--feuille);
   text-align: left;
   color: inherit;
-  box-shadow: var(--shadow-sm);
 }
 
 /*
@@ -2019,8 +2490,8 @@ h2,
   aspect-ratio: 4 / 3;
   display: grid;
   place-items: center;
-  border-radius: var(--r-md);
-  background: var(--c-surface);
+  border-radius: var(--rayon-champ);
+  background: var(--papier);
   overflow: hidden;
 }
 
@@ -2031,15 +2502,15 @@ h2,
 }
 
 .shopitem__name {
-  font-size: var(--t-small);
-  font-weight: var(--w-medium);
-  line-height: var(--lh-snug);
+  font-size: var(--t-secondaire);
+  font-weight: 600;
+  line-height: var(--lh-titre);
 }
 
 .shopitem__cost {
-  font-family: var(--font-heading);
-  font-weight: var(--w-heading);
-  color: var(--c-accent-strong);
+  font-family: var(--font-titre);
+  font-weight: 800;
+  color: var(--violette-appuyee);
 }
 
 /* --- Les étapes d'un formulaire long ---------------------------------- */
@@ -2047,7 +2518,7 @@ h2,
 .steps {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
+  gap: var(--espace-2);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -2063,25 +2534,25 @@ h2,
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-pill);
-  background: var(--c-neutral-surface);
-  color: var(--c-ink-faint);
-  font-size: var(--t-micro);
-  font-weight: var(--w-medium);
+  gap: var(--espace-2);
+  padding: var(--espace-2) var(--espace-3);
+  border-radius: var(--rayon-pastille);
+  background: var(--papier);
+  color: var(--crayon);
+  font-size: var(--t-secondaire);
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .steps__item[data-state='current'] {
-  background: var(--c-accent);
-  color: var(--c-on-accent);
-  font-weight: var(--w-strong);
+  background: var(--violette);
+  color: var(--sur-violette);
+  font-weight: 700;
 }
 
 .steps__item[data-state='done'] {
-  background: var(--c-success-soft);
-  color: var(--c-success);
+  background: var(--surligneur-pale);
+  color: var(--vert-fonce);
 }
 
 /* --- L'assistant ------------------------------------------------------ */
@@ -2089,7 +2560,7 @@ h2,
 .suggests {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-2);
+  gap: var(--espace-2);
 }
 
 /*
@@ -2123,7 +2594,7 @@ h2,
   }
 
   .navlinks {
-    gap: var(--s-2);
+    gap: var(--espace-2);
     /* Plus besoin de défiler : les sept onglets tiennent. */
     overflow-x: visible;
   }
@@ -2148,14 +2619,14 @@ h2,
   .grid-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: var(--s-4);
+    gap: var(--espace-4);
     /* Sans cela, toutes les cartes d'une rangee prennent la hauteur de la
        plus haute, et une carte courte se retrouve avec un grand vide. */
     align-items: start;
   }
 
   .hero {
-    padding: var(--s-8) var(--s-6);
+    padding: var(--espace-8) var(--espace-6);
   }
 
 }
@@ -2172,7 +2643,7 @@ h2,
      de navigation et les bandes de section traversent toute la largeur, comme
      sur un site. */
   .screen {
-    padding-top: var(--s-6);
+    padding-top: var(--espace-6);
   }
 
   /* Une fiche se lit a gauche, on agit a droite. L'action reste visible
@@ -2182,7 +2653,7 @@ h2,
   .detail {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 340px;
-    gap: var(--s-7);
+    gap: var(--espace-7);
     align-items: start;
   }
 
@@ -2199,7 +2670,7 @@ h2,
      casserait sur cinq lignes. Le nom complet reste affiche dans l'en-tete de
      page juste au-dessus. */
   .detail__aside .page-title {
-    font-size: var(--t-title);
+    font-size: var(--t-titre-carte);
   }
 
   .detail__aside {
@@ -2208,7 +2679,7 @@ h2,
     position: sticky;
     /* Sous l'en-tete devenu haut : sans ce decalage, la colonne se glisse
        derriere la barre de navigation. */
-    top: calc(var(--tap) + var(--s-5));
+    top: calc(var(--cible) + var(--espace-5));
   }
 }
 
@@ -2231,13 +2702,15 @@ h2,
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
     align-items: center;
-    column-gap: var(--s-8);
+    column-gap: var(--espace-8);
   }
 
-  .two-tone {
-    /* 3,25 rem : la borne haute de `--t-hero` sert aux en-tetes de page, qui
-       vivent dans une colonne ; ici le titre a la moitie d'un grand ecran. */
+  .affiche {
+    /* La borne haute de `--t-affiche` sert aussi aux en-tetes de page, qui
+       vivent dans une colonne ; ici le titre a la moitie d'un grand ecran et
+       peut monter plus haut. */
     font-size: clamp(2.5rem, 1.8rem + 2.4vw, 3.5rem);
+    max-width: 22ch;
   }
 
   .hero-page__bottom {
@@ -2248,7 +2721,7 @@ h2,
      c'est la colonne de l'engagement, et la colonne de gauche ne porte que
      la promesse. */
   .hero-page {
-    padding-bottom: var(--s-8);
+    padding-bottom: var(--espace-8);
   }
 }
 
@@ -2259,14 +2732,14 @@ h2,
      plutot qu'empiles. Le bandeau n'a pas besoin de toute la largeur, et un
      titre suivi de quatre nombres sur une ligne se lit d'un regard. */
   .pagehead {
-    padding: var(--s-6);
+    padding: var(--espace-6);
   }
 
   .pagehead--split {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
     align-items: center;
-    column-gap: var(--s-6);
+    column-gap: var(--espace-6);
   }
 
   /* Un bouton d'action majeur cesse de prendre toute la largeur : a 1 100 px
@@ -2277,6 +2750,103 @@ h2,
     min-width: 320px;
   }
 
+  /* --- Les deux structures prennent leur forme ------------------------ */
+
+  .pagegrid {
+    display: grid;
+    /* 360 px : la largeur d'une carte de montant avec son formulaire de
+       retrait. Plus etroit, le champ et son libelle ne tiennent plus sur une
+       ligne ; plus large, la colonne principale perd la place de deux
+       cartes. */
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--espace-7);
+    align-items: start;
+  }
+
+  /*
+   * Placement explicite des deux colonnes, et non automatique.
+   *
+   * --- Le defaut que ceci corrige -------------------------------------
+   *
+   * Sur trois des quatre pages, l'aside est **premier dans le DOM** : c'est
+   * l'ordre qu'il faut sur un telephone — le montant disponible avant
+   * l'historique, la progression du dossier avant les pieces a deposer, les
+   * filtres avant les resultats.
+   *
+   * En placement automatique, cet aside tombait donc dans la **premiere**
+   * colonne, celle de 1fr, et la colonne principale se retrouvait dans les
+   * 360 px. Les deux colonnes etaient inversees, et rien ne l'aurait
+   * signale : la page s'affiche, simplement a l'envers.
+   *
+   * C'est le meme piege que `.detail` evite depuis le 02/10, pour la meme
+   * raison.
+   */
+  .pagegrid__main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /*
+   * La colonne d'action suit le defilement.
+   *
+   * C'est sa raison d'etre : le montant disponible et le bouton de retrait
+   * restent visibles pendant qu'on parcourt l'historique. Sans cela, il faut
+   * remonter en haut pour agir sur ce qu'on vient de lire.
+   *
+   * Le decalage est la hauteur de la barre de navigation, qui colle elle
+   * aussi : sans lui, la colonne se glisse dessous.
+   */
+  .pagegrid__aside {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: calc(60px + var(--espace-5));
+    /* Une colonne laterale plus haute que la fenetre ne peut plus coller :
+       elle doit pouvoir defiler dans la sienne. */
+    max-height: calc(100dvh - 60px - var(--espace-6));
+    overflow-y: auto;
+  }
+
+  /*
+   * La boutique : des vignettes plus larges, pas plus nombreuses.
+   *
+   * A 160 px de minimum, une colonne de 1 120 px en posait sept : les
+   * vignettes devenaient plus etroites que sur un telephone, et la photo du
+   * lot ne se distinguait plus. 220 px en pose quatre ou cinq.
+   */
+  .shopgrid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--espace-5);
+  }
+
+  /*
+   * Les deux pastilles de compte passent sous la boite d'action.
+   *
+   * Elles sont soeurs du bloc central dans le DOM, donc posees a gauche sous
+   * le titre : la colonne de gauche porte la promesse, celle de droite
+   * l'engagement, et « Creer mon compte » appartient a la seconde. Les
+   * laisser a gauche separait le geste de son bouton.
+   */
+  .hero-page__bottom {
+    margin-left: auto;
+  }
+
+  /* Une liste de six actions sur 700 px de large laisse un grand vide au
+     milieu de chaque rangee. En deux colonnes, chaque rangee fait 340 px —
+     la largeur d'une carte, celle pour laquelle ce composant est dessine. */
+  .rows {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--espace-3);
+    align-items: start;
+  }
+
+  /* La rangee d'onglets tient entiere : le fondu de defilement n'a plus rien
+     a annoncer, et il mangerait le premier et le dernier libelle. */
+  .navlinks {
+    mask-image: none;
+  }
+
   /*
    * La discussion passe a deux colonnes : la liste des groupes a gauche,
    * le fil a droite, tous les deux visibles. Sur un telephone on entre dans
@@ -2285,13 +2855,30 @@ h2,
    */
   .chat {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
-    gap: var(--s-5);
-    height: calc(100dvh - 60px - var(--s-7));
+    /* 320 px : la largeur d'une rangee avec sa tuile, un nom de groupe de
+       trente signes et l'heure du dernier message. A 300, le nom se coupait. */
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: var(--espace-5);
+    /* Meme calcul que sur telephone : la fenetre moins la barre et le
+       remplissage de cet ecran, qui passe a `--espace-6` au-dessus de 600 px. */
+    height: calc(100dvh - 60px - var(--espace-6) - var(--espace-5));
+  }
+
+  /* Les deux panneaux reviennent : passer d'un groupe a l'autre en perdant
+     la liste a chaque fois serait une regression. Les regles de `data-ouvert`
+     ne valent donc que sous ce seuil. */
+  .chat:not([data-ouvert='true']) .chat__room,
+  .chat[data-ouvert='true'] .chat__list {
+    display: flex;
   }
 
   .chat__list {
-    padding-right: var(--s-1);
+    padding-right: var(--espace-1);
+  }
+
+  /* La fleche de retour ne menerait nulle part : la liste est deja la. */
+  .chat__back {
+    display: none;
   }
 
   /* La bande de section retrouve ses bords : elle traverse la fenetre, pas

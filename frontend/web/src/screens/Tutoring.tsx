@@ -112,6 +112,11 @@ function CoteFamille() {
         lede="Trois séances par semaine, à l’heure qui vous arrange. Les tarifs affichés sont un point de départ : on négocie toujours avec les parents."
       />
 
+      {/* Les filtres a droite, les offres a gauche : la forme de toutes les
+          places de marche, et pour une raison concrete — on affine en
+          regardant les resultats changer, pas en remontant les chercher. */}
+      <div className="pagegrid">
+        <aside className="pagegrid__aside">
       <div className="card stack">
         <Field label="Quelle matière ?">
           <TextInput
@@ -133,6 +138,9 @@ function CoteFamille() {
         </Field>
       </div>
 
+        </aside>
+
+        <div className="pagegrid__main">
       {offres.loading ? (
         <Skeleton height={120} count={3} />
       ) : offres.error ? (
@@ -155,6 +163,8 @@ function CoteFamille() {
           ))}
         </div>
       )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -180,7 +190,7 @@ function CarteOffre({ offre }: { offre: OffreDomicile }) {
         ) : null}
 
         {offre.city ? (
-          <span className="row faint micro" style={{ gap: 'var(--s-1)' }}>
+          <span className="row faint micro" style={{ gap: 'var(--espace-1)' }}>
             <Icon name="place" size={12} />
             {offre.city}
             {offre.districts.length > 0
@@ -513,7 +523,7 @@ function FormulaireOffre({
   }
 
   return (
-    <form className="card stack" onSubmit={publier}>
+    <form className="card stack form-col" onSubmit={publier}>
       <h3>Nouvelle offre</h3>
 
       <Field label="Matière">

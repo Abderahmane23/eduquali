@@ -110,12 +110,12 @@ export function Schools() {
                   </div>
                   <div
                     className="row small faint"
-                    style={{ gap: 'var(--s-2)' }}
+                    style={{ gap: 'var(--espace-2)' }}
                   >
                     <Icon name="place" size={14} />
                     {school.city}
                   </div>
-                  <div className="row" style={{ gap: 'var(--s-2)' }}>
+                  <div className="row" style={{ gap: 'var(--espace-2)' }}>
                     <Chip>{institutionTypeLabel(school.type)}</Chip>
                   </div>
                   {school.description ? (
@@ -195,10 +195,10 @@ export function SchoolDetail() {
                 <strong>{school.name}</strong>
                 {school.verified ? <Chip tone="success">Vérifié</Chip> : null}
               </div>
-              <div className="row" style={{ gap: 'var(--s-2)' }}>
+              <div className="row" style={{ gap: 'var(--espace-2)' }}>
                 <Chip>{institutionTypeLabel(school.type)}</Chip>
               </div>
-              <div className="row small faint" style={{ gap: 'var(--s-2)' }}>
+              <div className="row small faint" style={{ gap: 'var(--espace-2)' }}>
                 <Icon name="place" size={14} />
                 {school.address
                   ? `${school.address}, ${school.city}`

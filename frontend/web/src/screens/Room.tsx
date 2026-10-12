@@ -598,7 +598,7 @@ export function LiveRoom() {
           </Card>
         ) : null}
 
-        <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+        <div className="row" style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}>
           {role === 'teacher' ? (
             <>
               <Button

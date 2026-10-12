@@ -90,7 +90,7 @@ export function Teachers() {
         {/* Le defaut se voit et se desactive : une liste filtree en silence fait
             croire qu'il n'y a que trois professeurs dans la ville. */}
         {familleOuEtudiant ? (
-          <label className="row" style={{ gap: 'var(--s-2)' }}>
+          <label className="row" style={{ gap: 'var(--espace-2)' }}>
             <input
               type="checkbox"
               checked={domicileSeulement}
@@ -140,7 +140,7 @@ export function Teachers() {
                     </div>
                     <div
                       className="row faint micro"
-                      style={{ gap: 'var(--s-1)' }}
+                      style={{ gap: 'var(--espace-1)' }}
                     >
                       <Icon name="place" size={12} />
                       {profile.city}
@@ -241,7 +241,7 @@ export function TeacherDetail() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <strong>{profile.fullName}</strong>
                 <div className="muted small">{profile.headline}</div>
-                <div className="row faint micro" style={{ gap: 'var(--s-1)' }}>
+                <div className="row faint micro" style={{ gap: 'var(--espace-1)' }}>
                   <Icon name="place" size={12} />
                   {profile.city ?? 'Ville non précisée'}
                 </div>
@@ -251,9 +251,9 @@ export function TeacherDetail() {
             <div
               className="row"
               style={{
-                gap: 'var(--s-2)',
+                gap: 'var(--espace-2)',
                 flexWrap: 'wrap',
-                marginTop: 'var(--s-3)',
+                marginTop: 'var(--espace-3)',
               }}
             >
               <Chip>{experienceLabel(profile.yearsExperience)}</Chip>
@@ -274,7 +274,7 @@ export function TeacherDetail() {
           <section className="stack stack--tight">
             <h2 className="section-title">Vérification</h2>
             {verifies.map((label) => (
-              <div className="row" key={label} style={{ gap: 'var(--s-2)' }}>
+              <div className="row" key={label} style={{ gap: 'var(--espace-2)' }}>
                 <Icon name="check" size={16} />
                 <span className="small">{label}</span>
               </div>
@@ -387,7 +387,7 @@ function TutoringOffers({ teacherId }: { teacherId: string }) {
               ) : null}
             </div>
 
-            <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+            <div className="row" style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}>
               <Chip>{tutoringModeLabel(offre.mode)}</Chip>
               {offre.levels.length > 0 ? (
                 <Chip>{offre.levels.map((l) => l.name).join(' · ')}</Chip>
@@ -398,14 +398,14 @@ function TutoringOffers({ teacherId }: { teacherId: string }) {
                 l'information la plus concrete de la fiche pour une famille de
                 Conakry. */}
             {offre.districts.length > 0 ? (
-              <div className="row small faint" style={{ gap: 'var(--s-2)' }}>
+              <div className="row small faint" style={{ gap: 'var(--espace-2)' }}>
                 <Icon name="place" size={14} />
                 {offre.districts.join(', ')}
               </div>
             ) : null}
 
             {offre.availabilityNote ? (
-              <div className="row small faint" style={{ gap: 'var(--s-2)' }}>
+              <div className="row small faint" style={{ gap: 'var(--espace-2)' }}>
                 <Icon name="clock" size={14} />
                 {offre.availabilityNote}
               </div>

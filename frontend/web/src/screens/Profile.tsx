@@ -79,7 +79,7 @@ function InstitutionProfile() {
                 {mine ? institutionTypeLabel(mine.type) : 'Établissement'}
               </div>
               {mine ? (
-                <div className="row faint micro" style={{ gap: 'var(--s-1)' }}>
+                <div className="row faint micro" style={{ gap: 'var(--espace-1)' }}>
                   <Icon name="place" size={12} />
                   {mine.city}
                 </div>
@@ -184,7 +184,7 @@ function TempsDeCours() {
           ) : null}
 
           {perSubject.length > 0 ? (
-            <div className="row" style={{ gap: 'var(--s-1)', flexWrap: 'wrap' }}>
+            <div className="row" style={{ gap: 'var(--espace-1)', flexWrap: 'wrap' }}>
               {perSubject.map((ligne) => (
                 <Chip key={ligne.subjectName}>
                   {ligne.subjectName} · {dureeLongue(ligne.minutes)}
@@ -256,7 +256,7 @@ function TeacherProfileView() {
           <div>
             <strong>{me.fullName}</strong>
             <div className="muted small">{me.headline}</div>
-            <div className="row faint micro" style={{ gap: 'var(--s-1)' }}>
+            <div className="row faint micro" style={{ gap: 'var(--espace-1)' }}>
               <Icon name="place" size={12} />
               {me.city}
             </div>
@@ -281,7 +281,7 @@ function TeacherProfileView() {
           <h3 className="section-title">Verification</h3>
           {badges.map(([label, done]) => (
             <div className="row small" key={label}>
-              <span style={{ color: done ? 'var(--c-success)' : 'var(--c-ink-faint)' }}>
+              <span style={{ color: done ? 'var(--vert-fonce)' : 'var(--crayon)' }}>
                 <Icon name={done ? 'check' : 'shield'} size={16} />
               </span>
               <span className={done ? '' : 'faint'}>{label}</span>
@@ -379,7 +379,7 @@ export function Applications() {
                 <span className="muted small">
                   {application.job.institution.name}
                 </span>
-                <div className="row" style={{ gap: 'var(--s-2)' }}>
+                <div className="row" style={{ gap: 'var(--espace-2)' }}>
                   <Chip>{applicationStatusLabel(application.status)}</Chip>
                   <span className="faint micro">
                     {relative(application.appliedAt)}

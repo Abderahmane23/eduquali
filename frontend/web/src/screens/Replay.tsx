@@ -99,7 +99,7 @@ export function Replay() {
             {etat.chapters && etat.chapters.length > 0 ? (
               <div className="stack stack--tight">
                 <strong className="small">Reprendre à</strong>
-                <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+                <div className="row" style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}>
                   {etat.chapters.map((chapitre) => (
                     <Button
                       key={chapitre.index}

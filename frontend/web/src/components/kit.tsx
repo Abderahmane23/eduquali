@@ -16,13 +16,42 @@ import { Icon, type IconName } from './ui'
  */
 
 /**
- * Un titre dont un seul mot est mis en avant.
+ * Le surlignage : deux ou trois mots, ceux qu'il faut retenir.
  *
- * Le jaune ne sert qu'à cela : jamais un fond, jamais un statut. C'est le
- * seul procédé qui fasse lire un titre de trois lignes en entier, et il perd
- * tout son effet au deuxième emploi sur la même page.
+ * --- Le premier signe de la marque -------------------------------------
+ *
+ * « Dans un cahier, on surligne ce qu'il faut retenir. » Pour le parent, ce
+ * sont les minutes où son enfant était là ; pour l'élève, sa place ; pour le
+ * professeur, sa part.
+ *
+ * **Un seul passage par phrase, un seul par écran.** Ne pas surligner un
+ * bouton, un titre entier, un paragraphe, un prix : un surlignage partout ne
+ * dit plus rien. C'est la règle qui fait tenir le signe, et c'est aussi la
+ * plus facile à enfreindre sans le voir.
  */
-export function TwoToneTitle({
+export function Surlignage({
+  children,
+  anime,
+}: {
+  children: ReactNode
+  /** Se trace de gauche à droite en 300 ms, quand une preuve s'ouvre. */
+  anime?: boolean
+}) {
+  return (
+    <span className={`surlignage${anime ? ' surlignage--anime' : ''}`}>
+      {children}
+    </span>
+  )
+}
+
+/**
+ * Une affiche : une phrase courte dont un mot est surligné.
+ *
+ * Remplace l'ancien titre à deux tons, qui posait un mot en jaune sur un
+ * dégradé. Même intention — faire lire un titre de trois lignes en entier —
+ * et le geste de la marque à la place de l'effet.
+ */
+export function Affiche({
   before,
   accented,
   after,
@@ -34,12 +63,109 @@ export function TwoToneTitle({
   as?: 'h1' | 'h2' | 'p'
 }) {
   return (
-    <Tag className="two-tone">
+    <Tag className="affiche">
       {before}
-      <em>{accented}</em>
+      <Surlignage>{accented}</Surlignage>
       {after}
     </Tag>
   )
+}
+
+/**
+ * L'annotation du cahier : un mot ou deux.
+ *
+ * « Présent ! », « Vu », « Bravo ». Jamais une phrase, jamais un bouton, une
+ * seule fois par écran. C'est la troisième police, et elle ne sert qu'à ça.
+ */
+export function Annotation({
+  children,
+  rouge,
+}: {
+  children: ReactNode
+  rouge?: boolean
+}) {
+  return (
+    <span className={`annotation${rouge ? ' annotation--rouge' : ''}`}>
+      {children}
+    </span>
+  )
+}
+
+/**
+ * La classe de quinze.
+ *
+ * Quinze places, trois rangs de cinq. Jamais plus, jamais moins — c'est le
+ * nombre que le produit promet, et le dessin le dit avant la phrase.
+ *
+ * `label` n'est pas facultatif : la charte exige une phrase à côté, et un
+ * carré de couleur seul ne dit pas combien de places restent. Elle sert aussi
+ * de description pour qui n'voit pas l'image.
+ */
+export function Quinze({
+  prises,
+  mienne,
+  label,
+  mini,
+}: {
+  /** Combien de places sont prises, de 0 à 15. */
+  prises: number
+  /** Le rang de votre place, de 1 à 15, si vous en avez une. */
+  mienne?: number
+  label: string
+  mini?: boolean
+}) {
+  // Borné : une séance de seize places n'existe pas, et un tableau de seize
+  // carrés casserait les trois rangs de cinq.
+  const n = Math.max(0, Math.min(15, Math.round(prises)))
+
+  return (
+    <div
+      className={`quinze${mini ? ' quinze--mini' : ''}`}
+      role="img"
+      aria-label={label}
+    >
+      {Array.from({ length: 15 }, (_, i) => {
+        const rang = i + 1
+        const classe =
+          rang === mienne ? 'mienne' : rang <= n ? 'prise' : ''
+        return <i key={rang} className={classe} />
+      })}
+    </div>
+  )
+}
+
+/**
+ * Une pastille de statut : une couleur, une forme et **un mot**.
+ *
+ * La couleur seule ne suffit jamais. C'est la règle de la charte, et c'est
+ * aussi celle de l'accessibilité : un écran en plein soleil, un daltonien, un
+ * téléphone en noir et blanc pour économiser la batterie.
+ */
+export function Statut({
+  children,
+  ton = 'attente',
+  icon,
+}: {
+  children: ReactNode
+  ton?: 'ok' | 'ko' | 'attente' | 'point'
+  icon?: IconName
+}) {
+  return (
+    <span className={`statut statut--${ton}`}>
+      {icon ? <Icon name={icon} size={18} /> : null}
+      {children}
+    </span>
+  )
+}
+
+/**
+ * « En direct ».
+ *
+ * Le seul emploi de `rouge` en aplat. S'il est à l'écran, la caméra tourne —
+ * il ne décore jamais.
+ */
+export function EnDirect() {
+  return <span className="en-direct">En direct</span>
 }
 
 /**
@@ -259,6 +385,39 @@ export function Money({ amount, unit = 'GNF' }: { amount: number; unit?: string 
 /** Le même montant, en ligne dans une phrase. */
 export function gnf(amount: number): string {
   return `${amount.toLocaleString('fr-FR')} GNF`
+}
+
+/**
+ * Le même montant, en abrégé : « 1,2 M », « 45 k ».
+ *
+ * --- Pourquoi deux formats ----------------------------------------------
+ *
+ * Une cellule de bandeau fait un tiers de sa largeur. Sur un écran de
+ * 360 px, cela laisse environ 74 px de texte utile — et « 1 200 000 GNF » en
+ * Poppins 22 gras en demande 140. Le chiffre débordait de sa cellule ou se
+ * cassait sur trois lignes.
+ *
+ * Abréger n'est pas une concession à la petite taille : une cellule de
+ * bandeau porte un ordre de grandeur, qu'on lit d'un coup d'œil pour savoir
+ * où l'on en est. Le montant exact a sa place dans `.money`, qui a toute la
+ * largeur, et dans les lignes d'historique, où il doit être vérifiable.
+ *
+ * Une virgule décimale, et une seule : « 1,25 M » demande de compter les
+ * chiffres pour savoir ce qu'on lit.
+ */
+export function gnfCourt(amount: number): string {
+  if (amount >= 1_000_000) {
+    const millions = amount / 1_000_000
+    // Pas de « 1,0 M » : au-dessus de dix millions la décimale n'apporte
+    // plus rien, et en dessous un zéro décimal est du bruit.
+    const texte =
+      millions >= 10 || Number.isInteger(millions)
+        ? String(Math.round(millions))
+        : millions.toFixed(1).replace('.', ',')
+    return `${texte} M`
+  }
+  if (amount >= 10_000) return `${Math.round(amount / 1000)} k`
+  return amount.toLocaleString('fr-FR')
 }
 
 /**

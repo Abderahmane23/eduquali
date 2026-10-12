@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Field, TextInput } from '../components/ui'
-import { BigButton, RowItem, SegmentedToggle, Tile, TwoToneTitle } from '../components/kit'
+import {
+  Affiche,
+  BigButton,
+  RowItem,
+  SegmentedToggle,
+  Tile,
+} from '../components/kit'
 import { useSession } from '../app/session'
 
 /**
@@ -76,14 +82,25 @@ export function Landing() {
 
           <div className="hero-page__middle">
             <div className="stack">
-              <TwoToneTitle
+              {/*
+                La signature de la marque, et la promesse du produit.
+
+                Le titre s'arrête sur « pour » : la phrase se termine dans la
+                boîte juste en dessous, où l'on choisit entre « Cours à
+                domicile » et « Embauche ». Le premier geste devient la fin de
+                la phrase.
+
+                Un seul mot surligné, et c'est « professeur » : c'est lui que
+                le produit promet. « Le professeur est là. »
+              */}
+              <Affiche
                 before="Trouvez le "
                 accented="professeur"
                 after=" qu’il vous faut pour"
               />
               <p
                 className="small"
-                style={{ color: 'var(--c-on-hero-muted)', maxWidth: '44ch' }}
+                style={{ color: 'rgba(255, 255, 255, 0.82)', maxWidth: '44ch' }}
               >
                 Chaque profil est vérifié pièce par pièce : identité, diplôme,
                 puis un test de compétence sur le programme guinéen. Vous voyez
@@ -233,7 +250,7 @@ export function Landing() {
             seulement se lire. */}
         <nav
           className="row centered"
-          style={{ gap: 'var(--s-4)', flexWrap: 'wrap' }}
+          style={{ gap: 'var(--espace-4)', flexWrap: 'wrap' }}
           aria-label="Listes publiques"
         >
           <Link to="/professeurs">Professeurs</Link>

@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { revenus, serveurDisponible, type Retrait } from '../api/server'
-import { Money, PageHead, StatStrip, Tile, gnf } from '../components/kit'
+import {
+  Money,
+  PageHead,
+  StatStrip,
+  Tile,
+  gnf,
+  gnfCourt,
+} from '../components/kit'
 import {
   Banner,
   Button,
@@ -125,10 +132,23 @@ export function Revenue() {
         stats={[
           { value: argent.seats, label: 'places vendues' },
           { value: argent.purchases, label: 'cours achetés' },
-          { value: gnf(argent.paidOut), label: 'déjà versé' },
+          { value: gnfCourt(argent.paidOut), label: 'déjà versé' },
         ]}
       />
 
+      {/*
+        --- Ce que la colonne de droite change ---------------------------
+
+        Le montant disponible et le formulaire de retrait restent visibles
+        pendant qu'on parcourt l'historique. C'est la raison d'etre d'une
+        colonne qui suit le defilement : sans elle, il faut remonter en haut
+        pour agir sur ce qu'on vient de lire.
+
+        Sur un telephone, l'ordre du DOM s'applique — le montant d'abord,
+        parce que c'est la seule chose qu'on vient verifier.
+      */}
+      <div className="pagegrid">
+        <aside className="pagegrid__aside">
       <Card>
         <div className="stack stack--tight">
           <span className="section-title" style={{ marginBottom: 0 }}>
@@ -155,14 +175,17 @@ export function Revenue() {
         </div>
       </Card>
 
+        </aside>
+
+        <div className="pagegrid__main">
       <section className="stack">
         <h2 className="section-title">D’où vient cet argent</h2>
         <StatStrip
           plain
           stats={[
-            { value: gnf(argent.earned.live), label: 'cours en direct' },
-            { value: gnf(argent.earned.videos), label: 'cours vidéo' },
-            { value: gnf(argent.earned.contracts), label: 'contrats' },
+            { value: gnfCourt(argent.earned.live), label: 'cours en direct' },
+            { value: gnfCourt(argent.earned.videos), label: 'cours vidéo' },
+            { value: gnfCourt(argent.earned.contracts), label: 'contrats' },
           ]}
         />
         <p className="faint micro measure">
@@ -192,7 +215,7 @@ export function Revenue() {
             message={`Il faut ${gnf(argent.minimum)} pour qu’un virement vaille sa commission. Continuez : chaque place vendue vous en rapproche.`}
           />
         ) : (
-          <form className="card stack" onSubmit={demander}>
+          <form className="card stack form-col" onSubmit={demander}>
             <Field
               label="Montant"
               hint={`Entre ${gnf(argent.minimum)} et ${gnf(argent.available)}`}
@@ -260,6 +283,8 @@ export function Revenue() {
           ))}
         </section>
       ) : null}
+        </div>
+      </div>
     </div>
   )
 }

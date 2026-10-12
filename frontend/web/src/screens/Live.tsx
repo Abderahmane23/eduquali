@@ -288,13 +288,13 @@ function SessionCard({ seance }: { seance: LiveSession }) {
           <Chip tone="accent">{money(seance.price)}</Chip>
         </div>
 
-        <div className="row" style={{ gap: 'var(--s-2)', flexWrap: 'wrap' }}>
+        <div className="row" style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}>
           <Chip>{seance.subject.name}</Chip>
           <Chip>{seance.level.name}</Chip>
         </div>
 
-        <div className="row small faint" style={{ gap: 'var(--s-3)' }}>
-          <span className="row" style={{ gap: 'var(--s-1)' }}>
+        <div className="row small faint" style={{ gap: 'var(--espace-3)' }}>
+          <span className="row" style={{ gap: 'var(--espace-1)' }}>
             <Icon name="clock" size={14} />
             {timeLabel(new Date(seance.startsAt))}
           </span>
@@ -421,7 +421,7 @@ function EnrolForm({ seance }: { seance: LiveSession }) {
         />
       </Field>
 
-      <div className="row" style={{ gap: 'var(--s-2)' }}>
+      <div className="row" style={{ gap: 'var(--espace-2)' }}>
         <Button block disabled={envoi} onClick={() => reserver('OM')}>
           {envoi && methode === 'OM' ? 'Envoi…' : 'Orange Money'}
         </Button>
