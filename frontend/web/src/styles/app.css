@@ -6,18 +6,47 @@
 
 /* --- Ossature -------------------------------------------------------- */
 
+/*
+ * L'ossature.
+ *
+ * --- Ce qui a changé le 11/10 --------------------------------------------
+ *
+ * Elle était une colonne de 720 px centrée, fond blanc, avec la navigation
+ * collée en bas. Sur un ordinateur, cela donnait une bande étroite au milieu
+ * d'un grand vide blanc : le site ressemblait à une application de téléphone
+ * agrandie, pas à un site.
+ *
+ * Désormais : la barre de navigation traverse toute la largeur, et seul le
+ * *contenu* est contenu dans une colonne. C'est ce que fait n'importe quel
+ * site, et c'est aussi ce qui permet aux grilles de cartes d'avoir enfin la
+ * place de montrer trois cartes au lieu d'une.
+ */
 .shell {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  max-width: 720px;
-  margin: 0 auto;
-  background: var(--c-bg);
+  background: var(--c-surface);
 }
 
 .screen {
   flex: 1;
+  width: 100%;
+  max-width: var(--col);
+  margin: 0 auto;
   padding: var(--s-5) var(--gutter) var(--s-9);
+}
+
+/* Une page de lecture : un formulaire, un article, un fil. Au-delà de 720 px
+ * un champ de saisie devient une ligne qu'on ne suit plus du regard. */
+.screen--narrow {
+  max-width: var(--col-narrow);
+}
+
+/* Une page qui porte son propre fond jusqu'aux bords — l'accueil, la salle.
+ * La colonne et les marges y seraient des bandes claires sur le dégradé. */
+.screen--bleed {
+  max-width: none;
+  padding: 0;
 }
 
 .screen--flush {
@@ -54,10 +83,15 @@
 
 /* --- En-tete --------------------------------------------------------- */
 
+/*
+ * La barre de titre d'une page.
+ *
+ * Elle ne colle plus. Elle etait `sticky; top: 0` — comme la barre de
+ * navigation depuis le 11/10. Deux elements colles a la meme hauteur se
+ * superposent, et sur un telephone c'etait le titre de page qui recouvrait
+ * les onglets. La navigation suit le defilement ; un titre de page, non.
+ */
 .appbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
   display: flex;
   align-items: center;
   gap: var(--s-3);
@@ -469,48 +503,141 @@
   letter-spacing: -0.02em;
 }
 
-/* --- Navigation basse ------------------------------------------------ */
+/* --- Navigation haute -------------------------------------------------
+ *
+ * --- Pourquoi en haut, et en liens -----------------------------------
+ *
+ * Elle était en bas sur téléphone, et remontait en en-tête à 600 px. Deux
+ * mises en page pour une seule barre, et sur téléphone elle mangeait la
+ * hauteur basse de l'écran — celle où se trouvent les boutons d'action des
+ * pages.
+ *
+ * Désormais une seule barre, en haut, en liens texte. Sur un téléphone elle
+ * défile horizontalement : c'est ce que fait une rangée d'onglets dans
+ * l'application, et cela permet d'en porter sept sans que le septième
+ * disparaisse.
+ *
+ * `scroll-snap` sur les liens : un défilement libre laisse un onglet coupé
+ * en deux au bord de l'écran, ce qui se lit comme un défaut d'affichage.
+ */
 
-.tabbar {
+.topbar {
   position: sticky;
-  bottom: 0;
-  display: flex;
-  border-top: 1px solid var(--c-border);
+  top: 0;
+  z-index: 20;
   background: var(--c-bar);
   backdrop-filter: blur(12px);
-  padding-bottom: env(safe-area-inset-bottom);
+  border-bottom: 1px solid var(--c-border);
 }
 
-/* Masquee sous 600 px : la barre du bas n'a que la place de ses onglets. */
-.tabbar__brand {
-  display: none;
+.topbar__inner {
+  width: 100%;
+  max-width: var(--col);
+  margin: 0 auto;
+  display: flex;
   align-items: center;
-  padding: 0 var(--s-3) 0 0;
-  margin-right: var(--s-2);
+  gap: var(--s-4);
+  padding: 0 var(--gutter);
+  min-height: 60px;
+}
+
+.topbar__brand {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
   color: var(--c-accent);
   font-family: var(--font-heading);
-  font-size: 1.125rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.1875rem;
+  font-weight: var(--w-heading);
+  letter-spacing: -0.03em;
   text-decoration: none;
 }
 
-.tabbar__item {
+/*
+ * La rangée de liens.
+ *
+ * `min-width: 0` sur un enfant de flexbox : sans elle, la rangée refuse de
+ * se rétrécir sous la largeur de son contenu et pousse la marque hors de
+ * l'écran au lieu de défiler.
+ */
+.navlinks {
   flex: 1;
+  min-width: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: var(--s-1);
-  padding: var(--s-3) 0;
-  border: 0;
-  background: transparent;
-  font-size: var(--t-micro);
-  font-weight: 500;
-  color: var(--c-ink-faint);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.tabbar__item[aria-current='page'] {
-  color: var(--c-accent);
+.navlinks::-webkit-scrollbar {
+  display: none;
+}
+
+.navlinks__item {
+  flex: none;
+  scroll-snap-align: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  min-height: var(--tap);
+  border-radius: var(--r-pill);
+  border: 0;
+  background: transparent;
+  font-size: var(--t-small);
+  font-weight: var(--w-medium);
+  color: var(--c-ink-muted);
+  white-space: nowrap;
+  transition: background var(--motion-fast) ease, color var(--motion-fast) ease;
+}
+
+.navlinks__item:hover {
+  background: var(--c-neutral-surface);
+  color: var(--c-ink);
+}
+
+/*
+ * L'onglet courant : une pastille teintée, pas seulement une couleur de
+ * texte. L'information n'est jamais portée par la couleur seule (§7) — le
+ * fond, le poids et `aria-current` disent la même chose trois fois.
+ */
+.navlinks__item[aria-current='page'],
+.navlinks__item:has([aria-current='page']) {
+  background: var(--c-accent-soft);
+  color: var(--c-accent-strong);
+  font-weight: var(--w-strong);
+}
+
+/* L'icône ne sert qu'à reconnaître un onglet d'un coup d'œil ; sur un
+ * téléphone, où la place manque, le libellé seul suffit et tient plus
+ * d'onglets à l'écran. */
+.navlinks__item svg {
+  display: none;
+}
+
+/* Le bouton de compte, à droite de la barre et hors du défilement. */
+.topbar__account {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 38px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-pill);
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font-size: var(--t-small);
+  font-weight: var(--w-strong);
+  white-space: nowrap;
+}
+
+.topbar__account--quiet {
+  background: var(--c-neutral-surface);
+  color: var(--c-ink);
 }
 
 /* --- Divers ---------------------------------------------------------- */
@@ -621,40 +748,15 @@
 
 /* --- Preuve sur l'accueil -------------------------------------------- */
 
-.prooflist {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  color: var(--c-ink-muted);
-  font-size: var(--t-small);
-  max-width: var(--measure);
-}
 
-.prooflist li {
-  display: flex;
-  gap: var(--s-3);
-  align-items: flex-start;
-}
+
+
 
 /* La puce ne porte aucune information : elle est decorative et masquee
    aux lecteurs d'ecran par `aria-hidden` via ::before. */
-.prooflist li::before {
-  content: '';
-  flex: none;
-  width: 6px;
-  height: 6px;
-  margin-top: 0.55em;
-  border-radius: var(--r-pill);
-  background: var(--c-accent);
-}
 
-.prooflist strong {
-  color: var(--c-ink);
-  font-weight: 600;
-}
+
+
 
 .block-link {
   display: block;
@@ -679,7 +781,7 @@
 .chip:focus-visible,
 .choice:focus-visible,
 .plan:focus-visible,
-.tabbar__item:focus-visible,
+.navlinks__item:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible {
   outline: none;
@@ -720,8 +822,8 @@ a:focus-visible,
   border: 0;
 }
 
-/* Les cibles tactiles du pied de page restent atteignables au pouce. */
-.tabbar__item {
+/* Les onglets restent atteignables au pouce. */
+.navlinks__item {
   min-height: var(--tap);
 }
 
@@ -938,16 +1040,7 @@ a:focus-visible,
 
 /* La boite de premiere action, qui chevauche l'en-tete : la page commence
  * par ce qu'on peut faire. */
-.action-card {
-  background: var(--c-bg);
-  border-radius: 16px;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 36, 0.04),
-    0 4px 12px rgba(15, 23, 36, 0.08);
-  padding: var(--s-5);
-  margin-top: calc(-1 * var(--s-6));
-  position: relative;
-}
+
 
 /* La mise en garde des donnees de demonstration. Au-dessus de tout, lisible,
  * et sans bouton pour la fermer : elle doit rester vraie tant que le serveur
@@ -1216,11 +1309,7 @@ a:focus-visible,
   margin-top: var(--s-3);
 }
 
-.doors {
-  display: grid;
-  gap: var(--s-3);
-  margin-top: var(--s-6);
-}
+
 
 .door {
   display: flex;
@@ -1305,65 +1394,738 @@ h2,
  * largeur : voir la requete `(pointer: fine)` plus bas.
  */
 
-/* --- A partir de 600 px : la navigation remonte ----------------------- */
+/* ===========================================================================
+ * Les composants repris de l'application (11/10)
+ * ===========================================================================
+ *
+ * Le site et l'application avaient la même palette depuis le 24/09 et deux
+ * vocabulaires de formes différents : des cartes à bordure fine ici, des
+ * tuiles d'icônes teintées et des bandeaux de chiffres là-bas. Une personne
+ * qui passe de l'un à l'autre reconnaissait la couleur et rien d'autre.
+ *
+ * Ce qui suit vient des trois maquettes de référence et des écrans Flutter :
+ * en-tête en dégradé, feuille blanche posée dessus, tuiles d'icônes,
+ * bandeau de stats, bascule segmentée, pastilles.
+ */
+
+/* --- La page en dégradé : l'accueil ------------------------------------
+ *
+ * L'accueil du téléphone occupe tout l'écran d'un seul bleu
+ * (`landing_screen.dart`). Le site posait un bloc bleu dans une page
+ * blanche, et le bas de page restait vide — le fond gris coupait la page à
+ * une hauteur qui ne correspondait à rien.
+ */
+
+.hero-page {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--hero-gradient);
+  color: #fff;
+  padding: var(--s-4) var(--gutter) var(--s-6);
+}
+
+.hero-page__inner {
+  width: 100%;
+  max-width: var(--col);
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.hero-page__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-height: 44px;
+}
+
+.hero-page__brand {
+  font-family: var(--font-heading);
+  font-size: 1.375rem;
+  font-weight: var(--w-heading);
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+/*
+ * Le centre de la page : le titre et la boîte d'action, centrés dans ce qui
+ * reste. C'est la seule chose à faire ici, donc rien ne la concurrence.
+ */
+.hero-page__middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-5);
+  padding-block: var(--s-5);
+}
+
+/* Une pastille posée sur le dégradé : du blanc transparent, pas une teinte
+ * fixe — ainsi elle suit le dégradé au lieu de le trancher. */
+.pill-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-on-hero-border);
+  background: var(--c-on-hero-surface);
+  color: #fff;
+  font-size: var(--t-small);
+  font-weight: var(--w-strong);
+  white-space: nowrap;
+}
+
+.pill-ghost:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/*
+ * Le titre à deux tons.
+ *
+ * Un seul mot en jaune, et rien d'autre : jamais un fond, jamais un statut.
+ * C'est le seul procédé qui fasse lire un titre de trois lignes en entier.
+ */
+.two-tone {
+  font-family: var(--font-heading);
+  font-size: var(--t-hero);
+  font-weight: var(--w-heading);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-hero);
+  color: #fff;
+  margin: 0;
+  max-width: 24ch;
+}
+
+.two-tone em {
+  color: var(--c-highlight);
+  font-style: normal;
+}
+
+/* Les deux portes du compte, posées sur le bleu.
+ *
+ * Le plein est blanc, le contour est blanc : sur ce bleu, les deux passent
+ * 8:1. Un bouton teinté dans le bleu de la page se lirait comme un élément
+ * de décor, et personne ne saurait qu'il se clique. */
+.pill-row {
+  display: flex;
+  gap: var(--s-3);
+}
+
+.pill-row > * {
+  flex: 1;
+}
+
+.pill-solid,
+.pill-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-body);
+  font-weight: var(--w-strong);
+}
+
+.pill-solid {
+  background: #fff;
+  color: var(--c-hero-start);
+  border: 0;
+}
+
+.pill-outline {
+  background: transparent;
+  color: #fff;
+  border: 1.6px solid #fff;
+}
+
+.pill-outline:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* --- La feuille blanche posée sur le dégradé --------------------------- */
+
+.sheet {
+  background: var(--c-bg);
+  border-radius: var(--r-xl);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  /* La boîte de recherche ne prend pas toute la largeur sur un grand écran :
+   * un champ de 900 px pour y taper « maths » se lit comme une erreur de
+   * mise en page. */
+  width: 100%;
+  max-width: 560px;
+}
+
+/* --- La bascule segmentée ---------------------------------------------
+ *
+ * « Cours à domicile » / « Embauche ». Les deux cherchent des professeurs,
+ * mais pas pour la même chose : une famille cherche quelqu'un qui se déplace
+ * le soir, une école cherche quelqu'un à recruter. Mélanger les deux listes
+ * donnait des résultats que ni l'un ni l'autre ne pouvait utiliser.
+ */
+.segmented {
+  display: flex;
+  gap: var(--s-1);
+  padding: var(--s-1);
+  border-radius: var(--r-pill);
+  background: var(--c-neutral-surface);
+}
+
+.segmented__item {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--c-ink-muted);
+  font-size: var(--t-small);
+  font-weight: var(--w-medium);
+  transition: background var(--motion-fast) ease, color var(--motion-fast) ease;
+}
+
+.segmented__item[aria-pressed='true'] {
+  background: var(--c-bg);
+  color: var(--c-accent-strong);
+  font-weight: var(--w-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- Le bouton d'action majeur ----------------------------------------
+ *
+ * Celui que l'application pose en haut du tableau de bord d'un professeur.
+ * Pleine largeur, pastille, majuscules espacées : il n'y en a qu'un par page
+ * et c'est ce qui lui donne son poids.
+ */
+.bigbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 0 var(--s-5);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font-size: var(--t-small);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-md);
+  transition: background var(--motion-fast) ease;
+}
+
+.bigbtn:hover:not(:disabled) {
+  background: var(--c-accent-strong);
+}
+
+.bigbtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* --- L'en-tête d'une page connectée -----------------------------------
+ *
+ * Dégradé, titre, sous-titre, et un bandeau de chiffres posé dessus. C'est
+ * la forme de tous les tableaux de bord de l'application, et elle sert à
+ * dire en un écran « voici où vous en êtes » avant « voici quoi faire ».
+ */
+.pagehead {
+  background: var(--hero-gradient);
+  color: #fff;
+  border-radius: var(--r-xl);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.pagehead__title {
+  font-family: var(--font-heading);
+  font-size: var(--t-display);
+  font-weight: var(--w-heading);
+  letter-spacing: var(--ls-hero);
+  line-height: var(--lh-tight);
+  margin: 0;
+  color: #fff;
+}
+
+.pagehead__lede {
+  color: var(--c-on-hero-muted);
+  font-size: var(--t-small);
+  margin: 0;
+  max-width: 52ch;
+}
+
+/*
+ * Le bandeau de chiffres.
+ *
+ * Trois à quatre mesures, séparées par un filet et non par des cartes : des
+ * cartes feraient quatre objets à comparer, alors qu'il s'agit d'une seule
+ * ligne de lecture.
+ */
+.statstrip {
+  display: flex;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-on-hero-border);
+  background: var(--c-on-hero-surface);
+  overflow: hidden;
+}
+
+.statstrip__cell {
+  flex: 1;
+  padding: var(--s-3) var(--s-2);
+  text-align: center;
+  min-width: 0;
+}
+
+.statstrip__cell + .statstrip__cell {
+  border-left: 1px solid var(--c-on-hero-border);
+}
+
+.statstrip__value {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 1.375rem;
+  font-weight: var(--w-heading);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.statstrip__label {
+  display: block;
+  margin-top: var(--s-1);
+  font-size: var(--t-micro);
+  color: var(--c-on-hero-muted);
+}
+
+/* La même bande, posée sur du blanc plutôt que sur le dégradé. */
+.statstrip--plain {
+  border-color: var(--c-border);
+  background: var(--c-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.statstrip--plain .statstrip__cell + .statstrip__cell {
+  border-left-color: var(--c-border);
+}
+
+.statstrip--plain .statstrip__label {
+  color: var(--c-ink-faint);
+}
+
+/* --- La tuile d'icône teintée -----------------------------------------
+ *
+ * Un carré de couleur très claire portant une icône de la couleur pleine.
+ * Elle remplace la puce ronde : sur une liste de six actions, la tuile donne
+ * un point d'accroche que l'œil retrouve, là où six lignes de texte se
+ * lisent une par une.
+ */
+.tile {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  background: var(--c-accent-soft);
+  color: var(--c-accent-strong);
+}
+
+.tile--success {
+  background: var(--c-success-soft);
+  color: var(--c-success);
+}
+.tile--warning {
+  background: var(--c-warning-soft);
+  color: var(--c-warning);
+}
+.tile--danger {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}
+.tile--neutral {
+  background: var(--c-neutral-surface);
+  color: var(--c-ink-muted);
+}
+
+/* --- La rangée d'action : tuile, texte, chevron ------------------------ */
+
+.rowitem {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-bg);
+  text-align: left;
+  color: inherit;
+  transition: border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+.rowitem:hover {
+  border-color: var(--c-border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.rowitem__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowitem__title {
+  display: block;
+  font-weight: var(--w-medium);
+  /* Un nom long ne doit pas repousser le chevron hors de la carte. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowitem__sub {
+  display: block;
+  font-size: var(--t-small);
+  color: var(--c-ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowitem__end {
+  flex: none;
+  color: var(--c-ink-faint);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* --- Un montant --------------------------------------------------------
+ *
+ * Les grands nombres en Poppins 800 et en chiffres de même chasse : un
+ * montant qui change de largeur en passant de 900 000 à 1 000 000 donne
+ * l'impression que la page saute.
+ */
+.money {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 1.5rem + 2.5vw, 2.75rem);
+  font-weight: var(--w-heading);
+  letter-spacing: var(--ls-hero);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.money__unit {
+  font-size: 0.45em;
+  font-weight: var(--w-strong);
+  letter-spacing: 0.04em;
+  margin-left: 0.25em;
+  color: var(--c-ink-faint);
+}
+
+/* --- La bande de section ----------------------------------------------
+ *
+ * Bleu très pâle, pleine largeur. Elle alterne avec le blanc pour découper
+ * une page longue sans tracer une seule ligne de séparation.
+ */
+.band {
+  background: var(--c-band-soft);
+  padding-block: var(--s-6);
+  margin-inline: calc(-1 * var(--gutter));
+  padding-inline: var(--gutter);
+}
+
+/* --- La discussion ----------------------------------------------------
+ *
+ * Deux colonnes sur un ordinateur — la liste des groupes, le fil — et une
+ * seule sur un téléphone, où l'on entre dans un fil et l'on en sort. C'est
+ * la forme de Discord, et elle tient parce qu'un fil se lit par le bas.
+ */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  /* La hauteur de la fenêtre moins la barre de navigation : un fil qui
+   * déborde la page fait défiler la page entière, et l'on perd le champ de
+   * saisie. */
+  height: calc(100dvh - 60px - var(--s-9));
+  min-height: 420px;
+}
+
+.chat__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  overflow-y: auto;
+}
+
+.chat__room {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-bg);
+  overflow: hidden;
+}
+
+.chat__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.chat__thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.chat__compose {
+  flex: none;
+  display: flex;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.chat__compose .field__input {
+  flex: 1;
+}
+
+/*
+ * Une bulle.
+ *
+ * `max-width: 78%` : une bulle pleine largeur ne se distingue plus d'un
+ * paragraphe, et l'on ne voit plus de quel côté elle vient. Les coins : trois
+ * arrondis et un angle vif du côté de l'auteur — c'est ce qui dit qui parle
+ * sans écrire son nom à chaque ligne.
+ */
+.bubble {
+  max-width: 78%;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-lg);
+  background: var(--c-neutral-surface);
+  color: var(--c-ink);
+  align-self: flex-start;
+  border-bottom-left-radius: var(--s-1);
+  /* Un message collé sans espace doit garder ses retours à la ligne. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bubble--mine {
+  align-self: flex-end;
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  border-bottom-left-radius: var(--r-lg);
+  border-bottom-right-radius: var(--s-1);
+}
+
+.bubble__author {
+  display: block;
+  font-size: var(--t-micro);
+  font-weight: var(--w-strong);
+  color: var(--c-accent-strong);
+  margin-bottom: var(--s-1);
+}
+
+.bubble__time {
+  display: block;
+  font-size: var(--t-micro);
+  color: var(--c-ink-faint);
+  margin-top: var(--s-1);
+}
+
+.bubble--mine .bubble__time {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* --- Le dépôt d'un fichier -------------------------------------------- */
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-6) var(--s-4);
+  border: 1.5px dashed var(--c-border-strong);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  text-align: center;
+  color: var(--c-ink-muted);
+  width: 100%;
+  transition: border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease;
+}
+
+.dropzone:hover,
+.dropzone[data-over='true'] {
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
+}
+
+/* --- La grille de la boutique ----------------------------------------- */
+
+.shopgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--s-4);
+}
+
+.shopitem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-bg);
+  text-align: left;
+  color: inherit;
+  box-shadow: var(--shadow-sm);
+}
+
+/*
+ * L'image d'un lot.
+ *
+ * `aspect-ratio` et `object-fit: contain` : les visuels des lots sont des
+ * photos de produit sur fond clair, de proportions inégales. En `cover`, un
+ * sac de riz se faisait couper en deux.
+ */
+.shopitem__visual {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  overflow: hidden;
+}
+
+.shopitem__visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.shopitem__name {
+  font-size: var(--t-small);
+  font-weight: var(--w-medium);
+  line-height: var(--lh-snug);
+}
+
+.shopitem__cost {
+  font-family: var(--font-heading);
+  font-weight: var(--w-heading);
+  color: var(--c-accent-strong);
+}
+
+/* --- Les étapes d'un formulaire long ---------------------------------- */
+
+.steps {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.steps::-webkit-scrollbar {
+  display: none;
+}
+
+.steps__item {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-pill);
+  background: var(--c-neutral-surface);
+  color: var(--c-ink-faint);
+  font-size: var(--t-micro);
+  font-weight: var(--w-medium);
+  white-space: nowrap;
+}
+
+.steps__item[data-state='current'] {
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font-weight: var(--w-strong);
+}
+
+.steps__item[data-state='done'] {
+  background: var(--c-success-soft);
+  color: var(--c-success);
+}
+
+/* --- L'assistant ------------------------------------------------------ */
+
+.suggests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+/*
+ * Une réponse du modèle.
+ *
+ * Elle arrive en texte brut avec des retours à la ligne, et c'est tout ce
+ * qu'on en fait : `white-space: pre-wrap`. Interpréter du Markdown
+ * demanderait d'exécuter le rendu d'un texte venu d'un modèle, donc
+ * d'assainir ce qu'il produit — une surface d'attaque pour un gain
+ * d'affichage.
+ */
+.aireply {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: var(--measure);
+}
+
+/* --- A partir de 600 px : il y a la place d'en montrer plus ----------- */
 
 @media (min-width: 600px) {
-  :root {
-    --gutter: 40px;
-    --t-display: 2.5rem;
+  /*
+   * Les icônes des onglets apparaissent ici seulement.
+   *
+   * Sur un téléphone, le libellé seul tient plus d'onglets à l'écran et
+   * l'icône ne servait qu'à les élargir. Dès qu'il y a la place, elle aide à
+   * reconnaître une destination sans la lire — et le libellé reste, donc
+   * rien n'est porté par l'icône seule (§7).
+   */
+  .navlinks__item svg {
+    display: block;
   }
 
-  /* La barre d'onglets devient un en-tete. Meme composant, meme DOM, meme
-     liste de liens : seule la mise en page change. Dupliquer la navigation
-     en JSX aurait donne deux choses a tenir a jour, et l'une des deux aurait
-     fini par mentir. */
-  .tabbar {
-    order: -1;
-    position: sticky;
-    top: 0;
-    bottom: auto;
-    /* Au-dessus de `.appbar`, qui porte deja un z-index : sans cela le titre
-       de la page passerait devant la navigation au defilement. */
-    z-index: 20;
+  .navlinks {
     gap: var(--s-2);
-    padding: var(--s-3) var(--gutter);
-    border-top: 0;
-    border-bottom: 1px solid var(--c-border);
-  }
-
-  .tabbar__item {
-    flex: none;
-    flex-direction: row;
-    gap: var(--s-2);
-    padding: var(--s-2) var(--s-3);
-    border-radius: var(--r-md);
-    font-size: var(--t-small);
-  }
-
-  .tabbar__item:hover {
-    background: var(--c-surface);
-  }
-
-  .tabbar__item[aria-current='page'],
-  .tabbar__item:has([aria-current='page']) {
-    background: var(--c-accent-soft);
-  }
-
-  /* La marque n'apparait qu'ici : en bas d'un telephone, la barre n'a pas la
-     place, et un en-tete sans nom de produit se lit comme une page inachevee. */
-  .tabbar__brand {
-    display: flex;
-  }
-
-  /* Le dernier lien — le compte — part a droite, comme sur tout site ou l'on
-     se connecte. */
-  .tabbar__item:last-child {
-    margin-left: auto;
-  }
-
-  /* Le bas de page n'a plus de barre a eviter. */
-  .screen {
-    padding-bottom: var(--s-7);
+    /* Plus besoin de défiler : les sept onglets tiennent. */
+    overflow-x: visible;
   }
 
   /* Le titre de page cesse de coller en haut. Deux elements colles a `top: 0`
@@ -1396,19 +2158,6 @@ h2,
     padding: var(--s-8) var(--s-6);
   }
 
-  .doors {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  /* La boite de recherche cesse de prendre toute la largeur : un champ de
-     900 px de long pour y taper « maths » se lit comme une erreur de mise en
-     page. */
-  .action-card,
-  .doors {
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 640px;
-  }
 }
 
 /* --- A partir de 1024 px : l'ordinateur ------------------------------- */
@@ -1418,13 +2167,10 @@ h2,
     --gutter: 56px;
   }
 
-  /* Le cadre cesse d'etre un telephone centre sur du blanc. 1 240 px est la
-     largeur ou trois cartes de 300 px tiennent avec leurs gouttieres ; au-dela,
-     une quatrieme colonne rendrait les cartes trop etroites pour leur contenu. */
-  .shell {
-    max-width: 1240px;
-  }
-
+  /* La colonne de contenu : 1 120 px, soit trois cartes de 300 px avec leurs
+     gouttieres et les marges. L'ossature, elle, ne borne plus rien — la barre
+     de navigation et les bandes de section traversent toute la largeur, comme
+     sur un site. */
   .screen {
     padding-top: var(--s-6);
   }
@@ -1468,61 +2214,92 @@ h2,
 
 /* --- L'accueil sur un ordinateur -------------------------------------- */
 /*
- * Deux colonnes : la promesse a gauche, l'action a droite. C'est la forme
- * qu'ont toutes les places de marche, et pour une raison qui n'est pas la
- * mode : sur un ecran large, un titre centre puis un champ de recherche centre
- * se lisent l'un apres l'autre, en deux temps, alors qu'ils disent la meme
- * chose au meme moment.
+ * Deux colonnes : la promesse a gauche, la boite d'action a droite. C'est la
+ * forme qu'ont toutes les places de marche, et pour une raison qui n'est pas
+ * la mode : sur un ecran large, un titre centre puis un champ de recherche
+ * centre se lisent l'un apres l'autre, en deux temps, alors qu'ils disent la
+ * meme chose au meme moment.
+ *
+ * Le degrade, lui, ne change pas : il tient toute la page sur les deux
+ * tailles. C'est ce que fait `landing_screen.dart`, et c'est ce qui manquait
+ * au site — un bloc bleu dans une page blanche laissait un bas de page vide
+ * qui ne disait rien.
  */
 
 @media (min-width: 1024px) {
-  /* La promesse et l'action sont soeurs dans le DOM, pas imbriquees : c'est la
-     racine de la page qui les place cote a cote. Deplacer la carte a
-     l'interieur du degrade aurait touche l'accueil du telephone, qui
-     fonctionne — et le telephone est le marche reel. */
-  .landing {
+  .hero-page__middle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
     align-items: center;
     column-gap: var(--s-8);
+  }
+
+  .two-tone {
+    /* 3,25 rem : la borne haute de `--t-hero` sert aux en-tetes de page, qui
+       vivent dans une colonne ; ici le titre a la moitie d'un grand ecran. */
+    font-size: clamp(2.5rem, 1.8rem + 2.4vw, 3.5rem);
+  }
+
+  .hero-page__bottom {
+    max-width: 480px;
+  }
+
+  /* Les deux portes du compte se rangent sous la boite d'action, a droite :
+     c'est la colonne de l'engagement, et la colonne de gauche ne porte que
+     la promesse. */
+  .hero-page {
+    padding-bottom: var(--s-8);
+  }
+}
+
+/* --- Les composants de l'application, elargis ------------------------- */
+
+@media (min-width: 1024px) {
+  /* L'en-tete d'une page connectee : le titre et les chiffres cote a cote
+     plutot qu'empiles. Le bandeau n'a pas besoin de toute la largeur, et un
+     titre suivi de quatre nombres sur une ligne se lit d'un regard. */
+  .pagehead {
+    padding: var(--s-6);
+  }
+
+  .pagehead--split {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    align-items: center;
+    column-gap: var(--s-6);
   }
 
-  .landing > .hero {
-    grid-column: 1;
-    grid-row: 1;
-    /* Deborde a gauche seulement : le degrade touche le bord de l'ecran d'un
-       cote et s'arrete net de l'autre, la ou commence la colonne d'action. Le
-       coin arrondi dit que l'arret est voulu. */
-    border-radius: 0 var(--r-lg) var(--r-lg) 0;
-    margin-inline: calc(-1 * var(--gutter)) 0;
-    padding: var(--s-9) var(--s-8);
+  /* Un bouton d'action majeur cesse de prendre toute la largeur : a 1 100 px
+     de long, une pastille ne se lit plus comme un bouton. */
+  .bigbtn {
+    width: auto;
+    align-self: flex-start;
+    min-width: 320px;
   }
 
-  .landing > .action-card {
-    grid-column: 2;
-    grid-row: 1;
-    /* Plus de chevauchement : cote a cote, ce decalage desaligne les deux
-       colonnes au lieu de lier deux blocs empiles. */
-    margin-top: 0;
-    max-width: none;
+  /*
+   * La discussion passe a deux colonnes : la liste des groupes a gauche,
+   * le fil a droite, tous les deux visibles. Sur un telephone on entre dans
+   * un fil et l'on en sort ; sur un ordinateur, passer d'un groupe a l'autre
+   * en perdant la liste a chaque fois serait une regression.
+   */
+  .chat {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: var(--s-5);
+    height: calc(100dvh - 60px - var(--s-7));
   }
 
-  /* Tout le reste passe sous les deux colonnes : les portes de profil, les
-     liens publics et l'invite de connexion concernent autant l'une que
-     l'autre. */
-  .landing > .doors,
-  .landing > nav,
-  .landing > p {
-    grid-column: 1 / -1;
-    max-width: none;
+  .chat__list {
+    padding-right: var(--s-1);
   }
 
-  .hero__title {
-    font-size: 3rem;
-  }
-
-  .hero__lede {
-    max-width: 38ch;
+  /* La bande de section retrouve ses bords : elle traverse la fenetre, pas
+     seulement la colonne de contenu. `100vw` et non `100%` — la colonne est
+     centree, donc le decalage se calcule depuis son milieu. */
+  .band {
+    margin-inline: calc(50% - 50vw);
+    padding-inline: calc(50vw - 50% + var(--gutter));
   }
 }
 
@@ -1560,7 +2337,7 @@ h2,
  */
 
 @media (pointer: fine) {
-  .tabbar__item {
+  .navlinks__item {
     min-height: 36px;
   }
 }

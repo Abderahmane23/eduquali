@@ -81,6 +81,45 @@ const TestRunner = lazy(() =>
   import('./screens/Tests').then((m) => ({ default: m.TestRunner })),
 )
 
+/*
+ * Les ecrans ouverts le 11/10. Tous charges a la demande, comme les autres :
+ * sur un reseau 3G, ce que l'on ne telecharge pas est la seule optimisation
+ * qui compte vraiment.
+ */
+const Dashboard = lazy(() =>
+  import('./screens/Dashboard').then((m) => ({ default: m.Dashboard })),
+)
+const Messages = lazy(() =>
+  import('./screens/Messages').then((m) => ({ default: m.Messages })),
+)
+const Roster = lazy(() =>
+  import('./screens/Roster').then((m) => ({ default: m.Roster })),
+)
+const Dossier = lazy(() =>
+  import('./screens/Dossier').then((m) => ({ default: m.Dossier })),
+)
+const Revenue = lazy(() =>
+  import('./screens/Revenue').then((m) => ({ default: m.Revenue })),
+)
+const Tutoring = lazy(() =>
+  import('./screens/Tutoring').then((m) => ({ default: m.Tutoring })),
+)
+const Assistant = lazy(() =>
+  import('./screens/Assistant').then((m) => ({ default: m.Assistant })),
+)
+const Shop = lazy(() =>
+  import('./screens/Shop').then((m) => ({ default: m.Shop })),
+)
+const MesCours = lazy(() =>
+  import('./screens/CourseStudio').then((m) => ({ default: m.MesCours })),
+)
+const NouveauCours = lazy(() =>
+  import('./screens/CourseStudio').then((m) => ({ default: m.NouveauCours })),
+)
+const ContenuCours = lazy(() =>
+  import('./screens/CourseStudio').then((m) => ({ default: m.ContenuCours })),
+)
+
 /** Ossature de l'application et routage. */
 export default function App() {
   const { session, ready } = useSession()
@@ -97,6 +136,12 @@ export default function App() {
       <a className="skip-link" href="#contenu">
         Aller au contenu
       </a>
+
+      {/* La barre est le premier element de la page, dans le DOM comme a
+          l'ecran. Elle etait derniere et remontait par `order: -1` : l'ordre
+          de tabulation ne suivait donc pas l'ordre visuel, et un visiteur au
+          clavier traversait toute la page avant d'atteindre la navigation. */}
+      {isFlow ? null : <TopBar />}
 
       {/*
         La mise en garde vit dans l'ossature, et non sur l'accueil seul.
@@ -128,7 +173,20 @@ export default function App() {
             <Routes>
               <Route
                 path="/"
-                element={session ? <Navigate to="/offres" replace /> : <Landing />}
+                element={
+                  session ? (
+                    // Un professeur arrivait sur `/offres` — un tableau
+                    // d'offres d'emploi. Son tableau de bord existe depuis le
+                    // 11/10 ; les autres roles gardent leur premiere liste
+                    // utile, parce qu'ils n'en ont pas.
+                    <Navigate
+                      to={session.role === 'TEACHER' ? '/tableau' : '/professeurs'}
+                      replace
+                    />
+                  ) : (
+                    <Landing />
+                  )
+                }
               />
               {/* Publique : on regarde avant d'ouvrir un compte. Une
                   session ouverte peut la parcourir aussi — elle a les
@@ -209,15 +267,57 @@ export default function App() {
               <Route path="/tests/:id" element={<Guard><TestRunner /></Guard>} />
               <Route path="/profil" element={<Guard><Profile /></Guard>} />
 
+              {/*
+                Les neuf ecrans ouverts le 11/10.
+
+                `/domicile` est publique : une famille cherche un repetiteur
+                avant d'ouvrir un compte, exactement comme elle parcourt la
+                liste des professeurs. Les autres sont gardees — elles ne
+                montrent que ce qui appartient au compte.
+              */}
+              <Route path="/domicile" element={<Tutoring />} />
+
+              <Route path="/tableau" element={<Guard><Dashboard /></Guard>} />
+              <Route path="/messages" element={<Guard><Messages /></Guard>} />
+              <Route path="/messages/:id" element={<Guard><Messages /></Guard>} />
+              <Route
+                path="/direct/:id/inscrits"
+                element={<Guard><Roster /></Guard>}
+              />
+              <Route
+                path="/profil/dossier"
+                element={<Guard><Dossier /></Guard>}
+              />
+              <Route path="/revenus" element={<Guard><Revenue /></Guard>} />
+              <Route path="/assistant" element={<Guard><Assistant /></Guard>} />
+              <Route path="/boutique" element={<Guard><Shop /></Guard>} />
+
+              {/*
+                `/cours/nouveau` coexiste avec `/cours/:id` sans ordre a
+                respecter : React Router classe les routes par specificite, et
+                un segment fixe l'emporte sur un segment variable. L'ecrire
+                ici parce que la regle n'est pas celle de la v5, ou le premier
+                chemin qui correspondait gagnait — et ou « nouveau » aurait
+                ete lu comme un identifiant de cours.
+              */}
+              <Route
+                path="/cours/mes-cours"
+                element={<Guard><MesCours /></Guard>}
+              />
+              <Route
+                path="/cours/nouveau"
+                element={<Guard><NouveauCours /></Guard>}
+              />
+              <Route
+                path="/cours/:id/contenu"
+                element={<Guard><ContenuCours /></Guard>}
+              />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>
       </main>
-
-      {/* Un visiteur a maintenant des pages a parcourir : sans barre, il
-          atterrit sur une liste et n'a aucun moyen d'aller voir l'autre. */}
-      {isFlow ? null : <TabBar />}
     </div>
   )
 }
@@ -359,33 +459,54 @@ function SignupRoute({ presetRole }: { presetRole?: Role }) {
 }
 
 
+/*
+ * Les onglets, par rôle.
+ *
+ * --- Ce qui a changé le 11/10 --------------------------------------------
+ *
+ * Un professeur arrivait sur `/offres` — un tableau d'offres d'emploi — et
+ * n'avait aucun onglet vers ses propres cours, ses messages, ses revenus ou
+ * son dossier. Sept de ces destinations n'existaient pas ; les trois
+ * dernières existaient côté serveur et aucun écran ne les appelait.
+ *
+ * L'ordre n'est pas alphabétique : il suit la journée d'un professeur. Son
+ * tableau de bord, ses élèves, ses messages, puis ce qui se gère plus
+ * rarement — le dossier, les revenus.
+ */
 const TABS_BY_ROLE = {
   TEACHER: [
+    { to: '/tableau', label: 'Tableau', icon: 'gauge' as const },
     { to: '/direct', label: 'Direct', icon: 'clock' as const },
+    { to: '/domicile', label: 'À domicile', icon: 'pin' as const },
+    { to: '/messages', label: 'Messages', icon: 'chat' as const },
+    { to: '/assistant', label: 'Assistant', icon: 'sparkle' as const },
     { to: '/offres', label: 'Offres', icon: 'briefcase' as const },
-    { to: '/candidatures', label: 'Candidatures', icon: 'clipboard' as const },
-    { to: '/tests', label: 'Tests', icon: 'check' as const },
-    { to: '/profil', label: 'Profil', icon: 'user' as const },
+    { to: '/revenus', label: 'Revenus', icon: 'wallet' as const },
   ],
   INSTITUTION: [
     { to: '/offres', label: 'Offres', icon: 'briefcase' as const },
+    { to: '/professeurs', label: 'Professeurs', icon: 'user' as const },
     { to: '/candidatures', label: 'Candidatures', icon: 'clipboard' as const },
-    { to: '/profil', label: 'Profil', icon: 'user' as const },
+    { to: '/messages', label: 'Messages', icon: 'chat' as const },
   ],
   PARENT: [
-    { to: '/etablissements', label: 'Écoles', icon: 'home' as const },
     { to: '/professeurs', label: 'Professeurs', icon: 'user' as const },
+    { to: '/domicile', label: 'À domicile', icon: 'pin' as const },
+    { to: '/direct', label: 'Direct', icon: 'clock' as const },
     { to: '/cours', label: 'Cours', icon: 'play' as const },
-    { to: '/profil', label: 'Profil', icon: 'user' as const },
+    { to: '/messages', label: 'Messages', icon: 'chat' as const },
+    { to: '/boutique', label: 'Boutique', icon: 'gift' as const },
   ],
   // Un etudiant majeur voit la meme chose qu'une famille : c'est le meme
   // besoin, et c'est deja le choix fait cote mobile. Des onglets a lui
   // couteraient un second jeu d'ecrans a tenir sans rien ajouter.
   STUDENT: [
-    { to: '/etablissements', label: 'Écoles', icon: 'home' as const },
     { to: '/professeurs', label: 'Professeurs', icon: 'user' as const },
+    { to: '/domicile', label: 'À domicile', icon: 'pin' as const },
+    { to: '/direct', label: 'Direct', icon: 'clock' as const },
     { to: '/cours', label: 'Cours', icon: 'play' as const },
-    { to: '/profil', label: 'Profil', icon: 'user' as const },
+    { to: '/assistant', label: 'Assistant', icon: 'sparkle' as const },
+    { to: '/boutique', label: 'Boutique', icon: 'gift' as const },
   ],
   ADMIN: [{ to: '/profil', label: 'Profil', icon: 'user' as const }],
 }
@@ -393,55 +514,84 @@ const TABS_BY_ROLE = {
 /**
  * Ce qu'un visiteur peut parcourir.
  *
- * Les trois listes publiques, puis la porte d'entree. « Se connecter » en
- * dernier et non en premier : on regarde d'abord, on ouvre un compte quand on
- * a trouve une raison.
+ * Les listes publiques, et rien de plus : la porte d'entree vit dans le
+ * bouton de compte, a droite de la barre, et non au bout des onglets. On
+ * regarde d'abord, on ouvre un compte quand on a trouve une raison.
  */
 const PUBLIC_TABS = [
-  { to: '/direct', label: 'Direct', icon: 'clock' as const },
   { to: '/professeurs', label: 'Professeurs', icon: 'user' as const },
+  { to: '/domicile', label: 'À domicile', icon: 'pin' as const },
+  { to: '/direct', label: 'Direct', icon: 'clock' as const },
   { to: '/cours', label: 'Cours', icon: 'play' as const },
-  { to: '/connexion', label: 'Compte', icon: 'user' as const },
+  { to: '/etablissements', label: 'Écoles', icon: 'home' as const },
 ]
 
-function TabBar() {
+/**
+ * La barre de navigation.
+ *
+ * --- Pourquoi en haut, et en liens ---------------------------------------
+ *
+ * Elle était en bas sur téléphone et remontait en en-tête à 600 px : deux
+ * mises en page pour une seule barre, et sur téléphone elle occupait la
+ * hauteur basse de l'écran — celle où se trouvent les boutons d'action des
+ * pages, et celle que le pouce atteint.
+ *
+ * Désormais une seule barre, en haut, en liens texte, qui défile
+ * horizontalement sur un écran étroit. C'est ce que fait une rangée d'onglets
+ * dans l'application, et cela permet d'en porter sept sans que le septième
+ * disparaisse.
+ *
+ * Le bouton de compte est hors du défilement, à droite : il doit rester
+ * atteignable même quand les onglets ont débordé.
+ */
+function TopBar() {
   const { session } = useSession()
   const tabs = session
     ? (TABS_BY_ROLE[session.role] ?? TABS_BY_ROLE.TEACHER)
     : PUBLIC_TABS
 
   return (
-    <nav className="tabbar" aria-label="Navigation principale">
-      {/*
-        La marque n'est visible qu'a partir de 600 px, ou la barre devient un
-        en-tete : en bas d'un telephone il n'y a pas la place, et un en-tete
-        d'ordinateur sans nom de produit se lit comme une page inachevee.
-        Masquee en CSS et non retiree du DOM — le lien vers l'accueil reste
-        atteignable au clavier et par un lecteur d'ecran.
-      */}
-      <Link to="/" className="tabbar__brand">
-        Eduquali
-      </Link>
+    <header className="topbar">
+      <div className="topbar__inner">
+        <Link to="/" className="topbar__brand">
+          Eduquali
+        </Link>
 
-      {tabs.map((tab) => (
-        <NavLink
-          key={tab.to}
-          to={tab.to}
-          className="tabbar__item"
-          aria-label={tab.label}
-        >
-          {({ isActive }) => (
-            <>
-              {/* L'icone double le libelle : jamais d'information portee par
-                  la seule icone ni par la seule couleur (§7). */}
-              <Icon name={tab.icon} size={22} />
-              <span aria-current={isActive ? 'page' : undefined}>
-                {tab.label}
-              </span>
-            </>
-          )}
-        </NavLink>
-      ))}
-    </nav>
+        <nav className="navlinks" aria-label="Navigation principale">
+          {tabs.map((tab) => (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              className="navlinks__item"
+              aria-label={tab.label}
+            >
+              {({ isActive }) => (
+                <>
+                  {/* L'icone double le libelle : jamais d'information portee
+                      par la seule icone ni par la seule couleur (§7). Elle
+                      n'apparait qu'a partir de 600 px, ou il y a la place. */}
+                  <Icon name={tab.icon} size={18} />
+                  <span aria-current={isActive ? 'page' : undefined}>
+                    {tab.label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+
+        {session ? (
+          <Link to="/profil" className="topbar__account topbar__account--quiet">
+            <Icon name="user" size={18} />
+            <span className="sr-only">Mon profil</span>
+          </Link>
+        ) : (
+          <Link to="/connexion" className="topbar__account">
+            Se connecter
+          </Link>
+        )}
+      </div>
+    </header>
   )
 }
+

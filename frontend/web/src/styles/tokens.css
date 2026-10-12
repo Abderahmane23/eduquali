@@ -1,81 +1,149 @@
 /*
- * Jetons de design partages avec l'application mobile.
+ * Jetons de design, alignés sur l'application mobile.
  *
- * Deux regles gouvernent cette feuille :
+ * La source est `frontend/mobile/lib/core/theme/app_colors.dart` et
+ * `presentation/theme/app_theme.dart`. Les valeurs sont recopiées, pas
+ * réinterprétées : une personne qui commence sur son téléphone et finit sur
+ * un ordinateur doit reconnaître le même produit, pas deux cousins.
+ *
+ * Deux règles gouvernent cette feuille :
  *  - grille de 4 px : toute mesure est un multiple de 4, ce qui donne un
- *    rythme previsible d'un ecran a l'autre ;
- *  - espace negatif genereux : les marges sont environ 50 % plus larges
+ *    rythme prévisible d'un écran à l'autre ;
+ *  - espace négatif généreux : les marges sont environ 50 % plus larges
  *    qu'un gabarit standard. L'espace est ce qui distingue une interface
- *    professionnelle d'une interface encombree.
+ *    professionnelle d'une interface encombrée.
  *
- * Une seule couleur d'accent, employee avec parcimonie (§54).
+ * Une seule couleur d'accent, employée avec parcimonie (§54).
  */
 
 :root {
   /* --- Couleur -------------------------------------------------------
    *
-   * Alignee sur l'application mobile le 24/09. Meme violet, meme encre,
-   * meme fond : une personne qui commence sur son telephone et finit sur un
-   * ordinateur doit reconnaitre le meme produit, pas deux cousins.
+   * Bleu #1E40AF, tiré du marine du logo et plus saturé. 8,72:1 sur blanc,
+   * et le blanc posé dessus tient le même rapport — un bouton plein n'a pas
+   * besoin d'une seconde teinte pour son libellé.
    */
   --c-accent: #1e40af;
   --c-accent-strong: #1e3a8a;
+  --c-accent-light: #3b82f6;
   --c-accent-soft: #dbeafe;
-  /* Encre posee sur l'accent : suit l'accent, jamais un blanc en dur. */
+  --c-accent-soft-strong: #bfdbfe;
+  /* Encre posée sur l'accent : suit l'accent, jamais un blanc en dur. */
   --c-on-accent: #ffffff;
 
-  /* Le degrade des en-tetes, comme sur mobile. */
+  /* Le dégradé des en-têtes, du haut-gauche au bas-droit.
+   *
+   * Deux pas seulement, et proches : un dégradé qui traverse la roue des
+   * teintes attire l'œil sur le fond, alors que l'en-tête est là pour
+   * porter un titre. */
   --c-hero-start: #1e40af;
   --c-hero-end: #1d4ed8;
+  --hero-gradient: linear-gradient(
+    135deg,
+    var(--c-hero-start),
+    var(--c-hero-end)
+  );
+
+  /* Les surfaces posées *sur* le dégradé : panneau de chiffres, champ de
+   * recherche, pastilles d'action. Du blanc transparent, pas une teinte
+   * fixe — ainsi elles suivent le dégradé au lieu de le trancher. */
   --c-on-hero-surface: rgba(255, 255, 255, 0.15);
   --c-on-hero-border: rgba(255, 255, 255, 0.2);
   --c-on-hero-muted: rgba(255, 255, 255, 0.8);
 
   /* Le mot mis en avant dans un titre, et rien d'autre : jamais un fond,
    * jamais un statut. 5,70:1 sur le bleu principal, 4,37:1 au bout clair du
-   * degrade — au-dessus du plancher de 3:1 des grands titres, le seul
-   * endroit ou il sert. */
+   * dégradé — au-dessus du plancher de 3:1 des grands titres, le seul
+   * endroit où il sert. En corps de texte sur le dégradé il ne passerait
+   * pas, et employé comme surface il redeviendrait illisible dès qu'on
+   * poserait du texte dessus. */
   --c-highlight: #facc15;
 
-  /* La seconde surface sombre, et la bande de section. */
+  /* La seconde surface sombre : cartes marine posées sur du blanc. C'est le
+   * marine du logo. Il marque une section sans la teinter en bleu vif, qui
+   * se disputerait avec les boutons. */
   --c-surface-dark: #0f1e4d;
+
+  /* La bande de section, bleu très pâle. Elle alterne avec le blanc pour
+   * découper une page longue sans tracer une seule ligne de séparation. */
   --c-band-soft: #eff4ff;
 
+  /* Le fond des cartes est d'un blanc franc, celui des écrans légèrement
+   * lavande : c'est cet écart — 1,084:1 — qui détache une carte sans son
+   * trait de bordure. Une bordure d'un pixel disparaît en plein soleil,
+   * précisément là où ce produit sert. */
   --c-bg: #ffffff;
   --c-surface: #f6f5fb;
+  --c-neutral-surface: #f1f1f5;
+
+  /* Bordure visible : 1,3:1 ne se voyait pas en plein soleil. */
   --c-border: #d5d5e2;
   --c-border-strong: #d3d3e0;
 
+  /* #0F1724 : 16,6:1 sur le fond de page. Un noir bleuté plutôt qu'un noir
+   * pur, qui vibre sur un écran OLED. */
   --c-ink: #0f1724;
+  /* 5,9:1 sur blanc — au-dessus du plancher AA de 4,5:1. */
   --c-ink-muted: #4a4a5e;
+  /* Assombri deux fois : à #8E8EA3 il valait 3,1:1, puis le fond fumé l'a
+   * ramené à 4,45:1. Assombrir le texte plutôt qu'éclaircir le fond préserve
+   * le relief qu'on venait de gagner. */
   --c-ink-faint: #656579;
 
-  /* Memes etats que sur mobile. */
+  /* Mêmes états que sur mobile, usage parcimonieux. */
   --c-success: #16a34a;
   --c-success-soft: #e8f7ee;
   --c-warning: #d97706;
   --c-warning-soft: #fef3e2;
   --c-danger: #dc2626;
   --c-danger-soft: #fdecec;
+  --c-info: #2563eb;
+  --c-info-soft: #e8f0fe;
 
   /* --- Typographie ---------------------------------------------------- */
-  /* Une seule famille : Inter, dessinee pour les ecrans, x-height haute. */
+  /* Inter pour le corps : dessinée pour les écrans, hauteur d'x haute. */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
 
-  /* Poppins pour les titres seulement, comme sur mobile : sa geometrie ronde
-   * porte un grand titre, sa hauteur d'x plus courte la dessert en petit. */
+  /* Poppins pour les titres seulement, comme sur mobile : sa géométrie ronde
+   * porte un grand titre, sa hauteur d'x plus courte la dessert en petit.
+   * Le seuil est 20 px des deux côtés. */
   --font-heading: 'Poppins', var(--font-sans);
 
-  --t-display: 2rem;
-  --t-title: 1.5rem;
-  --t-heading: 1.125rem;
+  /* --- L'échelle, fluide -----------------------------------------------
+   *
+   * Elle était fixe, et plate : 32 px de titre en 700 sur un téléphone comme
+   * sur un écran de 27 pouces, alors que le mobile monte à 36 px en 800. Un
+   * titre qui ne pèse pas plus que son sous-titre ne fait pas de hiérarchie,
+   * il fait deux paragraphes.
+   *
+   * `clamp()` plutôt que trois points de rupture : la taille suit la largeur
+   * de façon continue, et le texte ne saute pas d'un pas entier quand on
+   * redimensionne une fenêtre. Le premier terme est la valeur du téléphone,
+   * le dernier celle de l'ordinateur, et aucun des deux n'est franchi.
+   */
+  --t-hero: clamp(1.75rem, 1.35rem + 2.2vw, 2.75rem);
+  --t-display: clamp(1.625rem, 1.35rem + 1.4vw, 2.25rem);
+  --t-title: clamp(1.375rem, 1.25rem + 0.6vw, 1.625rem);
+  --t-heading: 1.1875rem;
   --t-body: 1.0625rem;
   --t-small: 0.9375rem;
   --t-micro: 0.8125rem;
 
-  --lh-tight: 1.2;
+  /* Les graisses, nommées : un titre en 800 et un sous-titre en 400 est ce
+   * qui fait lire un titre de trois lignes en entier. */
+  --w-heading: 800;
+  --w-strong: 700;
+  --w-medium: 600;
+
+  --lh-tight: 1.14;
+  --lh-snug: 1.3;
   --lh-body: 1.55;
+
+  /* Resserrement optique des grands corps : à 36 px, l'espacement par
+   * défaut d'Inter fait flotter les mots. */
+  --ls-hero: -0.03em;
+  --ls-title: -0.02em;
 
   /* --- Espacement (grille de 4 px) ------------------------------------ */
   --s-1: 4px;
@@ -88,35 +156,51 @@
   --s-8: 64px;
   --s-9: 96px;
 
-  /* Marge exterieure de l'ecran — large, volontairement. */
-  --gutter: 24px;
+  /* Marge extérieure de l'écran. 20 px sur téléphone — la valeur de
+   * `AppSpacing.page` côté Flutter — et plus large dès qu'il y a la place. */
+  --gutter: clamp(20px, 2.5vw, 40px);
 
-  /* Largeur maximale d'un paragraphe. Au-dela de ~70 caracteres, l'oeil perd
-   * la ligne en revenant a la marge gauche : c'est la raison pour laquelle un
-   * ecran large doit porter PLUS de cartes, et non des phrases plus longues. */
-  --measure: 68ch;
+  /* Largeur maximale d'un paragraphe. Au-delà de ~70 caractères, l'œil perd
+   * la ligne en revenant à la marge gauche : c'est la raison pour laquelle un
+   * écran large doit porter PLUS de cartes, et non des phrases plus longues.
+   *
+   * Une seule déclaration. Il y en avait deux — 68ch puis 62ch — et seule la
+   * seconde agissait : la première se lisait comme la règle en vigueur. */
+  --measure: 64ch;
+
+  /* La colonne de contenu. Le téléphone n'en voit rien ; sur un ordinateur
+   * c'est elle qui empêche une liste de cartes de s'étirer sur 2 000 px. */
+  --col: 1120px;
+  --col-narrow: 720px;
 
   /* --- Rayons et ombres ----------------------------------------------- */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
+  --r-xl: 20px;
   --r-pill: 999px;
 
-  /* Ombres discretes : la hierarchie vient de l'espace, pas du relief. */
-  --shadow-sm: 0 1px 2px rgba(22, 22, 29, 0.07);
-  --shadow-md: 0 2px 10px rgba(22, 22, 29, 0.08);
-
-  /* Longueur de ligne confortable : 50 a 75 caracteres. */
-  --measure: 62ch;
+  /* Les ombres, en deux couches, comme sur mobile.
+   *
+   * Une seule couche large donne un halo flou qui grise le fond sans poser
+   * l'élément. Deux couches — une courte et dense au contact, une longue et
+   * diffuse dessous — donnent une vraie assise : c'est ainsi que la lumière
+   * se comporte. */
+  --shadow-sm:
+    0 1px 2px rgba(26, 26, 46, 0.04), 0 4px 12px rgba(26, 26, 46, 0.08);
+  --shadow-md:
+    0 1px 3px rgba(26, 26, 46, 0.06), 0 6px 18px rgba(26, 26, 46, 0.12);
+  --shadow-lg:
+    0 2px 6px rgba(26, 26, 46, 0.08), 0 16px 40px rgba(26, 26, 46, 0.14);
 
   --tap: 44px;
 
-  /* Surfaces translucides des barres fixes. Declarees ici et non en dur dans
+  /* Surfaces translucides des barres fixes. Déclarées ici et non en dur dans
      app.css, sinon le mode sombre laisse deux bandes blanches. */
   --c-bar: rgba(255, 255, 255, 0.92);
   --c-bar-fade: rgba(255, 255, 255, 0);
 
-  /* Anneau de focus : meme jeton partout, visible sur toutes les surfaces. */
+  /* Anneau de focus : même jeton partout, visible sur toutes les surfaces. */
   --focus-ring: 0 0 0 2px var(--c-bg), 0 0 0 4px var(--c-accent);
 
   --motion-fast: 150ms;
@@ -126,30 +210,61 @@
 /*
  * Mode sombre (§12 du design_skill).
  *
- * Suit le reglage systeme par defaut ; `data-theme` sur <html> permet a un
- * futur selecteur manuel de primer dans les deux sens. Aucune couleur n'est
- * definie uniquement ici : ce bloc ne fait que redefinir des jetons deja
- * poses sur `:root`.
+ * --- Ce qui a changé le 11/10 ---------------------------------------------
+ *
+ * Il redéfinissait l'accent en violet #9D86FF — un reste de l'époque où
+ * l'application était violette, avant l'alignement du 24/09. Et il ne
+ * redéfinissait **ni le dégradé d'en-tête, ni la couleur de mise en avant, ni
+ * la bande de section** : le haut de page restait bleu pendant que les
+ * boutons passaient au violet, deux teintes qui n'ont jamais été d'accord.
+ * Une page sombre affichait donc une marque que la page claire ne montrait
+ * nulle part.
+ *
+ * Ce bloc est désormais le même bleu, éclairci pour tenir le contraste sur
+ * fond sombre, et il redéfinit **tout** ce qui porte la couleur. Aucune
+ * teinte n'est inventée ici : chaque valeur est un pas plus clair de la même
+ * rampe.
+ *
+ * Suit le réglage système ; `data-theme` sur <html> permet à un futur
+ * sélecteur manuel de primer dans les deux sens.
  *
  * Ni noir pur ni blanc pur : #101014 et #ECECF2 gardent un contraste
- * confortable sans halo sur un ecran OLED.
+ * confortable sans halo sur un écran OLED.
  */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --c-accent: #9d86ff;
-    --c-accent-strong: #b3a2ff;
-    --c-accent-soft: #241d3d;
-    /* L'accent clair du mode sombre demande une encre foncee. */
-    --c-on-accent: #17111f;
+    /* #93B4FD : 8,1:1 sur #101014. L'accent clair d'un mode sombre demande
+       une encre foncée par-dessus, et non du blanc. */
+    --c-accent: #93b4fd;
+    --c-accent-strong: #bed3fe;
+    --c-accent-light: #60a5fa;
+    --c-accent-soft: #15223f;
+    --c-accent-soft-strong: #1b2d52;
+    --c-on-accent: #0b1220;
+
+    /* Le dégradé reste du bleu, assombri : sur une page sombre, le bleu vif
+       du mode clair brûle. Les mêmes deux pas, proches. */
+    --c-hero-start: #16275c;
+    --c-hero-end: #1b3372;
+    --c-on-hero-surface: rgba(255, 255, 255, 0.1);
+    --c-on-hero-border: rgba(255, 255, 255, 0.16);
+    --c-on-hero-muted: rgba(255, 255, 255, 0.76);
+
+    /* Le jaune de mise en avant tient 11:1 sur ce dégradé : il reste. */
+    --c-highlight: #facc15;
+
+    --c-surface-dark: #0a1230;
+    --c-band-soft: #141a28;
 
     --c-bg: #101014;
     --c-surface: #17171d;
+    --c-neutral-surface: #1d1d25;
     --c-border: #26262f;
     --c-border-strong: #3a3a46;
 
     --c-ink: #ececf2;
     --c-ink-muted: #a5a5b4;
-    --c-ink-faint: #7c7c8c;
+    --c-ink-faint: #8a8a9a;
 
     --c-success: #4ad08b;
     --c-success-soft: #102a1e;
@@ -157,29 +272,53 @@
     --c-warning-soft: #2c2113;
     --c-danger: #ff7b87;
     --c-danger-soft: #2e1418;
+    --c-info: #7eacff;
+    --c-info-soft: #131d33;
 
     --c-bar: rgba(16, 16, 20, 0.92);
     --c-bar-fade: rgba(16, 16, 20, 0);
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    /* Sur fond sombre une ombre ne se voit pas : elle doit être plus dense,
+       sinon la carte flotte sans assise. */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.6), 0 18px 48px rgba(0, 0, 0, 0.55);
   }
 }
 
+/*
+ * Le choix manuel. Dupliqué et non partagé par une liste de sélecteurs :
+ * `:root:not([data-theme='light'])` ne vaut que dans la requête média, et un
+ * sélecteur groupé invalide ferait tomber le bloc entier chez un navigateur
+ * qui ne comprend pas l'un des deux.
+ */
 :root[data-theme='dark'] {
-  --c-accent: #9d86ff;
-  --c-accent-strong: #b3a2ff;
-  --c-accent-soft: #241d3d;
-  --c-on-accent: #17111f;
+  --c-accent: #93b4fd;
+  --c-accent-strong: #bed3fe;
+  --c-accent-light: #60a5fa;
+  --c-accent-soft: #15223f;
+  --c-accent-soft-strong: #1b2d52;
+  --c-on-accent: #0b1220;
+
+  --c-hero-start: #16275c;
+  --c-hero-end: #1b3372;
+  --c-on-hero-surface: rgba(255, 255, 255, 0.1);
+  --c-on-hero-border: rgba(255, 255, 255, 0.16);
+  --c-on-hero-muted: rgba(255, 255, 255, 0.76);
+
+  --c-highlight: #facc15;
+  --c-surface-dark: #0a1230;
+  --c-band-soft: #141a28;
 
   --c-bg: #101014;
   --c-surface: #17171d;
+  --c-neutral-surface: #1d1d25;
   --c-border: #26262f;
   --c-border-strong: #3a3a46;
 
   --c-ink: #ececf2;
   --c-ink-muted: #a5a5b4;
-  --c-ink-faint: #7c7c8c;
+  --c-ink-faint: #8a8a9a;
 
   --c-success: #4ad08b;
   --c-success-soft: #102a1e;
@@ -187,14 +326,20 @@
   --c-warning-soft: #2c2113;
   --c-danger: #ff7b87;
   --c-danger-soft: #2e1418;
+  --c-info: #7eacff;
+  --c-info-soft: #131d33;
 
   --c-bar: rgba(16, 16, 20, 0.92);
   --c-bar-fade: rgba(16, 16, 20, 0);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.6), 0 18px 48px rgba(0, 0, 0, 0.55);
 }
 
-/* Les points de rupture vivent dans `app.css`, dans une seule section a la
- * fin du fichier. Trois valeurs differentes — 600 cote Flutter, 640 ici, 720
- * dans `app.css` — disaient la meme chose et se contredisaient : le fond bleu
+/* Les points de rupture vivent dans `app.css`, dans une seule section à la
+ * fin du fichier. Trois valeurs différentes — 600 côté Flutter, 640 ici, 720
+ * dans `app.css` — disaient la même chose et se contredisaient : le fond bleu
  * de l'accueil ne touchait plus les bords entre 640 et 720. */
 
 * {
@@ -202,7 +347,7 @@
 }
 
 html {
-  /* Cases a cocher, ascenseurs et selects natifs suivent le theme. */
+  /* Cases à cocher, ascenseurs et selects natifs suivent le thème. */
   color-scheme: light dark;
 }
 
@@ -218,10 +363,10 @@ body {
   font-size: var(--t-body);
   line-height: var(--lh-body);
   color: var(--c-ink);
-  background: var(--c-bg);
+  background: var(--c-surface);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* Chiffres de meme chasse : les scores et montants ne sautent pas. */
+  /* Chiffres de même chasse : les scores et montants ne sautent pas. */
   font-variant-numeric: tabular-nums;
 }
 
@@ -233,12 +378,20 @@ figure {
   margin: 0;
 }
 
+/* Poppins au-dessus de 20 px seulement, comme sur mobile. `h3` vaut 19 px et
+ * reste donc sur Inter : c'est le seuil, pas une inattention. */
 h1,
-h2,
-h3 {
+h2 {
+  font-family: var(--font-heading);
   line-height: var(--lh-tight);
-  letter-spacing: -0.02em;
-  font-weight: 700;
+  letter-spacing: var(--ls-title);
+  font-weight: var(--w-heading);
+}
+
+h3 {
+  line-height: var(--lh-snug);
+  letter-spacing: -0.01em;
+  font-weight: var(--w-strong);
 }
 
 h1 {

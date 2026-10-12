@@ -2,14 +2,14 @@
 -- Eduquali — schema complet pour un projet Supabase NEUF
 -- =====================================================================
 --
--- Genere le 2026-10-04 par `node backend/scripts/build-schema-file.mjs`.
+-- Genere le 2026-10-11 par `node backend/scripts/build-schema-file.mjs`.
 -- NE PAS MODIFIER CE FICHIER : il est reecrit a chaque appel du script. La
 -- verite vit dans `backend/supabase/migrations/`, que deux controles
 -- verifient (`npm run check` dans `backend/`).
 --
 -- --- Ce qu'il fait ----------------------------------------------------------
 --
--- Les 27 migrations, dans l'ordre. Certaines defont ce que les
+-- Les 31 migrations, dans l'ordre. Certaines defont ce que les
 -- precedentes ont fait — la 0008 retire le systeme de credits que la 0006
 -- avait pose. C'est voulu : rejouer l'histoire donne exactement l'etat que les
 -- deux controles valident, alors qu'un schema « nettoye » serait une version
@@ -4787,6 +4787,686 @@ comment on function est_membre_groupe(text, uuid) is
 comment on table chat_messages is
   'Conserves, contrairement au fil d''une seance en direct qui est ephemere : '
   'c''est ici que vit la question posee le soir sur l''exercice 3.';
+
+
+-- ---------------------------------------------------------------------
+-- 0028_public_teacher_read_fix.sql
+-- ---------------------------------------------------------------------
+
+-- La fiche publique d'un professeur etait invisible a tout le monde (06/10).
+--
+-- --- Le symptome ----------------------------------------------------------
+--
+-- Le site deploye affichait « aucun professeur » partout. Mesure sur la base
+-- en service :
+--
+--   teachers                    cle de service : 30   cle publique : 0
+--   profiles                    cle de service : 30   cle publique : 0
+--   public_teacher_identities   cle de service : 30   cle publique : 30
+--   profils suspendus : 0
+--
+-- Trente professeurs, aucun suspendu, et la vue des identites les rend tous
+-- les trente. Seule la table `teachers` etait vide pour le navigateur.
+--
+-- --- La cause -------------------------------------------------------------
+--
+-- La politique posee en 0009 verifiait le compte en ligne :
+--
+--   create policy "enseignant : fiche publique" on teachers
+--     for select using (
+--       exists (select 1 from profiles p
+--                where p.id = teachers.user_id and not p.suspended)
+--     );
+--
+-- Une sous-requete dans une politique subit **les politiques de la table
+-- qu'elle lit**. `profiles` est ferme a la cle publique — a dessein, il porte
+-- les numeros de telephone — donc ce `exists` ne trouvait jamais rien et
+-- rendait faux pour chaque ligne. La politique se fermait sur elle-meme.
+--
+-- Rien ne l'avait signale : `check:supabase` verifie qu'une table existe et
+-- qu'une ecriture est refusee, pas qu'une lecture autorisee aboutit. Une
+-- politique trop stricte ne leve rien — elle rend zero ligne, ce qui se lit
+-- comme une base vide.
+--
+-- --- La correction --------------------------------------------------------
+--
+-- Le depot avait deja la bonne forme a cote : `current_role_is` (0002) est une
+-- fonction `security definer`, justement pour lire `profiles` sans heriter de
+-- ses politiques. La politique de 0009 avait inline la sous-requete au lieu de
+-- passer par une fonction. On ajoute donc l'equivalent.
+
+/*
+ * Ce compte existe-t-il et n'est-il pas suspendu ?
+ *
+ * `security definer` : la fonction lit `profiles` avec les droits de son
+ * proprietaire, donc sans etre filtree par les politiques de `profiles`. Elle
+ * ne rend qu'un booleen — rien de ce qu'elle a lu ne sort.
+ *
+ * `stable` plutot que `volatile` : Postgres peut alors l'evaluer une fois par
+ * ligne au lieu d'une fois par reference, ce qui compte sur une liste de
+ * trente fiches.
+ */
+create or replace function compte_actif(qui uuid) returns boolean
+  language sql
+  stable
+  security definer
+  set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from profiles p where p.id = qui and not p.suspended
+  );
+$$;
+
+comment on function compte_actif(uuid) is
+  'Lit profiles sans heriter de ses politiques. Une politique qui fait '
+  '« exists (select ... from profiles) » en ligne se ferme sur elle-meme : '
+  'profiles est clos a la cle publique, donc le test ne trouve jamais rien.';
+
+-- La politique, reecrite sur la fonction. Le comportement voulu est inchange :
+-- un professeur dont le compte est suspendu reste invisible.
+drop policy if exists "enseignant : fiche publique" on teachers;
+
+create policy "enseignant : fiche publique" on teachers
+  for select using (compte_actif(user_id));
+
+
+-- ---------------------------------------------------------------------
+-- 0029_competences_sync.sql
+-- ---------------------------------------------------------------------
+
+-- Les competences d'un professeur remontent enfin (06/10).
+--
+-- --- Le defaut -------------------------------------------------------------
+--
+-- `teacher_subjects` et `teacher_levels` sont des **ensembles**. Le geste du
+-- professeur est « voila mes matieres » : cela veut dire en ajouter, et aussi
+-- retirer celles qu'il a decochees.
+--
+-- La synchronisation generique (`planWrite`) ecrit **une ligne** a partir
+-- d'une charge utile dont les cles sont des noms de colonnes. Le client, lui,
+-- poussait `{subjectIds: [...]}` sous l'entite `teacher_subjects`, dont les
+-- colonnes autorisees sont `teacher_id` et `subject_id`. Aucune cle ne
+-- correspondait : la charge etait videe, puis refusee avec « Aucune colonne
+-- reconnue ». Et son `entityId` etait l'identifiant du **professeur**, pas
+-- celui d'une ligne — l'upsert aurait de toute facon ecrit n'importe quoi.
+--
+-- Les matieres d'un professeur restaient donc sur son telephone. Comme
+-- `offersInSubjects` rend une liste vide sans matiere declaree, son onglet
+-- d'offres etait vide cote serveur, avec un message lui demandant de saisir ce
+-- qu'il avait deja saisi.
+--
+-- --- Pourquoi une fonction, et non deux instructions ----------------------
+--
+-- Remplacer, c'est supprimer puis reinserer. Fait en deux appels, il existe un
+-- instant ou le professeur n'a **aucune** matiere : visible par les autres, et
+-- introuvable dans toute recherche. Si le reseau tombe entre les deux, cet
+-- instant devient definitif.
+--
+-- Les deux vivent donc dans une seule instruction, et c'est Postgres qui
+-- garantit le tout ou rien.
+
+/*
+ * Remplace les matieres et niveaux declares d'un professeur.
+ *
+ * `declaration` est un tableau JSON :
+ *
+ *   [{"subject_id": "sub_math", "level_ids": ["lvl_12", "lvl_t"]}, ...]
+ *
+ * Cette forme-la et pas une liste plate de matieres : `teacher_levels` est
+ * clee par (professeur, matiere, niveau), donc les niveaux se declarent **par
+ * matiere**. Un professeur enseigne les maths en Terminale et l'anglais en
+ * 6eme ; une liste plate ne sait pas le dire.
+ *
+ * `security definer` : la fonction ecrit dans deux tables dont les politiques
+ * n'autorisent pas un client a supprimer les lignes d'un autre. Elle verifie
+ * donc elle-meme que le professeur est bien celui du jeton — c'est l'appelant
+ * (`/teacher/competences`) qui le resout, et il n'accepte que `auth.uid()`.
+ */
+create or replace function remplacer_competences(
+  prof text,
+  declaration jsonb
+) returns void
+  language plpgsql
+  security definer
+  set search_path = public, pg_temp
+as $$
+declare
+  matieres text[];
+begin
+  if prof is null then
+    raise exception 'professeur absent';
+  end if;
+
+  select coalesce(array_agg(d->>'subject_id'), '{}')
+    into matieres
+    from jsonb_array_elements(coalesce(declaration, '[]'::jsonb)) as d;
+
+  -- Les niveaux d'abord : ils referencent la matiere, et une matiere retiree
+  -- doit emporter ses niveaux.
+  delete from teacher_levels where teacher_id = prof;
+  delete from teacher_subjects
+   where teacher_id = prof
+     and subject_id <> all (matieres);
+
+  insert into teacher_subjects (teacher_id, subject_id)
+  select prof, d->>'subject_id'
+    from jsonb_array_elements(coalesce(declaration, '[]'::jsonb)) as d
+  on conflict (teacher_id, subject_id) do nothing;
+
+  insert into teacher_levels (teacher_id, subject_id, level_id)
+  select prof, d->>'subject_id', n
+    from jsonb_array_elements(coalesce(declaration, '[]'::jsonb)) as d,
+         jsonb_array_elements_text(coalesce(d->'level_ids', '[]'::jsonb)) as n
+  on conflict (teacher_id, subject_id, level_id) do nothing;
+end;
+$$;
+
+comment on function remplacer_competences(text, jsonb) is
+  'Remplace l''ensemble des matieres et niveaux d''un professeur en une '
+  'instruction. En deux appels, il existerait un instant sans aucune matiere '
+  '— et une coupure reseau le rendrait definitif.';
+
+-- La cle publique n'appelle pas cette fonction : elle passe par
+-- `/teacher/competences`, qui resout le professeur depuis le jeton. Lui ouvrir
+-- l'execution laisserait un client remplacer les competences d'un autre, le
+-- `prof` etant un simple argument.
+revoke all on function remplacer_competences(text, jsonb) from public;
+revoke all on function remplacer_competences(text, jsonb) from anon;
+revoke all on function remplacer_competences(text, jsonb) from authenticated;
+
+
+-- ---------------------------------------------------------------------
+-- 0030_promotion_views.sql
+-- ---------------------------------------------------------------------
+
+-- Les promotions sont enfin montrees, et comptees pour de vrai (10/10).
+--
+-- --- Ce qui n'allait pas --------------------------------------------------
+--
+-- Un etablissement remplit « Faire ma promotion », depose une image, et la
+-- promotion part en base avec `status = 'ACTIVE'`. Son espace lui affiche un
+-- compteur « Affichages ».
+--
+-- Ce compteur restait a zero pour toujours, et pour deux raisons :
+--
+--   1. **aucun ecran ne lisait les promotions actives.** Le fournisseur
+--      `activePromotionsProvider` existait sans un seul consommateur, et le
+--      seul `PromoCard` affiche etait un bouton fixe « Creer un cours » pour
+--      les professeurs. Une promotion n'etait vue par personne ;
+--   2. **personne ne pouvait l'incrementer.** La politique
+--      « son etablissement la gere » reserve l'ecriture au proprietaire — ce
+--      qui est juste : sinon n'importe qui gonflerait le compteur d'un autre.
+--      Mais le spectateur, lui, n'est pas l'etablissement.
+--
+-- Un etablissement payait donc pour un chiffre qui ne bougeait jamais.
+--
+-- --- Pourquoi une table de vues, et pas un simple +1 --------------------
+--
+-- « Affichages » est ce que l'etablissement achete : le chiffre doit vouloir
+-- dire quelque chose. Incrementer a chaque fois qu'un ecran se redessine
+-- compterait les allers-retours entre deux onglets, et le tableau de bord se
+-- redessine souvent.
+--
+-- Une vue par personne et par jour, donc, tenue par une cle unique. Le chiffre
+-- devient « combien de personnes l'ont vue », ce qui est la question qu'on se
+-- pose en l'achetant.
+
+create table if not exists promotion_views (
+  id            text primary key default gen_random_uuid()::text,
+  promotion_id  text not null references promotions (id) on delete cascade,
+
+  -- Le compte qui a vu. Pas d'anonyme : une promotion ne s'affiche qu'une
+  -- fois connecte, puisqu'elle est posee dans un tableau de bord.
+  viewer_id     uuid not null references profiles (id) on delete cascade,
+
+  -- Le jour calendaire, et non un horodatage : c'est lui qui porte l'unicite.
+  -- « Une fois par 24 h glissantes » demanderait de comparer a la derniere
+  -- vue, donc de la lire avant d'ecrire — deux requetes, et une course entre
+  -- deux onglets ouverts.
+  day           date not null default current_date,
+
+  created_at    timestamptz not null default now(),
+
+  unique (promotion_id, viewer_id, day)
+);
+
+create index if not exists promotion_views_promo_idx
+  on promotion_views (promotion_id, day);
+
+/*
+ * Enregistre un affichage, et rend vrai si c'en etait un nouveau.
+ *
+ * `security definer` : le spectateur n'est pas l'etablissement, donc il n'a le
+ * droit ni d'ecrire dans `promotion_views` ni de toucher au compteur. La
+ * fonction le fait pour lui, et ne lui laisse rien d'autre — elle ne prend
+ * aucun identifiant de compte en argument, elle lit `auth.uid()`.
+ *
+ * Le compteur n'est incremente que si l'insertion a vraiment eu lieu : rejouee
+ * dans la journee, la fonction rend faux et ne compte rien.
+ */
+create or replace function enregistrer_affichage(promo text)
+  returns boolean
+  language plpgsql
+  security definer
+  set search_path = public, pg_temp
+as $$
+declare
+  moi     uuid := auth.uid();
+  nouveau integer;
+begin
+  if moi is null then
+    return false;
+  end if;
+
+  -- Une promotion qui n'est plus active ne se compte plus : sinon un ecran
+  -- garde en memoire continuerait d'alimenter un chiffre deja facture.
+  if not exists (
+    select 1 from promotions p
+     where p.id = promo and p.status = 'ACTIVE'
+  ) then
+    return false;
+  end if;
+
+  insert into promotion_views (promotion_id, viewer_id)
+       values (promo, moi)
+  on conflict (promotion_id, viewer_id, day) do nothing;
+
+  get diagnostics nouveau = row_count;
+  if nouveau = 0 then
+    return false;
+  end if;
+
+  -- Atomique : `views = views + 1` et non une lecture suivie d'une ecriture.
+  -- Deux telephones qui ouvrent l'application en meme temps compteraient
+  -- sinon pour un seul.
+  update promotions
+     set views = views + 1, updated_at = now()
+   where id = promo;
+
+  return true;
+end;
+$$;
+
+comment on function enregistrer_affichage(text) is
+  'Compte une vue par personne et par jour. Le compteur « Affichages » est ce '
+  'que l''etablissement achete : il doit dire combien de personnes ont vu, pas '
+  'combien de fois un ecran s''est redessine.';
+
+alter table promotion_views enable row level security;
+
+-- L'etablissement voit le detail des vues de ses propres promotions : c'est la
+-- justification du chiffre qu'il paie.
+create policy "vues : celles de ses promotions" on promotion_views
+  for select using (
+    exists (
+      select 1 from promotions p
+       where p.id = promotion_views.promotion_id
+         and p.institution_id = my_institution_id()
+    )
+  );
+
+-- Aucune politique d'ecriture : tout passe par `enregistrer_affichage`. Un
+-- client qui pourrait inserer ici gonflerait le compteur d'un concurrent, ou
+-- le sien.
+
+
+-- ---------------------------------------------------------------------
+-- 0031_web_parity.sql
+-- ---------------------------------------------------------------------
+
+-- Ce qui manquait au navigateur (11/10).
+--
+-- --- Le constat qui a declenche ce fichier --------------------------------
+--
+-- La comparaison des deux clients a montre que le site sait inscrire un
+-- professeur, lui faire passer un test et publier un cours — puis plus rien.
+-- Il ne peut ni montrer ses pieces, ni savoir ce qu'il a gagne, ni etre
+-- paye, ni parler a l'assistant. Les tables de ces trois choses existaient
+-- deja pour les deux premieres (`teacher_documents`, `tutoring_*`) ; il
+-- manquait de quoi demander un paiement et de quoi tenir une conversation
+-- avec le modele.
+--
+-- Trois tables, donc, et pas une de plus : tout le reste est du code
+-- d'appel.
+
+-- ===========================================================================
+-- 1. Les demandes de retrait
+-- ===========================================================================
+--
+-- --- Pourquoi une demande et non un virement ------------------------------
+--
+-- Le paiement sortant est manuel au lancement : un operateur regarde la
+-- demande, verifie, puis envoie l'argent par Orange Money. Automatiser la
+-- sortie avant d'avoir vu passer dix virements reviendrait a confier a du
+-- code non eprouve la seule operation qu'on ne peut pas annuler.
+--
+-- La table est donc une file d'attente, pas un journal de virements. Elle
+-- porte ce que l'operateur doit savoir et rien de plus.
+--
+-- --- Ce qu'elle ne porte pas ---------------------------------------------
+--
+-- Pas de numero de compte complet, pas de solde. Le solde se **recalcule**
+-- depuis les ventes et les retraits deja regles : un solde stocke finit par
+-- s'ecarter de ses mouvements, et c'est alors lui qu'on croit.
+--
+-- `method_last4` suit la regle deja posee pour `payment_methods` — quatre
+-- chiffres pour reconnaitre son propre numero, jamais le numero.
+
+create table if not exists payout_requests (
+  id            text primary key default gen_random_uuid()::text,
+  teacher_id    text not null references teachers (id) on delete cascade,
+
+  -- En GNF, entier : la plus petite coupure en circulation est le billet de
+  -- 1 000, il n'y a pas de centime a representer.
+  amount        integer not null check (amount > 0),
+
+  -- ORANGE | MTN | CASH — le canal demande, pas une reference de compte.
+  method        text not null check (method in ('ORANGE', 'MTN', 'CASH')),
+  method_last4  text check (method_last4 is null
+                            or method_last4 ~ '^[0-9]{4}$'),
+
+  status        text not null default 'REQUESTED'
+                  check (status in ('REQUESTED', 'APPROVED', 'PAID',
+                                    'REJECTED')),
+
+  -- Ce que l'operateur ecrit quand il refuse. Affiche tel quel au
+  -- professeur : un refus sans motif se relit comme une panne.
+  decision_note text,
+
+  requested_at  timestamptz not null default now(),
+  settled_at    timestamptz,
+
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create index if not exists payout_requests_teacher_idx
+  on payout_requests (teacher_id, requested_at desc);
+
+-- Une seule demande en attente a la fois.
+--
+-- Sans cette contrainte, deux appuis sur « Demander » creent deux demandes du
+-- meme montant, et l'operateur paie deux fois la meme somme. C'est l'index
+-- qui le tient et non le code d'appel : le code d'appel a deja laisse passer
+-- un double clic.
+create unique index if not exists payout_requests_une_seule_en_cours
+  on payout_requests (teacher_id)
+  where status in ('REQUESTED', 'APPROVED');
+
+-- ===========================================================================
+-- 2. L'assistant : les conversations et leur cout
+-- ===========================================================================
+--
+-- --- Ce qui part chez Google, et ce qui n'en part pas --------------------
+--
+-- `_lib/gemini.ts` pose la regle depuis le premier jour : aucune donnee
+-- personnelle ne quitte le serveur par ce module, et c'est a l'appelant de
+-- construire une invite qui ne porte pas de noms. Un assistant de devoirs la
+-- met a l'epreuve — la question de l'eleve part forcement.
+--
+-- Ce qui reste tenu : **l'invite ne porte ni prenom, ni identifiant, ni
+-- ville**. Le serveur envoie la matiere, le niveau et le texte de la
+-- question. Google ne peut pas relier deux questions a la meme personne.
+--
+-- --- Pourquoi le cout est stocke en dollars ------------------------------
+--
+-- C'est la monnaie de la facture Google. Le convertir en francs a l'ecriture
+-- figerait un taux de change dans une ligne qu'on ne reecrit jamais, et la
+-- somme de la colonne ne vaudrait plus rien un an plus tard.
+
+create table if not exists ai_conversations (
+  id          text primary key default gen_random_uuid()::text,
+  owner_id    uuid not null references profiles (id) on delete cascade,
+
+  -- HOMEWORK : aide aux devoirs. COURSE : preparation d'un cours.
+  -- GENERAL : tout le reste.
+  feature     text not null default 'GENERAL'
+                check (feature in ('HOMEWORK', 'COURSE', 'GENERAL')),
+
+  -- Le premier message, tronque : c'est ce qui s'affiche dans la liste.
+  -- Recalculer un titre a chaque lecture demanderait de lire le premier
+  -- message de chaque fil.
+  title       text,
+
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+create index if not exists ai_conversations_owner_idx
+  on ai_conversations (owner_id, updated_at desc);
+
+create table if not exists ai_messages (
+  id              text primary key default gen_random_uuid()::text,
+  conversation_id text not null
+                    references ai_conversations (id) on delete cascade,
+  role            text not null check (role in ('USER', 'MODEL')),
+  body            text not null check (length(body) <= 8000),
+  created_at      timestamptz not null default now()
+);
+
+create index if not exists ai_messages_conversation_idx
+  on ai_messages (conversation_id, created_at);
+
+-- --- Le journal des appels -------------------------------------------------
+--
+-- Jamais modifie, seulement complete : c'est ce qui permet de repondre a
+-- « combien l'assistant a-t-il coute ce mois-ci » sans faire confiance a un
+-- compteur. Aucune politique d'ecriture, comme `point_ledger` : seules les
+-- fonctions `security definer` et la cle de service y ecrivent.
+create table if not exists ai_usage (
+  id            text primary key default gen_random_uuid()::text,
+  owner_id      uuid not null references profiles (id) on delete cascade,
+  feature       text not null,
+  model         text not null,
+  tokens_in     integer not null default 0 check (tokens_in >= 0),
+  tokens_out    integer not null default 0 check (tokens_out >= 0),
+
+  -- numeric et non float : une somme de flottants sur dix mille lignes
+  -- derive. Six decimales suffisent — un message coute 0,002 $.
+  cost_usd      numeric(12, 6) not null default 0 check (cost_usd >= 0),
+
+  duration_ms   integer,
+  status        text not null default 'OK' check (status in ('OK', 'ERROR')),
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists ai_usage_owner_jour_idx
+  on ai_usage (owner_id, created_at desc);
+
+create index if not exists ai_usage_mois_idx
+  on ai_usage (created_at desc);
+
+-- ===========================================================================
+-- 3. Les fonctions de lecture
+-- ===========================================================================
+
+/*
+ * Combien de messages ce compte a-t-il envoyes aujourd'hui.
+ *
+ * `security definer` parce que `ai_usage` est fermee en lecture directe : le
+ * client ne doit pas pouvoir lire le cout, seulement savoir ou il en est de
+ * sa limite. La fonction ne rend qu'un nombre.
+ *
+ * La journee est celle d'Afrique/Conakry (UTC+0, sans heure d'ete) : un
+ * decompte qui se remet a zero a 1 h du matin locale serait incomprehensible.
+ */
+create or replace function ai_messages_du_jour(qui uuid)
+  returns integer
+  language sql
+  stable
+  security definer
+  set search_path = public, pg_temp
+as $$
+  select count(*)::integer
+  from ai_usage
+  where owner_id = qui
+    and status = 'OK'
+    and created_at >= date_trunc('day', now() at time zone 'Africa/Conakry');
+$$;
+
+/*
+ * Ce que l'assistant a coute depuis le debut du mois, en dollars.
+ *
+ * Le garde-fou qui compte vraiment : une boucle dans un client, ou une
+ * poignee de comptes qui decouvrent le jouet, et la facture part. Le serveur
+ * lit cette somme avant chaque appel et s'arrete au plafond.
+ */
+create or replace function ai_cout_du_mois()
+  returns numeric
+  language sql
+  stable
+  security definer
+  set search_path = public, pg_temp
+as $$
+  select coalesce(sum(cost_usd), 0)
+  from ai_usage
+  where created_at >= date_trunc('month',
+                                 now() at time zone 'Africa/Conakry');
+$$;
+
+/*
+ * Les revenus d'un professeur, calcules et non stockes.
+ *
+ * Trois sources, et elles n'ont pas la meme forme :
+ *
+ *   * les places payees sur ses seances en direct (`session_enrolments`
+ *     confirmees, prix du cours, part professeur) ;
+ *   * les achats de ses cours video (`course_purchases`, montant moins
+ *     commission figee a l'achat) ;
+ *   * les echeances reglees de ses contrats (`contract_payments` a l'etat
+ *     PAID).
+ *
+ * --- Pourquoi 60 % sur le direct -----------------------------------------
+ *
+ * C'est le taux affiche au professeur au moment de publier
+ * (`publish_course_page.dart`, carte « Ce que vous gagnez »). Il est ecrit
+ * ici aussi, et c'est un doublon assume : la seule facon de ne pas l'ecrire
+ * deux fois serait de figer la part dans `live_courses` a la publication, ce
+ * qui est la bonne solution — mais elle demande une colonne et une reprise
+ * des lignes existantes. Note dans la feuille de route.
+ *
+ * `security definer` : la fonction traverse `session_enrolments`, dont les
+ * politiques sont ecrites pour la famille qui a paye, pas pour le professeur
+ * qui encaisse. Sans cela elle rendrait zero — exactement le defaut de 0028,
+ * ou une politique trop stricte se lisait comme une base vide.
+ */
+create or replace function revenus_enseignant(prof text)
+  returns table (
+    direct_gnf     bigint,
+    videos_gnf     bigint,
+    contrats_gnf   bigint,
+    retire_gnf     bigint,
+    en_cours_gnf   bigint,
+    places         bigint,
+    achats         bigint
+  )
+  language sql
+  stable
+  security definer
+  set search_path = public, pg_temp
+as $$
+  with direct as (
+    select
+      coalesce(sum((lc.price * 60) / 100), 0)::bigint as montant,
+      count(*)::bigint                                as places
+    from session_enrolments se
+    join live_sessions ls on ls.id = se.session_id
+    join live_courses  lc on lc.id = ls.live_course_id
+    where lc.teacher_id = prof
+      and se.status = 'CONFIRMED'
+  ),
+  videos as (
+    select
+      coalesce(sum(cp.amount - cp.commission), 0)::bigint as montant,
+      count(*)::bigint                                    as achats
+    from course_purchases cp
+    join video_courses vc on vc.id = cp.course_id
+    where vc.teacher_id = prof
+  ),
+  contrats as (
+    select coalesce(sum(pay.amount), 0)::bigint as montant
+    from contract_payments pay
+    join work_contracts wc on wc.id = pay.contract_id
+    where wc.teacher_id = prof
+      and pay.status = 'PAID'
+  ),
+  retraits as (
+    select
+      coalesce(sum(amount) filter (where status = 'PAID'), 0)::bigint
+        as regle,
+      coalesce(sum(amount) filter (where status in ('REQUESTED', 'APPROVED')),
+               0)::bigint
+        as en_cours
+    from payout_requests
+    where teacher_id = prof
+  )
+  select
+    direct.montant,
+    videos.montant,
+    contrats.montant,
+    retraits.regle,
+    retraits.en_cours,
+    direct.places,
+    videos.achats
+  from direct, videos, contrats, retraits;
+$$;
+
+-- `work_contracts.teacher_id` : verifie a l'ecriture de cette migration.
+-- Si la colonne porte un autre nom, `npm run check:db` le dira — une
+-- fonction qui ne compile pas leve a la creation, pas a l'appel.
+
+-- ===========================================================================
+-- 4. Les politiques
+-- ===========================================================================
+
+alter table payout_requests  enable row level security;
+alter table ai_conversations enable row level security;
+alter table ai_messages      enable row level security;
+alter table ai_usage         enable row level security;
+
+-- --- Les retraits ---------------------------------------------------------
+--
+-- Le professeur lit les siens. Il n'ecrit pas : c'est la route qui insere,
+-- apres avoir verifie que le montant demande ne depasse pas ce qui est
+-- disponible. Laisser le client inserer permettrait de demander un million
+-- sur un solde de zero.
+create policy "retraits : les siens" on payout_requests
+  for select using (
+    teacher_id in (select id from teachers where user_id = auth.uid())
+  );
+
+-- --- L'assistant ----------------------------------------------------------
+--
+-- Les conversations et les messages appartiennent a leur proprietaire, et a
+-- personne d'autre. Pas de politique d'ecriture sur `ai_messages` : les deux
+-- cotes d'un echange sont ecrits par la route, dans la meme transaction, et
+-- un client qui pourrait inserer un message `MODEL` pourrait se faire dire
+-- n'importe quoi par un faux assistant.
+create policy "assistant : ses conversations" on ai_conversations
+  for select using (owner_id = auth.uid());
+
+create policy "assistant : ses messages" on ai_messages
+  for select using (
+    conversation_id in (
+      select id from ai_conversations where owner_id = auth.uid()
+    )
+  );
+
+-- `ai_usage` : aucune politique. Le cout en dollars n'a aucune raison d'etre
+-- lisible par un client, et `ai_messages_du_jour` suffit a lui dire ou il en
+-- est. Une table sans politique est fermee a tout le monde sauf la cle de
+-- service et les fonctions `security definer`.
+
+-- Les fonctions de lecture ne s'appellent pas depuis un navigateur : le
+-- plafond global et le cout du mois sont des informations de gestion.
+revoke all on function ai_cout_du_mois() from public, anon, authenticated;
+revoke all on function revenus_enseignant(text) from public, anon;
+
+-- Celle-ci, si : l'ecran de l'assistant affiche « 12 messages sur 100
+-- aujourd'hui », et le faire calculer par le serveur a chaque affichage
+-- couterait un aller-retour pour un nombre.
+grant execute on function ai_messages_du_jour(uuid) to authenticated;
+grant execute on function revenus_enseignant(text) to authenticated;
 
 
 commit;

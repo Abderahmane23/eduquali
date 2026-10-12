@@ -144,38 +144,121 @@ describe('la largeur gagnée sert à montrer plus, pas à étirer', () => {
 })
 
 describe('le cadre cesse d’être un téléphone', () => {
-  it('s’élargit sur un ordinateur', () => {
+  /*
+   * --- Ce que ce test attendait avant le 11/10 ---------------------------
+   *
+   * Que `.shell` porte `max-width: 720px`, élargi à 1 240 px sur un
+   * ordinateur. C'était la bonne forme quand l'ossature *était* la page :
+   * une colonne centrée, fond blanc, navigation collée en bas.
+   *
+   * Elle ne l'est plus. La barre de navigation et les bandes de section
+   * traversent toute la largeur de la fenêtre, comme sur un site, et c'est le
+   * **contenu** qui est borné. Le plafond a donc changé d'élément : il est
+   * passé de `.shell` à `.screen`.
+   *
+   * Ce que le test continue de tenir est la règle, pas son emplacement : il
+   * existe une largeur maximale, et elle est déclarée une seule fois, dans un
+   * jeton — trois valeurs en dur dans trois fichiers sont ce qui avait
+   * produit les deux bandes blanches de l'accueil.
+   */
+  it('le contenu est borné, et par un jeton', () => {
+    const tokens = readFileSync('src/styles/tokens.css', 'utf-8')
+    expect(tokens).toMatch(/--col:\s*\d+px/)
+    expect(tokens).toMatch(/--col-narrow:\s*\d+px/)
+
     const app = readFileSync('src/styles/app.css', 'utf-8')
-    // 720 px était la largeur d'un téléphone centré sur du blanc.
+    const i = app.indexOf('.screen {')
+    expect(i).toBeGreaterThan(-1)
+    const bloc = app.slice(i, app.indexOf('}', i))
+    expect(bloc, '.screen sans plafond de largeur').toContain(
+      'max-width: var(--col)',
+    )
+    expect(bloc, '.screen non centré').toContain('margin: 0 auto')
+  })
+
+  it('l’ossature ne borne plus rien', () => {
+    // Une largeur maximale sur `.shell` rognerait la barre de navigation et
+    // les bandes de section, qui doivent toucher les bords.
+    const app = readFileSync('src/styles/app.css', 'utf-8')
     const i = app.indexOf('.shell {')
-    expect(app.slice(i, app.indexOf('}', i))).toContain('max-width: 720px')
-    expect(app).toMatch(/@media \(min-width: 1024px\)[\s\S]*?\.shell \{/)
+    expect(app.slice(i, app.indexOf('}', i))).not.toContain('max-width')
   })
 
   it('le dégradé de l’accueil touche les bords', () => {
-    // Il débordait de `--s-5` en dur alors que la gouttière passe à 40 px :
-    // deux bandes blanches encadraient le bleu dès 640 px.
+    /*
+     * Il débordait de `--s-5` en dur alors que la gouttière passe à 40 px :
+     * deux bandes blanches encadraient le bleu dès 640 px.
+     *
+     * Depuis le 11/10 l'accueil n'est plus un bloc bleu dans une page
+     * blanche : le dégradé tient toute la page (`.hero-page`), comme sur
+     * `landing_screen.dart`. Il n'y a donc plus de débordement à calculer.
+     * Ce qu'il faut vérifier à la place : que la page porte bien le dégradé.
+     */
     const app = readFileSync('src/styles/app.css', 'utf-8')
-    const i = app.indexOf('.hero {')
-    const bloc = app.slice(i, app.indexOf('}', i))
-    expect(bloc).toContain('margin-inline: calc(-1 * var(--gutter))')
+    const i = app.indexOf('.hero-page {')
+    expect(i, '.hero-page introuvable').toBeGreaterThan(-1)
+    expect(app.slice(i, app.indexOf('}', i))).toContain('var(--hero-gradient)')
+
+    // La bande de section, elle, déborde toujours : elle vit à l'intérieur de
+    // la colonne et doit en sortir.
+    const j = app.indexOf('.band {')
+    expect(app.slice(j, app.indexOf('}', j))).toContain(
+      'margin-inline: calc(-1 * var(--gutter))',
+    )
   })
 })
 
 describe('la navigation change de forme', () => {
-  it('un seul composant, deux mises en page', () => {
-    // Dupliquer la navigation en JSX aurait donné deux choses à tenir à jour,
-    // et l'une des deux aurait fini par mentir.
+  /*
+   * --- Ce que ce test attendait avant le 11/10 ---------------------------
+   *
+   * Que `.tabbar` existe une seule fois dans le JSX, et qu'à 600 px la
+   * requête média la fasse remonter par `order: -1`. Deux mises en page pour
+   * un seul composant : c'était l'intention, et elle tenait.
+   *
+   * Elle avait deux coûts. Sur un téléphone, la barre occupait la hauteur
+   * basse de l'écran — celle des boutons d'action des pages. Et `order: -1`
+   * remonte un élément **à l'écran seulement** : dans le DOM il restait
+   * dernier, donc un visiteur au clavier traversait toute la page avant
+   * d'atteindre la navigation.
+   *
+   * Une seule mise en page désormais, en haut, et la barre est le premier
+   * élément du DOM. Ce que le test tient : un seul composant (la dupliquer en
+   * JSX donnerait deux choses à tenir à jour, et l'une finirait par mentir),
+   * et l'ordre de tabulation qui suit l'ordre visuel.
+   */
+  it('un seul composant, et il est premier dans le DOM', () => {
     const app = readFileSync('src/App.tsx', 'utf-8')
-    expect(app.match(/className="tabbar"/g) ?? []).toHaveLength(1)
+    expect(app.match(/<TopBar \/>/g) ?? []).toHaveLength(1)
+    expect(app, 'la barre basse est restée').not.toContain('className="tabbar"')
+
+    // Avant `<main>`, donc avant le contenu : plus besoin d'`order`.
+    const barre = app.indexOf('<TopBar />')
+    const contenu = app.indexOf('<main id="contenu">')
+    expect(barre).toBeGreaterThan(-1)
+    expect(contenu).toBeGreaterThan(-1)
+    expect(barre, 'la navigation est après le contenu').toBeLessThan(contenu)
 
     const css = readFileSync('src/styles/app.css', 'utf-8')
-    const i = css.indexOf('@media (min-width: 600px)')
-    const bloc = css.slice(i, css.indexOf('@media (min-width: 1024px)', i))
-    // En haut, et non en bas : une barre d'onglets en bas d'un écran de
-    // 1 440 px, c'est la navigation garée au bord le plus lointain.
-    expect(bloc).toContain('.tabbar {')
-    expect(bloc).toContain('order: -1')
-    expect(bloc).toContain('top: 0')
+    const i = css.indexOf('.topbar {')
+    expect(css.slice(i, css.indexOf('}', i))).toContain('top: 0')
+    // Le contournement n'a plus de raison d'être, et le laisser inviterait à
+    // le réutiliser.
+    expect(css, '`order: -1` est resté').not.toContain('order: -1')
+  })
+
+  it('les onglets défilent plutôt que de disparaître', () => {
+    // Sept onglets ne tiennent pas sur un téléphone. Les tronquer en
+    // cacherait trois sans le dire ; la rangée défile donc, et s'accroche
+    // pour ne pas laisser un onglet coupé en deux au bord de l'écran.
+    const css = readFileSync('src/styles/app.css', 'utf-8')
+    const i = css.indexOf('.navlinks {')
+    expect(i).toBeGreaterThan(-1)
+    const bloc = css.slice(i, css.indexOf('}', i))
+    expect(bloc).toContain('overflow-x: auto')
+    expect(bloc).toContain('scroll-snap-type')
+    // Sans elle, la rangée refuse de se rétrécir sous la largeur de son
+    // contenu et pousse la marque hors de l'écran au lieu de défiler.
+    expect(bloc).toContain('min-width: 0')
   })
 })

@@ -73,6 +73,18 @@ import type {
 export class SupabaseApi implements VeriprofApi {
   constructor(private readonly db: SupabaseClient) {}
 
+  /**
+   * Le jeton de la session en cours, pour les appels au serveur Eduquali.
+   *
+   * Exposé parce que `api/server.ts` en a besoin et que seul ce client-ci le
+   * détient. Il le relit à chaque appel : `getSession` rend un jeton
+   * rafraîchi, alors qu'une copie gardée expire au bout d'une heure.
+   */
+  async accessToken(): Promise<string | null> {
+    const { data } = await this.db.auth.getSession()
+    return data.session?.access_token ?? null
+  }
+
   // --- Outils -------------------------------------------------------------
 
   /**

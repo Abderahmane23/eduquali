@@ -17,14 +17,34 @@
     "Vérifiés le 19/09/2026 par check-gemini.mjs."
   ],
 
+  "_prices": [
+    "Prix en dollars par million de jetons, entrée puis sortie. Ils servent à",
+    "une seule chose : alimenter le plafond mensuel en dollars, qui est la",
+    "vraie protection de la facture.",
+    "",
+    "⚠ Ce sont les tarifs d'APRÈS promotion, délibérément. Les tarifs des",
+    "modèles Flash sont promotionnels jusqu'au 31/12/2026 puis doublent",
+    "(documentation/AI_ASSISTANT.md §2.3). Compter au prix haut fait déclencher",
+    "le plafond un peu tôt ; compter au prix bas le ferait déclencher trop",
+    "tard, c'est-à-dire après la facture. Entre les deux erreurs, celle-ci se",
+    "corrige.",
+    "",
+    "Ils ne sont pas vérifiés par check-gemini.mjs : l'API ne publie pas ses",
+    "prix. À relire sur la page tarifaire à chaque rotation de modèle."
+  ],
+
   "models": {
     "build": {
       "id": "gemini-3.6-flash",
-      "usage": "Construction d'un cours : la qualité prime."
+      "usage": "Construction d'un cours : la qualité prime.",
+      "usdPerMillionIn": 1.5,
+      "usdPerMillionOut": 7.5
     },
     "chat": {
       "id": "gemini-3.5-flash-lite",
-      "usage": "Discussion et résumés courts : le moins cher qui reste utilisable."
+      "usage": "Discussion et résumés courts : le moins cher qui reste utilisable.",
+      "usdPerMillionIn": 0.25,
+      "usdPerMillionOut": 1.5
     }
   },
 

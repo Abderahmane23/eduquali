@@ -165,12 +165,19 @@ export function Avatar({
 }
 
 export function EmptyState({
-  icon = '—',
+  icon,
   title,
   message,
   action,
 }: {
-  icon?: string
+  /*
+   * Une icone du jeu, et non un glyphe libre.
+   *
+   * Le parametre acceptait n'importe quelle chaine, avec « — » par defaut :
+   * `icon="chat"` affichait donc le mot « chat » en gros au milieu de la
+   * page. Un type ferme refuse l'erreur au lieu de la dessiner.
+   */
+  icon?: IconName
   title: string
   message?: string
   action?: ReactNode
@@ -178,7 +185,7 @@ export function EmptyState({
   return (
     <div className="empty stack">
       <div className="empty__icon" aria-hidden>
-        {icon}
+        {icon ? <Icon name={icon} size={28} /> : '—'}
       </div>
       <h3>{title}</h3>
       {message ? <p className="muted small">{message}</p> : null}
@@ -245,6 +252,66 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
       </>
     ),
     check: <path d="M5 12l5 5 9-10" />,
+    // Ajoutees le 11/10 pour les sept ecrans du navigateur. Meme trait, meme
+    // grille de 24 : une icone dessinee a une autre echelle se repere tout de
+    // suite dans une rangee.
+    chat: (
+      <>
+        <path d="M4 5h16v11H9l-5 4z" />
+      </>
+    ),
+    wallet: (
+      <>
+        <rect x="3" y="6" width="18" height="13" rx="2" />
+        <path d="M16 12h2" />
+      </>
+    ),
+    sparkle: (
+      <>
+        <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />
+      </>
+    ),
+    gift: (
+      <>
+        <rect x="3" y="9" width="18" height="11" rx="2" />
+        <path d="M3 13h18M12 9v11" />
+        <path d="M8 9a2.5 2.5 0 110-5c2 0 4 5 4 5M16 9a2.5 2.5 0 100-5c-2 0-4 5-4 5" />
+      </>
+    ),
+    gauge: (
+      <>
+        <path d="M4 18a8 8 0 1116 0" />
+        <path d="M12 18l4-5" />
+      </>
+    ),
+    pin: (
+      <>
+        <path d="M12 21s-6-5.5-6-10a6 6 0 1112 0c0 4.5-6 10-6 10z" />
+        <circle cx="12" cy="11" r="2" />
+      </>
+    ),
+    plus: <path d="M12 5v14M5 12h14" />,
+    send: <path d="M4 12l16-7-7 16-2.5-6.5z" />,
+    upload: (
+      <>
+        <path d="M12 16V5" />
+        <path d="M7.5 9.5L12 5l4.5 4.5" />
+        <path d="M5 19h14" />
+      </>
+    ),
+    bell: (
+      <>
+        <path d="M6 16V11a6 6 0 1112 0v5l2 3H4z" />
+        <path d="M10 22h4" />
+      </>
+    ),
+    chevron: <path d="M9 5l7 7-7 7" />,
+    logout: (
+      <>
+        <path d="M14 5H6v14h8" />
+        <path d="M17 9l3 3-3 3M20 12h-8" />
+      </>
+    ),
     clipboard: (
       <>
         <rect x="5" y="4" width="14" height="17" rx="2" />
@@ -304,6 +371,18 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
 
 export type IconName =
   | 'back'
+  | 'chat'
+  | 'wallet'
+  | 'sparkle'
+  | 'gift'
+  | 'gauge'
+  | 'pin'
+  | 'plus'
+  | 'send'
+  | 'upload'
+  | 'bell'
+  | 'chevron'
+  | 'logout'
   | 'search'
   | 'home'
   | 'briefcase'

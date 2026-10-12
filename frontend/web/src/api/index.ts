@@ -1,5 +1,6 @@
 import { HttpApi, type VeriprofApi } from './client'
 import { MockApi } from './mock'
+import { brancherJeton } from './server'
 import { createSupabaseApi } from './supabase'
 
 /**
@@ -59,6 +60,25 @@ export const isSupabaseBackend = supabase !== null
  * premiere question plutot qu'apres la derniere.
  */
 export const canGradeTests = !isSupabaseBackend || Boolean(configured)
+
+/*
+ * Le jeton, branché une fois.
+ *
+ * `api/server.ts` porte les appels que PostgREST ne peut pas faire — revenus,
+ * retraits, assistant, dépôt de pièces. Il lui faut le jeton de la session,
+ * et c'est Supabase qui le détient et le rafraîchit.
+ *
+ * Lu à chaque appel et non capturé : un jeton pris au montage d'une page est
+ * périmé une heure plus tard, et l'écran dirait « reconnectez-vous » à
+ * quelqu'un qui est connecté.
+ *
+ * Sans Supabase — mode REST ou simulé — il n'y a pas de jeton à lire, et ces
+ * appels lèvent une phrase qui le dit plutôt que de partir sans en-tête.
+ */
+brancherJeton(async () => {
+  if (!supabase) return null
+  return supabase.accessToken()
+})
 
 export type { VeriprofApi } from './client'
 export { ApiError } from './client'

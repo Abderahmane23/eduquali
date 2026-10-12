@@ -186,10 +186,23 @@ describe('ouvrir et fermer', () => {
 
 describe('ce qui part chez Google', () => {
   it('l’invite ne porte ni nom, ni identifiant, ni texte d’élève', () => {
-    const invite = gemini.slice(
-      gemini.indexOf('const invite = ['),
-      gemini.indexOf('return this.generate(MODELS.chat'),
-    )
+    /*
+     * L'ancre de fin a changé le 11/10 : `generate` rend désormais les jetons
+     * consommés en plus du texte, donc l'appel s'écrit
+     * `(await this.generate(...)).text`. Un `indexOf` qui ne trouve plus rien
+     * rend -1, et `slice` rendait alors la chaîne vide — le test passait
+     * encore en vérifiant qu'une chaîne vide ne contient aucun nom interdit.
+     *
+     * C'est exactement le piège que ce projet rencontre partout : une
+     * vérification qui s'éteint sans rien dire. L'ancre est donc vérifiée
+     * avant d'être utilisée.
+     */
+    const debut = gemini.indexOf('const invite = [')
+    const fin = gemini.indexOf('this.generate(MODELS.chat', debut)
+    expect(debut, 'l’invite du résumé est introuvable').toBeGreaterThan(-1)
+    expect(fin, 'l’appel au modèle est introuvable').toBeGreaterThan(debut)
+    const invite = gemini.slice(debut, fin)
+    expect(invite.length, 'tranche vide : le test ne vérifierait rien').toBeGreaterThan(50)
     // Ce qui entre : matière, classe, module, trois nombres.
     expect(invite).toContain('input.subject')
     expect(invite).toContain('input.yes')
@@ -204,6 +217,50 @@ describe('ce qui part chez Google', () => {
     ]) {
       expect(invite).not.toContain(interdit)
     }
+  })
+
+  it('les consignes de l’assistant ne nomment personne', () => {
+    /*
+     * L'assistant ouvert le 11/10 met la règle à l'épreuve : la question de
+     * l'élève part forcément chez Google. Ce qui reste tenu, et que ce test
+     * vérifie : les consignes système décrivent un **rôle**, pas une
+     * personne. Google ne peut donc pas relier deux conversations au même
+     * enfant.
+     */
+    const routes = readFileSync(
+      '../../backend/api/[[...route]].ts',
+      'utf-8',
+    )
+    const debut = routes.indexOf('const CONSIGNES: Record<string, string> = {')
+    expect(debut, 'les consignes sont introuvables').toBeGreaterThan(-1)
+    const consignes = routes.slice(debut, routes.indexOf('\n}', debut))
+    expect(consignes.length).toBeGreaterThan(100)
+
+    for (const interdit of [
+      'firstName',
+      'first_name',
+      'childName',
+      'displayName',
+      'userId',
+      'phone',
+      'city',
+      'teacherId',
+    ]) {
+      expect(
+        consignes,
+        `les consignes interpolent ${interdit}`,
+      ).not.toContain(interdit)
+    }
+
+    // Et l'historique envoyé ne porte que des tours de parole : deux champs,
+    // pas de place pour un nom.
+    const tour = gemini.slice(
+      gemini.indexOf('export interface GeminiTurn {'),
+      gemini.indexOf('}', gemini.indexOf('export interface GeminiTurn {')),
+    )
+    expect(tour).toContain('role:')
+    expect(tour).toContain('body: string')
+    expect(tour).not.toContain('name')
   })
 
   it('la signature de l’appel ne peut pas transporter un nom', () => {

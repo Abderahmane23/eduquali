@@ -45,6 +45,38 @@ export const MODELS = {
   chat: catalogue.models.chat.id,
 } as const
 
+/** Le prix d'un appel, au tarif d'après promotion (voir models.json). */
+export function coutUsd(input: {
+  model: string
+  tokensIn: number
+  tokensOut: number
+}): number {
+  const tarif =
+    input.model === catalogue.models.build.id
+      ? catalogue.models.build
+      : catalogue.models.chat
+  const dollars =
+    (input.tokensIn / 1_000_000) * tarif.usdPerMillionIn
+    + (input.tokensOut / 1_000_000) * tarif.usdPerMillionOut
+  // Six décimales, comme la colonne `ai_usage.cost_usd` : un message coûte
+  // 0,002 $, arrondir au centime écrirait zéro sur chaque ligne.
+  return Math.round(dollars * 1_000_000) / 1_000_000
+}
+
+/** Ce qu'un appel a réellement consommé. */
+export interface GeminiUsage {
+  text: string
+  tokensIn: number
+  tokensOut: number
+  model: string
+}
+
+/** Un tour de parole, dans l'ordre où il a été dit. */
+export interface GeminiTurn {
+  role: 'USER' | 'MODEL'
+  body: string
+}
+
 export class GeminiError extends Error {
   readonly status: number
 
@@ -94,11 +126,28 @@ export class Gemini {
    */
   private async generate(
     model: string,
-    prompt: string,
-    options: { maxOutputTokens?: number; temperature?: number } = {},
-  ): Promise<string> {
+    prompt: string | GeminiTurn[],
+    options: {
+      maxOutputTokens?: number
+      temperature?: number
+      /** Consignes système, versionnées par l'appelant. */
+      system?: string
+    } = {},
+  ): Promise<GeminiUsage> {
     const corps = {
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents:
+        typeof prompt === 'string'
+          ? [{ role: 'user', parts: [{ text: prompt }] }]
+          : prompt.map((tour) => ({
+              // Google nomme `model` ce que nous nommons `MODEL`, et `user`
+              // ce que nous nommons `USER`. La traduction se fait ici, une
+              // fois : les tables et le reste du code gardent nos noms.
+              role: tour.role === 'MODEL' ? 'model' : 'user',
+              parts: [{ text: tour.body }],
+            })),
+      ...(options.system
+        ? { systemInstruction: { parts: [{ text: options.system }] } }
+        : {}),
       generationConfig: {
         // Court par construction : un résumé qu'on lit pendant une pause de
         // cinq minutes ne fait pas trois paragraphes.
@@ -167,10 +216,78 @@ export class Gemini {
         : ''
 
       if (texte.trim() === '') {
+        // Un refus de sécurité arrive ici : la réponse est valide, mais vide,
+        // et `finishReason` dit « SAFETY ». Le distinguer d'une panne change
+        // ce qu'on affiche — « reformulez » plutôt que « réessayez ».
+        const raison = (premier as Record<string, unknown> | undefined)
+          ?.finishReason
+        if (raison === 'SAFETY' || raison === 'PROHIBITED_CONTENT') {
+          throw new GeminiError(
+            'Cette question n’a pas pu être traitée. Reformulez-la, ou '
+              + 'posez-la autrement.',
+            422,
+          )
+        }
         throw new GeminiError('Gemini a repondu sans texte.')
       }
-      return texte.trim()
+
+      // Les jetons réellement comptés par Google, et non une estimation : le
+      // plafond mensuel ne vaut que s'il additionne la même chose que la
+      // facture. Absents sur certaines réponses — zéro alors, et la ligne de
+      // journal le dira par un coût nul.
+      const compteur = donnees.usageMetadata as
+        | Record<string, unknown>
+        | undefined
+      return {
+        text: texte.trim(),
+        tokensIn: Number(compteur?.promptTokenCount) || 0,
+        tokensOut: Number(compteur?.candidatesTokenCount) || 0,
+        model,
+      }
     }
+  }
+
+  /**
+   * Un tour de conversation avec l'assistant.
+   *
+   * --- Ce qui part chez Google, et ce qui n'en part pas -------------------
+   *
+   * Le module pose depuis le premier jour qu'aucune donnée personnelle ne le
+   * traverse. Un assistant de devoirs met cette règle à l'épreuve, puisque la
+   * question de l'élève part forcément. Ce qui reste tenu, et que l'appelant
+   * doit tenir avec lui :
+   *
+   *   * l'historique envoyé ne contient que des questions et des réponses —
+   *     ni prénom, ni identifiant de compte, ni ville, ni nom d'école ;
+   *   * les consignes système décrivent un rôle, pas une personne.
+   *
+   * Google ne peut donc pas relier deux conversations au même enfant.
+   *
+   * --- Pourquoi l'historique complet et non le dernier message -----------
+   *
+   * « Et pour la question 3 ? » ne veut rien dire seul. Le modèle n'a pas de
+   * mémoire entre deux appels : c'est nous qui la lui rendons, et c'est aussi
+   * pour cela que l'historique est **borné** par l'appelant — vingt tours de
+   * parole feraient grossir l'entrée, donc la facture, sans améliorer la
+   * réponse.
+   */
+  async converse(input: {
+    history: GeminiTurn[]
+    system: string
+    maxOutputTokens?: number
+  }): Promise<GeminiUsage> {
+    if (input.history.length === 0) {
+      throw new GeminiError('Aucune question a poser.', 400)
+    }
+    return this.generate(MODELS.chat, input.history, {
+      system: input.system,
+      // Assez pour une explication en trois paragraphes avec un exemple
+      // chiffré. Au-delà, le modèle reformule ce qu'il vient de dire.
+      maxOutputTokens: input.maxOutputTokens ?? 900,
+      // Plus haut que pour un résumé de chiffres : une explication a besoin
+      // de reformuler, de choisir un exemple. Trop bas, elle récite.
+      temperature: 0.6,
+    })
   }
 
   /**
@@ -222,6 +339,6 @@ export class Gemini {
       "d'eux, et tu ne dois rien supposer.",
     ].join('\n')
 
-    return this.generate(MODELS.chat, invite)
+    return (await this.generate(MODELS.chat, invite)).text
   }
 }

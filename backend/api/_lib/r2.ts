@@ -166,7 +166,22 @@ export class R2 {
    * signer dans un style et de lire dans l'autre.
    */
   async presign(input: {
-    method: 'GET' | 'DELETE'
+    /*
+     * `PUT` ajouté le 11/10, pour les pièces déposées depuis le navigateur.
+     *
+     * Le fichier ne traverse pas le Worker : le serveur signe une adresse, le
+     * navigateur y envoie les octets directement. Un diplôme scanné pèse
+     * couramment 4 Mo, et faire passer cela par un Worker — qui a une limite
+     * de taille de requête et facture le temps CPU — reviendrait à payer pour
+     * recopier un fichier d'un tuyau dans un autre.
+     *
+     * La signature ne couvre pas le corps (`UNSIGNED-PAYLOAD`, voir plus
+     * bas), donc l'adresse autorise *n'importe quel* contenu sous cette clé
+     * pendant sa durée de vie. C'est pourquoi la route qui la délivre choisit
+     * elle-même la clé et la garde courte : un client ne peut pas écrire
+     * ailleurs que là où le serveur a décidé.
+     */
+    method: 'GET' | 'PUT' | 'DELETE'
     key: string
     expiresInSeconds: number
     /** Injectable pour les tests ; l'heure courante sinon. */

@@ -12,7 +12,7 @@ import {
   purchaseStatusFor,
   toDjomyPhone,
 } from './_lib/djomy'
-import { Gemini } from './_lib/gemini'
+import { Gemini, GeminiError, MODELS, coutUsd } from './_lib/gemini'
 import { LiveKit, sessionFromRoom, type LiveKitEvent } from './_lib/livekit'
 import { R2 } from './_lib/r2'
 import { CloudflareStream } from './_lib/stream'
@@ -5638,6 +5638,1666 @@ app.post('/contests/cycle', async (c) => {
     return c.json({ error: 'Non autorise.' }, 401)
   }
   return c.json(await cycleContests())
+})
+
+/* ===========================================================================
+ * Le dossier du professeur : ses pieces
+ * ===========================================================================
+ *
+ * --- Le defaut que ceci corrige ------------------------------------------
+ *
+ * Les quatre pastilles du profil — identite, diplome, competence, experience
+ * — ne pouvaient passer au vert que depuis le telephone. Sur le site, la
+ * fiche etait en lecture seule : un professeur qui n'a pas l'application
+ * restait non verifie a vie, et des professeurs verifies sont precisement ce
+ * que ce produit vend.
+ *
+ * --- Pourquoi le fichier ne traverse pas le Worker ----------------------
+ *
+ * Le serveur signe une adresse, le navigateur y envoie les octets. Un
+ * diplome scanne pese 3 a 5 Mo ; le faire passer par un Worker reviendrait a
+ * payer du temps de calcul pour recopier un fichier d'un tuyau dans un
+ * autre, avec une limite de taille de requete au bout.
+ *
+ * C'est le serveur qui choisit la cle, jamais le client : une adresse signee
+ * autorise n'importe quel contenu sous *cette* cle, donc laisser le client la
+ * nommer lui permettrait d'ecraser la piece de quelqu'un d'autre.
+ */
+
+const documentsConfig = {
+  endpoint: (process.env.R2_ENDPOINT ?? '').trim(),
+  // Un depot a part quand il existe. A defaut celui des enregistrements, qui
+  // est prive et signe de la meme facon : mieux vaut un prefixe dans un
+  // depot ferme que pas de depot du tout.
+  bucket: (
+    process.env.R2_DOCUMENTS_BUCKET
+    ?? process.env.R2_RECORDINGS_BUCKET
+    ?? ''
+  ).trim(),
+  accessKey: (process.env.R2_ACCESS_KEY_ID ?? '').trim(),
+  secret: (process.env.R2_SECRET_ACCESS_KEY ?? '').trim(),
+  region: (process.env.R2_REGION ?? 'auto').trim(),
+}
+const documents = R2.isConfigured(documentsConfig)
+  ? new R2(documentsConfig)
+  : null
+
+/** Les types de piece qu'un professeur depose lui-meme. */
+const TYPES_PIECE = ['ID_FRONT', 'ID_BACK', 'SELFIE', 'DIPLOMA', 'CV'] as const
+
+const pieceSchema = z.object({
+  type: z.enum(TYPES_PIECE),
+  // Pour choisir l'extension, et pour refuser un exécutable. Jamais pour
+  // nommer la cle : le nom d'origine peut contenir n'importe quoi.
+  contentType: z.enum([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/pdf',
+  ]),
+  sizeBytes: z
+    .number()
+    .int()
+    .positive()
+    // 12 Mo : un scan de diplome en PDF depasse rarement 5 Mo, et au-dela
+    // c'est une photo non compressee qu'il vaut mieux refuser tout de suite
+    // que de faire monter pendant huit minutes sur un reseau guineen.
+    .max(12 * 1024 * 1024),
+})
+
+const EXTENSIONS: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+}
+
+/** Les pieces deja deposees, et leur etat de verification. */
+app.get('/teacher/documents', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ documents: [] })
+
+  const { data, error } = await asService()
+    .from('teacher_documents')
+    .select('id, type, status, size_bytes, created_at, updated_at')
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[pieces] lecture impossible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  return c.json({
+    documents: (data ?? []).map((piece) => ({
+      id: piece.id,
+      type: piece.type,
+      status: piece.status,
+      sizeBytes: piece.size_bytes,
+      createdAt: piece.created_at,
+      updatedAt: piece.updated_at,
+    })),
+    // Le chemin de stockage ne sort jamais : il ne servirait a rien au client
+    // (le depot est prive) et il dit ou chercher.
+  })
+})
+
+/**
+ * Une adresse pour deposer une piece, valable dix minutes.
+ *
+ * La ligne est creee avant le depot, a l'etat `PENDING_UPLOAD` : si le
+ * telechargement echoue, on garde la trace d'une tentative plutot qu'un
+ * fichier orphelin dont personne ne connait le proprietaire.
+ */
+app.post('/teacher/documents', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  if (!documents) {
+    return c.json(
+      {
+        error:
+          'Le depot de pieces n’est pas configure sur ce serveur. '
+          + 'Contactez le support.',
+      },
+      503,
+    )
+  }
+
+  const corps = pieceSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) {
+    return c.json(
+      {
+        error:
+          'Fichier refuse. Acceptes : photo JPEG, PNG, WEBP ou PDF, '
+          + '12 Mo au maximum.',
+      },
+      400,
+    )
+  }
+  const { type, contentType, sizeBytes } = corps.data
+
+  const service = asService()
+
+  // Une piece par type : la seconde remplace la premiere. Un professeur qui
+  // reprend une photo floue ne doit pas laisser derriere lui une pile de
+  // versions dont le verificateur ne saurait pas laquelle regarder.
+  await service
+    .from('teacher_documents')
+    .delete()
+    .eq('teacher_id', teacherId)
+    .eq('type', type)
+    .neq('status', 'VERIFIED')
+
+  const cle = `pieces/${teacherId}/${type}-${Date.now()}.${
+    EXTENSIONS[contentType]
+  }`
+
+  const { data: ligne, error } = await service
+    .from('teacher_documents')
+    .insert({
+      teacher_id: teacherId,
+      type,
+      storage_path: cle,
+      size_bytes: sizeBytes,
+      status: 'PENDING_UPLOAD',
+    })
+    .select('id')
+    .single()
+
+  if (error || !ligne) {
+    console.error('[pieces] creation impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  const url = await documents.presign({
+    method: 'PUT',
+    key: cle,
+    // Dix minutes : assez pour 5 Mo sur une connexion lente, assez court
+    // pour qu'une adresse recuperee dans un journal ne serve plus a rien.
+    expiresInSeconds: 600,
+  })
+
+  return c.json({ id: ligne.id, uploadUrl: url, expiresInSeconds: 600 })
+})
+
+/**
+ * Le depot a abouti.
+ *
+ * Le navigateur le declare apres son `PUT`. On ne le croit pas sur parole
+ * pour autant : l'etat devient `UPLOADED`, pas `VERIFIED`. La verification
+ * est un acte humain, et c'est elle qui allume la pastille.
+ */
+app.post('/teacher/documents/:id/uploaded', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const { data, error } = await asService()
+    .from('teacher_documents')
+    .update({ status: 'UPLOADED', updated_at: new Date().toISOString() })
+    .eq('id', c.req.param('id'))
+    // La piece est-elle bien la sienne ? Sans ce filtre, un identifiant devine
+    // ferait avancer le dossier d'un autre.
+    .eq('teacher_id', teacherId)
+    .eq('status', 'PENDING_UPLOAD')
+    .select('id, type, status')
+    .maybeSingle()
+
+  if (error) {
+    console.error('[pieces] mise a jour impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+  if (!data) return c.json({ error: 'Piece introuvable.' }, 404)
+
+  return c.json({ id: data.id, type: data.type, status: data.status })
+})
+
+/* ===========================================================================
+ * Les revenus et les retraits
+ * ===========================================================================
+ *
+ * --- Pourquoi un calcul et non un solde stocke --------------------------
+ *
+ * Trois sources alimentent ce que gagne un professeur, et aucune n'a la meme
+ * forme : les places vendues sur ses seances, les achats de ses cours video,
+ * les echeances reglees de ses contrats. Un solde stocke devrait etre mis a
+ * jour par chacun de ces trois chemins, et le jour ou l'un oublie, c'est le
+ * solde qu'on croit plutot que les mouvements.
+ *
+ * `revenus_enseignant()` (migration 0031) additionne les trois en une
+ * requete, sous `security definer` : les places appartiennent aux familles,
+ * et leurs politiques cachent au professeur ce qu'il a lui-meme encaisse.
+ */
+
+/**
+ * Le plancher d'un retrait.
+ *
+ * Chaque virement Orange Money coute une commission a peu pres fixe : sous
+ * ce montant, elle mange la somme. Le professeur attend donc d'avoir de quoi
+ * que le virement vaille la peine, et l'ecran le lui dit avant qu'il demande.
+ */
+const RETRAIT_MINIMUM = 50_000
+
+app.get('/teacher/revenue', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const service = asService()
+
+  const { data, error } = await service.rpc('revenus_enseignant', {
+    prof: teacherId,
+  })
+  if (error) {
+    console.error('[revenus] calcul impossible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  // `returns table` rend un tableau d'une ligne.
+  const ligne = (Array.isArray(data) ? data[0] : data) as Record<
+    string,
+    number
+  > | null
+
+  const direct = Number(ligne?.direct_gnf ?? 0)
+  const videos = Number(ligne?.videos_gnf ?? 0)
+  const contrats = Number(ligne?.contrats_gnf ?? 0)
+  const retire = Number(ligne?.retire_gnf ?? 0)
+  const enCours = Number(ligne?.en_cours_gnf ?? 0)
+
+  const { data: retraits } = await service
+    .from('payout_requests')
+    .select('id, amount, method, status, decision_note, requested_at, settled_at')
+    .eq('teacher_id', teacherId)
+    .order('requested_at', { ascending: false })
+    .limit(20)
+
+  const gagne = direct + videos + contrats
+
+  return c.json({
+    // Ce qui a ete gagne, par origine : « 1 200 000 » sans dire d'ou il
+    // vient ne permet pas de decider quoi faire de plus.
+    earned: { live: direct, videos, contracts: contrats, total: gagne },
+    seats: Number(ligne?.places ?? 0),
+    purchases: Number(ligne?.achats ?? 0),
+    paidOut: retire,
+    pending: enCours,
+    // Ce qu'il peut demander maintenant. Jamais negatif : un arrondi ou une
+    // correction manuelle ne doit pas afficher « -15 000 a retirer ».
+    available: Math.max(0, gagne - retire - enCours),
+    minimum: RETRAIT_MINIMUM,
+    payouts: (retraits ?? []).map((r) => ({
+      id: r.id,
+      amount: r.amount,
+      method: r.method,
+      status: r.status,
+      note: r.decision_note,
+      requestedAt: r.requested_at,
+      settledAt: r.settled_at,
+    })),
+  })
+})
+
+const retraitSchema = z.object({
+  amount: z.number().int().positive(),
+  method: z.enum(['ORANGE', 'MTN', 'CASH']),
+  /** Les quatre derniers chiffres du numero, pour qu'il reconnaisse le sien. */
+  last4: z
+    .string()
+    .regex(/^[0-9]{4}$/)
+    .optional(),
+})
+
+/**
+ * Demander un retrait.
+ *
+ * Le montant est verifie **ici** contre ce qui est reellement disponible, et
+ * c'est pourquoi `payout_requests` n'a aucune politique d'insertion : un
+ * client qui pourrait inserer demanderait un million sur un solde de zero.
+ *
+ * Le double appui est tenu par l'index partiel de 0031, pas par ce code : une
+ * seule demande peut etre en cours par professeur, et c'est la base qui le
+ * refuse. Un controle en lecture puis ecriture laisserait passer deux
+ * requetes parties en meme temps.
+ */
+app.post('/teacher/payouts', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = retraitSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) return c.json({ error: 'Demande illisible.' }, 400)
+  const { amount, method, last4 } = corps.data
+
+  if (amount < RETRAIT_MINIMUM) {
+    return c.json(
+      {
+        error:
+          `Le retrait minimum est de ${RETRAIT_MINIMUM.toLocaleString('fr-FR')} `
+          + 'GNF : en dessous, la commission du transfert mange la somme.',
+      },
+      400,
+    )
+  }
+
+  const service = asService()
+
+  const { data, error: erreurCalcul } = await service.rpc(
+    'revenus_enseignant',
+    { prof: teacherId },
+  )
+  if (erreurCalcul) {
+    console.error('[retrait] calcul impossible', erreurCalcul)
+    return c.json({ error: 'Calcul impossible.' }, 500)
+  }
+  const ligne = (Array.isArray(data) ? data[0] : data) as Record<
+    string,
+    number
+  > | null
+  const disponible = Math.max(
+    0,
+    Number(ligne?.direct_gnf ?? 0)
+      + Number(ligne?.videos_gnf ?? 0)
+      + Number(ligne?.contrats_gnf ?? 0)
+      - Number(ligne?.retire_gnf ?? 0)
+      - Number(ligne?.en_cours_gnf ?? 0),
+  )
+
+  if (amount > disponible) {
+    return c.json(
+      {
+        error:
+          'Montant supérieur à ce qui est disponible '
+          + `(${disponible.toLocaleString('fr-FR')} GNF).`,
+      },
+      400,
+    )
+  }
+
+  const { data: creee, error } = await service
+    .from('payout_requests')
+    .insert({
+      teacher_id: teacherId,
+      amount,
+      method,
+      method_last4: last4 ?? null,
+    })
+    .select('id, amount, method, status, requested_at')
+    .single()
+
+  if (error) {
+    // 23505 : l'index partiel a refuse une seconde demande en cours. Ce n'est
+    // pas une panne, c'est la reponse — et elle se lit mieux ainsi qu'en
+    // « erreur serveur ».
+    if (error.code === '23505') {
+      return c.json(
+        {
+          error:
+            'Vous avez déjà une demande en cours. Elle doit être réglée '
+            + 'avant la suivante.',
+        },
+        409,
+      )
+    }
+    console.error('[retrait] enregistrement impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  return c.json({
+    id: creee.id,
+    amount: creee.amount,
+    method: creee.method,
+    status: creee.status,
+    requestedAt: creee.requested_at,
+  })
+})
+
+/* ===========================================================================
+ * Les cours a domicile
+ * ===========================================================================
+ *
+ * --- Pourquoi c'est la ligne la plus importante de cette serie -----------
+ *
+ * C'est la plus riche du modele economique : 500 000 a 900 000 GNF par mois
+ * et par eleve, contre quelques milliers pour une place en direct. Les
+ * tables existaient depuis `0001_schema.sql` ; aucune route ne les servait,
+ * sur aucun client. Une offre a domicile ne pouvait donc ni se publier ni se
+ * recevoir.
+ *
+ * --- Une offre, pas un tarif impose --------------------------------------
+ *
+ * `hourly_rate` est ce que le professeur demande, et le dossier de reference
+ * le dit explicitement : on est toujours pret a negocier avec les parents.
+ * Le serveur ne plafonne donc rien — il refuse seulement l'absurde, qui
+ * trahit une faute de frappe plutot qu'une intention.
+ */
+
+const offreDomicileSchema = z.object({
+  subjectId: z.string().min(1),
+  levelIds: z.array(z.string().min(1)).min(1).max(12),
+  mode: z.enum(['AT_STUDENT', 'AT_TEACHER', 'ONLINE']).default('AT_STUDENT'),
+  // 1 000 a 5 000 000 GNF : en dessous c'est un zero oublie, au-dessus c'en
+  // est un de trop. Entre les deux, c'est au professeur de decider.
+  hourlyRate: z.number().int().min(1_000).max(5_000_000).optional(),
+  city: z.string().max(80).optional(),
+  districts: z.array(z.string().min(1).max(80)).max(12).default([]),
+  availabilityNote: z.string().max(400).optional(),
+  description: z.string().max(1500).optional(),
+  active: z.boolean().default(true),
+})
+
+/**
+ * Les offres a domicile, publiques.
+ *
+ * Publique comme la liste des professeurs et celle des offres d'emploi : on
+ * regarde avant d'ouvrir un compte, et l'accueil promet deja que « le compte
+ * n'est reclame qu'au moment de contacter quelqu'un ». RLS l'autorise depuis
+ * 0002 — `active or teacher_id = my_teacher_id()`.
+ *
+ * Ce qu'elle ne montre pas, et ne doit jamais montrer : le telephone, le
+ * courriel et les pieces. Ils ne circulent qu'apres mise en relation (§30).
+ */
+app.get('/tutoring/offers', async (c) => {
+  const ville = (c.req.query('city') ?? '').trim()
+  const matiere = (c.req.query('subjectId') ?? '').trim()
+
+  let requete = asService()
+    .from('tutoring_services')
+    .select(
+      'id, teacher_id, subject_id, level_ids, mode, hourly_rate, city, '
+        + 'districts, availability_note, description, '
+        + 'subjects ( id, name ), '
+        + 'teachers!inner ( id, headline, city, years_experience, '
+        + 'profiles!inner ( first_name, last_name, suspended ) )',
+    )
+    .eq('active', true)
+    // Un compte suspendu ne doit pas rester au catalogue : la jointure
+    // `!inner` sur `profiles` permet de filtrer dessus.
+    .eq('teachers.profiles.suspended', false)
+    .order('created_at', { ascending: false })
+    .limit(60)
+
+  if (ville) requete = requete.ilike('city', `%${ville}%`)
+  if (matiere) requete = requete.eq('subject_id', matiere)
+
+  const { data, error } = await requete
+  if (error) {
+    console.error('[domicile] catalogue illisible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  const lignes = (data ?? []) as unknown as Record<string, unknown>[]
+
+  return c.json({
+    offers: lignes.map((offre) => {
+      const matiereLue = offre.subjects as { id?: string; name?: string } | null
+      const prof = offre.teachers as Record<string, unknown> | null
+      const compte = prof?.profiles as Record<string, unknown> | null
+      const prenom = String(compte?.first_name ?? '').trim()
+      const nom = String(compte?.last_name ?? '').trim()
+      return {
+        id: offre.id,
+        teacherId: offre.teacher_id,
+        // Le prenom et l'initiale, pas le nom complet : c'est ce que montre
+        // deja la liste publique des professeurs.
+        teacherName: nom ? `${prenom} ${nom.charAt(0)}.` : prenom,
+        headline: prof?.headline ?? null,
+        yearsExperience: prof?.years_experience ?? 0,
+        subject: {
+          id: matiereLue?.id ?? offre.subject_id,
+          name: matiereLue?.name ?? '',
+        },
+        levelIds: offre.level_ids ?? [],
+        mode: offre.mode,
+        hourlyRate: offre.hourly_rate,
+        city: offre.city,
+        districts: offre.districts ?? [],
+        availabilityNote: offre.availability_note,
+        description: offre.description,
+      }
+    }),
+  })
+})
+
+/** Mes offres a domicile. */
+app.get('/tutoring/services/mine', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ services: [] })
+
+  const { data, error } = await asService()
+    .from('tutoring_services')
+    .select(
+      'id, subject_id, level_ids, mode, hourly_rate, city, districts, '
+        + 'availability_note, description, active, created_at, '
+        + 'subjects ( id, name )',
+    )
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[domicile] lecture impossible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  // La relation imbriquee depasse l'inference de supabase-js, qui rend alors
+  // un type d'erreur. Meme transtypage que partout ailleurs dans ce fichier.
+  const offres = (data ?? []) as unknown as Record<string, unknown>[]
+
+  return c.json({
+    services: offres.map((offre) => {
+      const matiere = offre.subjects as { id?: string; name?: string } | null
+      return {
+        id: offre.id,
+        subject: { id: matiere?.id ?? offre.subject_id, name: matiere?.name ?? '' },
+        levelIds: offre.level_ids ?? [],
+        mode: offre.mode,
+        hourlyRate: offre.hourly_rate,
+        city: offre.city,
+        districts: offre.districts ?? [],
+        availabilityNote: offre.availability_note,
+        description: offre.description,
+        active: offre.active,
+        createdAt: offre.created_at,
+      }
+    }),
+  })
+})
+
+/** Publier une offre a domicile. */
+app.post('/tutoring/services', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = offreDomicileSchema.safeParse(
+    await c.req.json().catch(() => ({})),
+  )
+  if (!corps.success) {
+    return c.json(
+      { error: 'Offre incomplete : matiere et au moins un niveau.' },
+      400,
+    )
+  }
+  const o = corps.data
+
+  const service = asService()
+
+  // La ville par defaut est celle du profil : la redemander alors qu'elle a
+  // ete donnee a l'inscription est exactement la redondance que l'audit du
+  // 04/10 reprochait au parcours.
+  let ville = o.city
+  if (!ville) {
+    const { data: fiche } = await service
+      .from('teachers')
+      .select('city')
+      .eq('id', teacherId)
+      .maybeSingle()
+    ville = (fiche?.city as string) ?? undefined
+  }
+
+  const { data, error } = await service
+    .from('tutoring_services')
+    .insert({
+      teacher_id: teacherId,
+      subject_id: o.subjectId,
+      level_ids: o.levelIds,
+      mode: o.mode,
+      hourly_rate: o.hourlyRate ?? null,
+      city: ville ?? null,
+      districts: o.districts,
+      availability_note: o.availabilityNote ?? null,
+      description: o.description ?? null,
+      active: o.active,
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    // 23503 : la matiere n'existe pas. Le dire plutot que « erreur serveur ».
+    if (error.code === '23503') {
+      return c.json({ error: 'Matiere ou niveau inconnu.' }, 400)
+    }
+    console.error('[domicile] publication impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  return c.json({ id: data.id })
+})
+
+/** Retirer ou remettre une offre. */
+app.patch('/tutoring/services/:id', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = z
+    .object({
+      active: z.boolean().optional(),
+      hourlyRate: z.number().int().min(1_000).max(5_000_000).optional(),
+    })
+    .safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) return c.json({ error: 'Demande illisible.' }, 400)
+
+  const modification: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  }
+  if (corps.data.active !== undefined) modification.active = corps.data.active
+  if (corps.data.hourlyRate !== undefined) {
+    modification.hourly_rate = corps.data.hourlyRate
+  }
+
+  const { data, error } = await asService()
+    .from('tutoring_services')
+    .update(modification)
+    .eq('id', c.req.param('id'))
+    .eq('teacher_id', teacherId)
+    .select('id, active, hourly_rate')
+    .maybeSingle()
+
+  if (error) {
+    console.error('[domicile] mise a jour impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+  if (!data) return c.json({ error: 'Offre introuvable.' }, 404)
+
+  return c.json({ id: data.id, active: data.active, hourlyRate: data.hourly_rate })
+})
+
+/**
+ * Les demandes recues sur mes offres.
+ *
+ * Lu avec la cle de service, et restreint a la main : le professeur voit le
+ * prenom de l'enfant, la matiere et la date souhaitee. Ni telephone ni
+ * adresse — ils ne circulent qu'apres mise en relation (§30), et c'est la
+ * seule chose qui rende acceptable qu'un inconnu publie une offre a domicile
+ * pour des mineurs.
+ */
+app.get('/tutoring/requests', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ requests: [] })
+
+  const service = asService()
+
+  const { data: miennes } = await service
+    .from('tutoring_services')
+    .select('id')
+    .eq('teacher_id', teacherId)
+
+  const ids = (miennes ?? []).map((o) => o.id as string)
+  if (ids.length === 0) return c.json({ requests: [] })
+
+  const { data, error } = await service
+    .from('tutoring_requests')
+    .select(
+      'id, service_id, status, message, preferred_start, created_at, '
+        + 'responded_at, children ( first_name ), '
+        + 'tutoring_services ( subjects ( name ) )',
+    )
+    .in('service_id', ids)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (error) {
+    console.error('[domicile] demandes illisibles', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  const lignes = (data ?? []) as unknown as Record<string, unknown>[]
+
+  return c.json({
+    requests: lignes.map((demande) => {
+      const enfant = demande.children as { first_name?: string } | null
+      const offre = demande.tutoring_services as {
+        subjects?: { name?: string } | null
+      } | null
+      return {
+        id: demande.id,
+        serviceId: demande.service_id,
+        status: demande.status,
+        message: demande.message,
+        preferredStart: demande.preferred_start,
+        createdAt: demande.created_at,
+        respondedAt: demande.responded_at,
+        childName: enfant?.first_name ?? 'Élève',
+        subject: offre?.subjects?.name ?? null,
+      }
+    }),
+  })
+})
+
+/**
+ * Accepter ou refuser une demande.
+ *
+ * Accepter ouvre le groupe de discussion : c'est le moment ou les deux
+ * personnes ont une raison de se parler, et c'est ce passage-la qui
+ * transforme une annonce en relation.
+ */
+app.patch('/tutoring/requests/:id', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = z
+    .object({ status: z.enum(['ACCEPTED', 'DECLINED']) })
+    .safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) return c.json({ error: 'Demande illisible.' }, 400)
+
+  const service = asService()
+  const demandeId = c.req.param('id')
+
+  // L'offre visee est-elle bien la mienne ? Une demande se designe par son
+  // identifiant, et rien dans la table ne porte le professeur : c'est la
+  // jointure qui le dit.
+  const { data: demande } = await service
+    .from('tutoring_requests')
+    .select('id, service_id, tutoring_services!inner ( teacher_id )')
+    .eq('id', demandeId)
+    .eq('tutoring_services.teacher_id', teacherId)
+    .maybeSingle()
+
+  if (!demande) return c.json({ error: 'Demande introuvable.' }, 404)
+
+  const { error } = await service
+    .from('tutoring_requests')
+    .update({
+      status: corps.data.status,
+      responded_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', demandeId)
+
+  if (error) {
+    console.error('[domicile] reponse impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  return c.json({ id: demandeId, status: corps.data.status })
+})
+
+/* ===========================================================================
+ * L'assistant
+ * ===========================================================================
+ *
+ * --- Ou vit la cle, et pourquoi -----------------------------------------
+ *
+ * Le navigateur ne parle jamais a Google. Il parle a cette route, qui detient
+ * l'unique cle et decide qui a le droit de s'en servir. Une cle prefixee
+ * `VITE_` serait recopiee dans le paquet du site par Vite, donc lisible par
+ * n'importe quel visiteur — `Gemini` refuse d'ailleurs une cle qui porte ce
+ * prefixe plutot que de la laisser passer.
+ *
+ * --- Les deux garde-fous, et ce qu'ils protegent ------------------------
+ *
+ * Ils ne protegent pas la meme chose, et c'est pourquoi il en faut deux :
+ *
+ *   * **la limite par compte** (100 messages par jour) empeche une personne
+ *     de monopoliser le service ou de boucler par accident ;
+ *   * **le plafond mensuel en dollars** empeche la facture de partir si cent
+ *     personnes decouvrent le jouet le meme jour. C'est le seul qui protege
+ *     l'argent, et il est lu avant chaque appel.
+ *
+ * Atteint, le plafond ne rend pas une erreur de panne : il dit que le service
+ * est en pause, parce que c'est ce qui se passe.
+ *
+ * --- Ce qui part chez Google, et ce qui n'en part pas -------------------
+ *
+ * L'invite ne porte **ni prenom, ni identifiant, ni ville, ni nom d'ecole**.
+ * Le serveur envoie les consignes de role, l'historique borne et la question.
+ * Google ne peut pas relier deux conversations a la meme personne.
+ *
+ * ⚠ OFFRE PAYANTE OBLIGATOIRE. En offre gratuite, Google se sert des donnees
+ * envoyees pour ameliorer ses produits : inacceptable pour des devoirs
+ * d'enfants. L'API ne dit pas de quelle offre releve une cle.
+ */
+
+/** 100 messages par jour et par compte (AI_ASSISTANT.md §3.5). */
+const AI_MESSAGES_PAR_JOUR = 100
+
+/** Le plafond mensuel, en dollars. Lu dans l'environnement. */
+const AI_PLAFOND_USD = Number(process.env.AI_MONTHLY_BUDGET_USD ?? 25) || 25
+
+/**
+ * Les tours de parole renvoyes au modele.
+ *
+ * Huit, soit quatre echanges. « Et pour la question 3 ? » n'a de sens
+ * qu'avec ce qui precede ; vingt tours feraient grossir l'entree, donc la
+ * facture, sans ameliorer la reponse.
+ */
+const AI_HISTORIQUE = 8
+
+/** Les consignes, par usage. Courtes : une longue invite est moins suivie. */
+const CONSIGNES: Record<string, string> = {
+  HOMEWORK: [
+    'Tu es un repetiteur guineen patient. Tu aides un eleve a comprendre',
+    'son devoir en francais simple.',
+    '',
+    'Regle absolue : tu ne donnes jamais la reponse finale directement. Tu',
+    'donnes la methode, une etape a la fois, et tu poses une question pour',
+    'verifier que l eleve suit. Si il insiste pour avoir la reponse, tu',
+    'expliques le dernier pas et tu le laisses conclure.',
+    '',
+    'Tu te refere au programme guineen. Tu utilises des exemples locaux :',
+    'francs guineens, Conakry, marche de Madina.',
+    '',
+    'Trois paragraphes au maximum. Pas de formule de politesse longue.',
+  ].join('\n'),
+  COURSE: [
+    'Tu aides un professeur guineen a preparer son cours.',
+    '',
+    'Tu rends un plan utilisable tel quel : objectifs, deroule minute par',
+    'minute, exercices avec leur corrige. Tu te refere au programme',
+    'guineen et aux manuels en usage.',
+    '',
+    'Tu es concret. Pas de conseils pedagogiques generaux.',
+  ].join('\n'),
+  GENERAL: [
+    'Tu reponds aux questions sur Eduquali et sur la scolarite en Guinee,',
+    'en francais simple.',
+    '',
+    'Tu ne promets rien sur les prix, les abonnements ou les delais : tu',
+    'renvoies vers le support. Si tu ne sais pas, tu le dis.',
+    '',
+    'Court : deux paragraphes au maximum.',
+  ].join('\n'),
+}
+
+/** Ou en est ce compte de sa limite du jour. */
+app.get('/ai/quota', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  if (!gemini) {
+    return c.json({ available: false, used: 0, limit: AI_MESSAGES_PAR_JOUR })
+  }
+
+  const service = asService()
+  const { data } = await service.rpc('ai_messages_du_jour', { qui: userId })
+  const { data: cout } = await service.rpc('ai_cout_du_mois')
+
+  const utilises = Number(data ?? 0)
+  const depense = Number(cout ?? 0)
+
+  return c.json({
+    available: depense < AI_PLAFOND_USD,
+    used: utilises,
+    limit: AI_MESSAGES_PAR_JOUR,
+    remaining: Math.max(0, AI_MESSAGES_PAR_JOUR - utilises),
+  })
+})
+
+/** Mes conversations, la plus recente d'abord. */
+app.get('/ai/conversations', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const { data, error } = await asService()
+    .from('ai_conversations')
+    .select('id, feature, title, updated_at')
+    .eq('owner_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(30)
+
+  if (error) {
+    console.error('[assistant] conversations illisibles', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  return c.json({
+    conversations: (data ?? []).map((fil) => ({
+      id: fil.id,
+      feature: fil.feature,
+      title: fil.title,
+      updatedAt: fil.updated_at,
+    })),
+  })
+})
+
+/** Les messages d'une conversation. */
+app.get('/ai/conversations/:id', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const service = asService()
+  const { data: fil } = await service
+    .from('ai_conversations')
+    .select('id, feature, title')
+    .eq('id', c.req.param('id'))
+    .eq('owner_id', userId)
+    .maybeSingle()
+
+  if (!fil) return c.json({ error: 'Conversation introuvable.' }, 404)
+
+  const { data } = await service
+    .from('ai_messages')
+    .select('id, role, body, created_at')
+    .eq('conversation_id', fil.id)
+    .order('created_at', { ascending: true })
+    .limit(200)
+
+  return c.json({
+    id: fil.id,
+    feature: fil.feature,
+    title: fil.title,
+    messages: (data ?? []).map((m) => ({
+      id: m.id,
+      role: m.role,
+      body: m.body,
+      createdAt: m.created_at,
+    })),
+  })
+})
+
+const aiSchema = z.object({
+  message: z.string().min(1).max(4000),
+  feature: z.enum(['HOMEWORK', 'COURSE', 'GENERAL']).default('GENERAL'),
+  /** Absent au premier message : la route ouvre alors un fil. */
+  conversationId: z.string().min(1).optional(),
+})
+
+app.post('/ai/chat', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  if (!gemini) {
+    return c.json(
+      {
+        error:
+          'L’assistant n’est pas configuré sur ce serveur. '
+          + 'Les autres fonctions restent disponibles.',
+      },
+      503,
+    )
+  }
+
+  const corps = aiSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) {
+    return c.json({ error: 'Message vide ou trop long (4 000 signes).' }, 400)
+  }
+  const { message, feature } = corps.data
+
+  const service = asService()
+
+  // --- Garde-fou 1 : la facture ------------------------------------------
+  //
+  // Lu avant la limite par compte, et avant tout appel : c'est le seul qui
+  // protege l'argent, et il doit s'appliquer meme au premier message d'un
+  // compte neuf.
+  const { data: cout } = await service.rpc('ai_cout_du_mois')
+  if (Number(cout ?? 0) >= AI_PLAFOND_USD) {
+    return c.json(
+      {
+        error:
+          'L’assistant est en pause jusqu’au mois prochain. '
+          + 'Rien ne vous a été débité.',
+      },
+      503,
+    )
+  }
+
+  // --- Garde-fou 2 : la limite du jour ----------------------------------
+  const { data: utilises } = await service.rpc('ai_messages_du_jour', {
+    qui: userId,
+  })
+  if (Number(utilises ?? 0) >= AI_MESSAGES_PAR_JOUR) {
+    return c.json(
+      {
+        error:
+          `Vous avez atteint ${AI_MESSAGES_PAR_JOUR} messages aujourd’hui. `
+          + 'Le compteur repart demain.',
+      },
+      429,
+    )
+  }
+
+  // --- Le fil ------------------------------------------------------------
+  let filId = corps.data.conversationId ?? null
+  if (filId) {
+    const { data: existant } = await service
+      .from('ai_conversations')
+      .select('id')
+      .eq('id', filId)
+      .eq('owner_id', userId)
+      .maybeSingle()
+    if (!existant) return c.json({ error: 'Conversation introuvable.' }, 404)
+  } else {
+    const { data: nouveau, error } = await service
+      .from('ai_conversations')
+      .insert({
+        owner_id: userId,
+        feature,
+        // Le debut de la premiere question : c'est ce qui s'affiche dans la
+        // liste, et c'est ce dont on se souvient d'un fil.
+        title: message.slice(0, 80),
+      })
+      .select('id')
+      .single()
+    if (error || !nouveau) {
+      console.error('[assistant] ouverture impossible', error)
+      return c.json({ error: 'Enregistrement impossible.' }, 500)
+    }
+    filId = nouveau.id as string
+  }
+
+  // L'historique borne, du plus ancien au plus recent.
+  const { data: precedents } = await service
+    .from('ai_messages')
+    .select('role, body')
+    .eq('conversation_id', filId)
+    .order('created_at', { ascending: false })
+    .limit(AI_HISTORIQUE)
+
+  const historique = [...(precedents ?? [])].reverse().map((m) => ({
+    role: m.role as 'USER' | 'MODEL',
+    body: m.body as string,
+  }))
+  historique.push({ role: 'USER', body: message })
+
+  // La question est enregistree avant l'appel : si le modele echoue, elle
+  // reste dans le fil et la personne la retrouve au lieu de la retaper.
+  await service
+    .from('ai_messages')
+    .insert({ conversation_id: filId, role: 'USER', body: message })
+
+  const depart = Date.now()
+  try {
+    const reponse = await gemini.converse({
+      history: historique,
+      system: CONSIGNES[feature] ?? CONSIGNES.GENERAL,
+    })
+
+    const duree = Date.now() - depart
+    const dollars = coutUsd({
+      model: reponse.model,
+      tokensIn: reponse.tokensIn,
+      tokensOut: reponse.tokensOut,
+    })
+
+    // Les deux ecritures, puis la reponse. L'ordre compte : le journal
+    // d'usage est ce qui alimente le plafond, et un appel paye mais non
+    // journalise rend le plafond faux a la baisse.
+    await service.from('ai_usage').insert({
+      owner_id: userId,
+      feature,
+      model: reponse.model,
+      tokens_in: reponse.tokensIn,
+      tokens_out: reponse.tokensOut,
+      cost_usd: dollars,
+      duration_ms: duree,
+      status: 'OK',
+    })
+
+    const { data: ecrit } = await service
+      .from('ai_messages')
+      .insert({ conversation_id: filId, role: 'MODEL', body: reponse.text })
+      .select('id, created_at')
+      .single()
+
+    await service
+      .from('ai_conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', filId)
+
+    return c.json({
+      conversationId: filId,
+      id: ecrit?.id ?? null,
+      body: reponse.text,
+      createdAt: ecrit?.created_at ?? new Date().toISOString(),
+    })
+  } catch (cause) {
+    // Un echec est journalise lui aussi, a cout nul : sans cette ligne, une
+    // panne de dix minutes serait invisible dans les relevés.
+    await service.from('ai_usage').insert({
+      owner_id: userId,
+      feature,
+      model: MODELS.chat,
+      duration_ms: Date.now() - depart,
+      status: 'ERROR',
+    })
+
+    const status =
+      cause instanceof GeminiError ? cause.status : 502
+    const message =
+      cause instanceof GeminiError
+        ? cause.message
+        : 'L’assistant n’a pas répondu. Réessayez dans un instant.'
+    console.error('[assistant] appel echoue', cause)
+    // 422 : refus de securite, deja formule pour l'affichage. Les autres sont
+    // reecrits — le message de Google n'est pas destine a un professeur.
+    return c.json(
+      { conversationId: filId, error: status === 422 ? message : message },
+      status === 422 ? 422 : 502,
+    )
+  }
+})
+
+/* ===========================================================================
+ * La creation d'un cours video
+ * ===========================================================================
+ *
+ * --- Le vide que ceci remplit -------------------------------------------
+ *
+ * `sync.ts` refuse depuis toujours l'ecriture directe de `video_courses`,
+ * `course_chapters` et `course_items`, et chacun des trois refus renvoie vers
+ * « une route dediee ». Ces routes n'existaient pas. Un professeur ne pouvait
+ * donc pas creer un cours video, sur aucun des deux clients — la table etait
+ * remplie par le jeu de demonstration et par rien d'autre.
+ *
+ * --- Le prix est relu ici ------------------------------------------------
+ *
+ * C'est la raison du refus cote synchronisation, et elle tient : un prix
+ * ecrit par un client est un prix que le client choisit, y compris zero sur
+ * un cours payant, ou un million sur le cours de quelqu'un d'autre.
+ *
+ * --- Le chemin d'une video ----------------------------------------------
+ *
+ *   1. le navigateur demande une adresse de depot -> R2, cle choisie ici ;
+ *   2. il y envoie le fichier directement ;
+ *   3. il declare le depot fini ;
+ *   4. le serveur demande a Stream d'ingerer depuis une adresse signee en
+ *      lecture, et garde l'identifiant rendu.
+ *
+ * C'est exactement le chemin des enregistrements de seance, deja eprouve.
+ * Le fichier ne traverse jamais le Worker.
+ */
+
+const PRIX_COURS_MAX = 2_000_000
+
+const coursVideoSchema = z.object({
+  title: z.string().min(3).max(140),
+  description: z.string().max(4000).optional(),
+  subjectId: z.string().min(1),
+  levelIds: z.array(z.string().min(1)).min(1).max(12),
+  // Zero est permis, et c'est un choix : un cours offert fait venir du monde
+  // sur les suivants. Au-dela de deux millions, c'est un zero de trop.
+  price: z.number().int().min(0).max(PRIX_COURS_MAX),
+  chapters: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(140),
+        description: z.string().max(1000).optional(),
+      }),
+    )
+    .min(1)
+    .max(30),
+})
+
+/** Mes cours video, publies ou non. */
+app.get('/courses/mine', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ courses: [] })
+
+  const service = asService()
+  const { data, error } = await service
+    .from('video_courses')
+    .select(
+      'id, title, description, subject_id, level_ids, price, status, '
+        + 'purchase_count, created_at, subjects ( name )',
+    )
+    .eq('teacher_id', teacherId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[cours] lecture impossible', error)
+    return c.json({ error: 'Lecture impossible.' }, 500)
+  }
+
+  const lignes = (data ?? []) as unknown as Record<string, unknown>[]
+  const ids = lignes.map((cours) => cours.id as string)
+
+  // Le nombre de chapitres et d'elements deposes, en une requete : « cours
+  // en brouillon » sans dire s'il contient deja trois videos ne permet pas
+  // de savoir ce qu'il reste a faire.
+  const compte = new Map<string, { chapitres: number; elements: number }>()
+  if (ids.length > 0) {
+    const { data: chapitres } = await service
+      .from('course_chapters')
+      .select('id, course_id')
+      .in('course_id', ids)
+    const parChapitre = new Map<string, string>()
+    for (const chapitre of chapitres ?? []) {
+      const cours = chapitre.course_id as string
+      parChapitre.set(chapitre.id as string, cours)
+      const actuel = compte.get(cours) ?? { chapitres: 0, elements: 0 }
+      actuel.chapitres += 1
+      compte.set(cours, actuel)
+    }
+    if (parChapitre.size > 0) {
+      const { data: elements } = await service
+        .from('course_items')
+        .select('id, chapter_id')
+        .in('chapter_id', [...parChapitre.keys()])
+      for (const element of elements ?? []) {
+        const cours = parChapitre.get(element.chapter_id as string)
+        if (!cours) continue
+        const actuel = compte.get(cours) ?? { chapitres: 0, elements: 0 }
+        actuel.elements += 1
+        compte.set(cours, actuel)
+      }
+    }
+  }
+
+  return c.json({
+    courses: lignes.map((cours) => {
+      const matiere = cours.subjects as { name?: string } | null
+      const n = compte.get(cours.id as string) ?? { chapitres: 0, elements: 0 }
+      return {
+        id: cours.id,
+        title: cours.title,
+        description: cours.description,
+        subject: matiere?.name ?? null,
+        // `level_ids` est une chaine separee par des virgules sur cette
+        // table, et non un tableau : elle precede la convention actuelle.
+        levelIds: String(cours.level_ids ?? '')
+          .split(',')
+          .filter((v) => v !== ''),
+        price: cours.price,
+        status: cours.status,
+        purchaseCount: cours.purchase_count,
+        chapters: n.chapitres,
+        items: n.elements,
+        createdAt: cours.created_at,
+      }
+    }),
+  })
+})
+
+/** Creer un cours video, en brouillon, avec ses chapitres. */
+app.post('/courses', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = coursVideoSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) {
+    return c.json(
+      {
+        error:
+          'Cours incomplet : un titre, une matiere, un niveau, un prix et '
+          + 'au moins un chapitre.',
+      },
+      400,
+    )
+  }
+  const cours = corps.data
+
+  const service = asService()
+  const coursId = crypto.randomUUID()
+
+  const { error } = await service.from('video_courses').insert({
+    id: coursId,
+    teacher_id: teacherId,
+    title: cours.title,
+    description: cours.description ?? null,
+    subject_id: cours.subjectId,
+    level_ids: cours.levelIds.join(','),
+    price: cours.price,
+    // Brouillon : un cours sans video ne doit pas apparaitre au catalogue.
+    // C'est la publication, plus tard, qui verifie qu'il a du contenu.
+    status: 'DRAFT',
+  })
+
+  if (error) {
+    if (error.code === '23503') {
+      return c.json({ error: 'Matiere inconnue.' }, 400)
+    }
+    console.error('[cours] creation impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  const chapitres = cours.chapters.map((chapitre, index) => ({
+    id: crypto.randomUUID(),
+    course_id: coursId,
+    title: chapitre.title,
+    description: chapitre.description ?? null,
+    position: index,
+  }))
+
+  const { error: erreurChapitres } = await service
+    .from('course_chapters')
+    .insert(chapitres)
+
+  if (erreurChapitres) {
+    // Le cours sans ses chapitres ne sert a rien : on le retire plutot que de
+    // laisser un brouillon vide que le professeur ne saura pas reparer.
+    await service.from('video_courses').delete().eq('id', coursId)
+    console.error('[cours] chapitres impossibles', erreurChapitres)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  return c.json({
+    id: coursId,
+    status: 'DRAFT',
+    chapters: chapitres.map((chapitre) => ({
+      id: chapitre.id,
+      title: chapitre.title,
+      position: chapitre.position,
+    })),
+  })
+})
+
+/** Le detail d'un de mes cours, avec ses chapitres et ses elements. */
+app.get('/courses/:id/content', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const service = asService()
+  const { data: cours } = await service
+    .from('video_courses')
+    .select('id, title, status, price')
+    .eq('id', c.req.param('id'))
+    .eq('teacher_id', teacherId)
+    .maybeSingle()
+
+  if (!cours) return c.json({ error: 'Cours introuvable.' }, 404)
+
+  const { data: chapitres } = await service
+    .from('course_chapters')
+    .select('id, title, description, position')
+    .eq('course_id', cours.id)
+    .order('position', { ascending: true })
+
+  const ids = (chapitres ?? []).map((chapitre) => chapitre.id as string)
+
+  // `.in('x', [])` rend zero ligne sans erreur : la requete part toujours,
+  // plutot qu'un ternaire dont les deux branches n'ont pas le meme type.
+  const { data: elementsLus } = await service
+    .from('course_items')
+    .select(
+      'id, chapter_id, kind, title, position, duration_seconds, '
+        + 'provider_status',
+    )
+    .in('chapter_id', ids)
+    .order('position', { ascending: true })
+  const elements = (elementsLus ?? []) as unknown as Record<
+    string,
+    unknown
+  >[]
+
+  return c.json({
+    id: cours.id,
+    title: cours.title,
+    status: cours.status,
+    price: cours.price,
+    chapters: (chapitres ?? []).map((chapitre) => ({
+      id: chapitre.id,
+      title: chapitre.title,
+      description: chapitre.description,
+      position: chapitre.position,
+      items: elements
+        .filter((element) => element.chapter_id === chapitre.id)
+        .map((element) => ({
+          id: element.id,
+          kind: element.kind,
+          title: element.title,
+          position: element.position,
+          durationSeconds: element.duration_seconds,
+          status: element.provider_status,
+        })),
+    })),
+  })
+})
+
+const elementSchema = z.object({
+  chapterId: z.string().min(1),
+  title: z.string().min(1).max(140),
+  // 600 Mo : une heure de cours filmee au telephone. Au-dela, le depot
+  // n'aboutira pas sur une connexion guineenne, et il vaut mieux le dire.
+  sizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(600 * 1024 * 1024),
+  contentType: z.enum(['video/mp4', 'video/quicktime', 'video/webm']),
+})
+
+/** Une adresse pour deposer la video d'un chapitre. */
+app.post('/courses/items', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  if (!documents) {
+    return c.json({ error: 'Le depot video n’est pas configure.' }, 503)
+  }
+
+  const corps = elementSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) {
+    return c.json(
+      { error: 'Video refusee. MP4, MOV ou WEBM, 600 Mo au maximum.' },
+      400,
+    )
+  }
+
+  const service = asService()
+
+  // Le chapitre appartient-il a un de mes cours ? Sans ce controle, un
+  // identifiant devine ferait deposer une video dans le cours d'un autre.
+  const { data: chapitre } = await service
+    .from('course_chapters')
+    .select('id, course_id, video_courses!inner ( teacher_id )')
+    .eq('id', corps.data.chapterId)
+    .eq('video_courses.teacher_id', teacherId)
+    .maybeSingle()
+
+  if (!chapitre) return c.json({ error: 'Chapitre introuvable.' }, 404)
+
+  const { count } = await service
+    .from('course_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('chapter_id', chapitre.id)
+
+  const elementId = crypto.randomUUID()
+  const cle = `cours/${teacherId}/${elementId}.mp4`
+
+  const { error } = await service.from('course_items').insert({
+    id: elementId,
+    chapter_id: chapitre.id,
+    kind: 'VIDEO',
+    title: corps.data.title,
+    local_path: cle,
+    position: count ?? 0,
+    provider_status: 'PENDING_UPLOAD',
+  })
+
+  if (error) {
+    console.error('[cours] element impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  const url = await documents.presign({
+    method: 'PUT',
+    key: cle,
+    // Trente minutes : une video de 300 Mo sur une connexion a 2 Mbit/s met
+    // vingt minutes. Dix auraient expire au milieu du depot.
+    expiresInSeconds: 1800,
+  })
+
+  return c.json({ id: elementId, uploadUrl: url, expiresInSeconds: 1800 })
+})
+
+/**
+ * Le depot est fini : faire ingerer la video par Stream.
+ *
+ * Stream va chercher le fichier lui-meme, par une adresse signee en lecture
+ * valable une heure — le temps du transcodage. On garde l'identifiant rendu ;
+ * c'est lui que `/videos/:itemId/url` signera plus tard pour la lecture.
+ */
+app.post('/courses/items/:id/uploaded', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  if (!documents || !video) {
+    return c.json({ error: 'L’hebergement video n’est pas configure.' }, 503)
+  }
+
+  const service = asService()
+  const { data: lu } = await service
+    .from('course_items')
+    .select(
+      'id, local_path, title, chapter_id, '
+        + 'course_chapters!inner ( video_courses!inner ( teacher_id ) )',
+    )
+    .eq('id', c.req.param('id'))
+    .eq('course_chapters.video_courses.teacher_id', teacherId)
+    .maybeSingle()
+
+  if (!lu) return c.json({ error: 'Element introuvable.' }, 404)
+  // Deux niveaux de `!inner` depassent l'inference de supabase-js.
+  const element = lu as unknown as Record<string, unknown>
+
+  const cle = element.local_path as string | null
+  if (!cle) return c.json({ error: 'Aucun fichier attendu.' }, 409)
+
+  const lecture = await documents.presign({
+    method: 'GET',
+    key: cle,
+    expiresInSeconds: 3600,
+  })
+
+  try {
+    const videoId = await video.ingestFromUrl({
+      url: lecture,
+      name: String(element.title ?? 'Cours'),
+    })
+    await service
+      .from('course_items')
+      .update({
+        provider_video_id: videoId,
+        provider_status: 'TRANSFERRING',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', element.id)
+
+    return c.json({ id: element.id, status: 'TRANSFERRING' })
+  } catch (cause) {
+    console.error('[cours] ingestion refusee', cause)
+    await service
+      .from('course_items')
+      .update({ provider_status: 'FAILED' })
+      .eq('id', element.id)
+    return c.json(
+      { error: 'Le transfert vers l’hebergeur video a echoue.' },
+      502,
+    )
+  }
+})
+
+/**
+ * Publier ou retirer un cours.
+ *
+ * Publier verifie qu'il y a quelque chose a voir : un cours au catalogue
+ * sans une seule video prete est une promesse qu'on ne tient pas, et un
+ * acheteur decouvre l'ecran vide apres avoir paye.
+ */
+app.patch('/courses/:id', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = z
+    .object({
+      status: z.enum(['PUBLISHED', 'HIDDEN', 'DRAFT']).optional(),
+      price: z.number().int().min(0).max(PRIX_COURS_MAX).optional(),
+    })
+    .safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) return c.json({ error: 'Demande illisible.' }, 400)
+
+  const service = asService()
+  const coursId = c.req.param('id')
+
+  const { data: cours } = await service
+    .from('video_courses')
+    .select('id')
+    .eq('id', coursId)
+    .eq('teacher_id', teacherId)
+    .maybeSingle()
+  if (!cours) return c.json({ error: 'Cours introuvable.' }, 404)
+
+  if (corps.data.status === 'PUBLISHED') {
+    const { data: chapitres } = await service
+      .from('course_chapters')
+      .select('id')
+      .eq('course_id', coursId)
+    const ids = (chapitres ?? []).map((chapitre) => chapitre.id as string)
+    const { count } = ids.length
+      ? await service
+          .from('course_items')
+          .select('id', { count: 'exact', head: true })
+          .in('chapter_id', ids)
+          .eq('provider_status', 'READY')
+      : { count: 0 }
+
+    if (!count) {
+      return c.json(
+        {
+          error:
+            'Aucune video prete. Deposez au moins une video et attendez la '
+            + 'fin de sa preparation avant de publier.',
+        },
+        409,
+      )
+    }
+  }
+
+  const modification: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  }
+  if (corps.data.status) modification.status = corps.data.status
+  if (corps.data.price !== undefined) modification.price = corps.data.price
+
+  const { data, error } = await service
+    .from('video_courses')
+    .update(modification)
+    .eq('id', coursId)
+    .select('id, status, price')
+    .single()
+
+  if (error) {
+    console.error('[cours] mise a jour impossible', error)
+    return c.json({ error: 'Enregistrement impossible.' }, 500)
+  }
+
+  return c.json({ id: data.id, status: data.status, price: data.price })
 })
 
 /**

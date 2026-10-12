@@ -1,134 +1,249 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Field, Icon, TextInput } from '../components/ui'
+import { Button, Field, TextInput } from '../components/ui'
+import { BigButton, RowItem, SegmentedToggle, Tile, TwoToneTitle } from '../components/kit'
 import { useSession } from '../app/session'
 
 /**
- * Accueil non connecte (§55, ecrans 1 a 3).
+ * Accueil non connecté (§55, écrans 1 à 3).
  *
- * Une page = une promesse = une action principale. La promesse porte sur le
- * mecanisme — trois preuves controlees — et non sur une adjectivation
- * ("meilleurs enseignants") qu'un concurrent pourrait recopier telle quelle.
+ * --- Ce qui a changé le 11/10 --------------------------------------------
  *
- * Les chiffres de traction (nombre d'enseignants, d'établissements) sont
- * volontairement absents tant qu'ils ne sont pas mesurés : une preuve
- * inventée se retourne contre celui qui l'affiche.
+ * La page était un bloc bleu posé dans une page blanche, suivi d'une boîte de
+ * recherche, de deux portes et de trois liens. Trois défauts, dans l'ordre de
+ * ce qu'ils coûtaient :
+ *
+ *   * **sur un téléphone**, le fond blanc reprenait sous le bloc bleu à une
+ *     hauteur qui ne correspondait à rien, et la page se terminait sur un
+ *     vide. L'écran du téléphone (`landing_screen.dart`) occupe tout l'écran
+ *     d'un seul bleu, et c'est ce qui lui donne son assise ;
+ *   * **sur un ordinateur**, la promesse et l'action étaient côte à côte mais
+ *     le dégradé débordait d'un seul côté, ce qui faisait lire la page comme
+ *     deux pages collées ;
+ *   * **le premier geste n'était pas qualifié.** « Cherchez une matière »
+ *     mélangeait deux besoins qui n'ont pas les mêmes résultats : une famille
+ *     cherche quelqu'un qui se déplace le soir, une école cherche quelqu'un à
+ *     recruter. La bascule du téléphone posait la question ; le site non.
+ *
+ * --- La promesse, et pourquoi elle est formulée ainsi --------------------
+ *
+ * Le titre s'arrête sur « pour » : la phrase se termine dans la boîte juste
+ * en dessous, où l'on choisit entre « Cours à domicile » et « Embauche ». Le
+ * premier geste devient la fin de la phrase, et il n'y a donc rien à lire
+ * avant d'agir.
+ *
+ * La preuve porte sur le **mécanisme** — identité, diplôme et compétence
+ * vérifiés un par un — et non sur une adjectivation (« les meilleurs
+ * enseignants ») qu'un concurrent recopierait telle quelle. Les chiffres de
+ * traction restent volontairement absents tant qu'ils ne sont pas mesurés :
+ * une preuve inventée se retourne contre celui qui l'affiche.
  */
 export function Landing() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
 
+  /** 0 = cours à domicile, 1 = embauche. Le même ordre que sur le téléphone. */
+  const [mode, setMode] = useState(0)
+
   const search = (preset?: string) => {
     const q = (preset ?? query).trim()
-    navigate(q ? `/recherche?q=${encodeURIComponent(q)}` : '/recherche')
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    params.set('mode', mode === 0 ? 'domicile' : 'embauche')
+    navigate(`/recherche?${params.toString()}`)
   }
 
   return (
-    // `landing` ne sert qu'au grand ecran : a partir de 1024 px, la promesse
-    // et la boite de recherche se placent cote a cote. Le telephone ne voit
-    // pas cette classe agir — tout ce qui s'y rattache vit dans une requete
-    // `min-width`.
-    <div className="screen landing">
-      <header className="hero">
-        <h1 className="hero__title">
-          Trouvez le <span className="hero__accent">professeur</span>
-          <br />
-          qu’il vous faut
-        </h1>
-        <p className="hero__lede">
-          Écoles, universités et cours à domicile, partout en Guinée.
-        </p>
-      </header>
+    <>
+      {/* Le dégradé tient toute la page, téléphone comme ordinateur. */}
+      <div className="hero-page">
+        <div className="hero-page__inner">
+          <div className="hero-page__top">
+            <span className="hero-page__brand">Eduquali</span>
+            {/*
+              Une seule porte en haut, et c'est celle du professeur : la page
+              entière parle à qui cherche un professeur, donc celui qui *est*
+              professeur doit pouvoir sortir de ce discours tout de suite.
 
-      {/* La boite de premiere action. On cherche sans compte ; le compte
-          n'est reclame qu'au moment de contacter quelqu'un, parce que c'est
-          le premier geste qui engage une autre personne. */}
-      <section className="action-card">
-        <form
-          className="stack stack--tight"
-          onSubmit={(event) => {
-            event.preventDefault()
-            search()
-          }}
-        >
-          <Field label="Quelle matière cherchez-vous ?">
-            <TextInput
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Maths, physique, anglais…"
-            />
-          </Field>
-
-          <div className="action-card__suggestions">
-            {['Mathématiques', 'Physique', 'Anglais'].map((name) => (
-              <button
-                key={name}
-                type="button"
-                className="chip chip--action"
-                onClick={() => search(name)}
-              >
-                {name}
-              </button>
-            ))}
+              Elle mène à la connexion, pas à l'inscription : un professeur
+              qui clique ici a presque toujours déjà un compte, et celui qui
+              n'en a pas trouve « Créer mon profil » sur l'écran d'arrivée.
+            */}
+            <Link className="pill-ghost" to="/connexion">
+              Espace professeur
+            </Link>
           </div>
 
-          <Button block type="submit">
-            Chercher
-          </Button>
-          <p className="micro faint centered">
-            Aucun compte nécessaire pour regarder.
-          </p>
-        </form>
-      </section>
+          <div className="hero-page__middle">
+            <div className="stack">
+              <TwoToneTitle
+                before="Trouvez le "
+                accented="professeur"
+                after=" qu’il vous faut pour"
+              />
+              <p
+                className="small"
+                style={{ color: 'var(--c-on-hero-muted)', maxWidth: '44ch' }}
+              >
+                Chaque profil est vérifié pièce par pièce : identité, diplôme,
+                puis un test de compétence sur le programme guinéen. Vous voyez
+                ce qui a été contrôlé avant d’appeler qui que ce soit.
+              </p>
+            </div>
 
-      <div className="doors">
-        <button
-          type="button"
-          className="door"
-          onClick={() => navigate('/inscription?role=TEACHER')}
-        >
-          <Icon name="user" />
-          <span>
-            <span className="door__title">Je suis professeur</span>
-            <br />
-            <span className="door__sub">
-              Créez votre profil et recevez des offres
-            </span>
-          </span>
-        </button>
+            {/* La boîte de première action : ce qu'on peut faire sans compte. */}
+            <section className="sheet">
+              <form
+                className="stack"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  search()
+                }}
+              >
+                <SegmentedToggle
+                  label="Ce que vous cherchez"
+                  labels={['Cours à domicile', 'Embauche']}
+                  selected={mode}
+                  onSelect={setMode}
+                />
 
-        <button
-          type="button"
-          className="door"
-          onClick={() => navigate('/inscription?role=INSTITUTION')}
-        >
-          <Icon name="briefcase" />
-          <span>
-            <span className="door__title">Je représente une école</span>
-            <br />
-            <span className="door__sub">
-              Publiez un poste et recevez des candidatures
-            </span>
-          </span>
-        </button>
+                <Field
+                  label={
+                    mode === 0
+                      ? 'Quelle matière pour votre enfant ?'
+                      : 'Quelle matière enseignez-vous… ou cherchez-vous ?'
+                  }
+                >
+                  <TextInput
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Maths, physique, anglais…"
+                  />
+                </Field>
+
+                <div className="action-card__suggestions">
+                  {['Mathématiques', 'Physique', 'Anglais', 'Français'].map(
+                    (name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        className="chip chip--action"
+                        onClick={() => search(name)}
+                      >
+                        {name}
+                      </button>
+                    ),
+                  )}
+                </div>
+
+                <BigButton type="submit" icon="search">
+                  Chercher
+                </BigButton>
+
+                <p className="micro faint centered">
+                  Aucun compte nécessaire pour regarder.
+                </p>
+              </form>
+            </section>
+          </div>
+
+          {/* Les deux portes du compte, en bas, décollées du bord : sur le
+              bleu elles se lisent comme des boutons, pas comme du texte posé
+              sur le fond. */}
+          <div className="hero-page__bottom pill-row">
+            <Link className="pill-solid" to="/inscription">
+              Créer mon compte
+            </Link>
+            <Link className="pill-outline" to="/connexion">
+              Me connecter
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* Les trois listes publiques, atteignables depuis l'accueil : « aucun
-          compte necessaire pour regarder » doit se verifier d'un clic, pas
-          seulement se lire. */}
-      <nav className="row centered" style={{ gap: 'var(--s-4)', flexWrap: 'wrap' }}>
-        <Link to="/cours">Cours vidéo</Link>
-        <Link to="/etablissements">Écoles</Link>
-        <Link to="/tests">Tests de certification</Link>
-      </nav>
+      {/* Ce qui suit se lit en défilant, donc sur du blanc : trois paragraphes
+          en blanc sur bleu demanderaient un contraste que le dégradé ne tient
+          pas en corps de texte. */}
+      <div className="screen stack stack--loose">
+        <section className="stack">
+          <h2>Ce que « vérifié » veut dire ici</h2>
+          <div className="stack grid-cards">
+            <div className="card">
+              <div className="stack stack--tight">
+                <Tile icon="shield" />
+                <strong>Identité contrôlée</strong>
+                <span className="muted small">
+                  Pièce d’identité et photo, comparées l’une à l’autre. Un
+                  profil sans ce contrôle le dit sur sa fiche.
+                </span>
+              </div>
+            </div>
+            <div className="card">
+              <div className="stack stack--tight">
+                <Tile icon="diploma" tone="success" />
+                <strong>Diplôme vu et lu</strong>
+                <span className="muted small">
+                  Le document est déposé, puis relu par quelqu’un. Ce n’est pas
+                  une case que le professeur coche lui-même.
+                </span>
+              </div>
+            </div>
+            <div className="card">
+              <div className="stack stack--tight">
+                <Tile icon="check" tone="warning" />
+                <strong>Compétence testée</strong>
+                <span className="muted small">
+                  Un test sur le programme guinéen, matière par matière et
+                  niveau par niveau. La note est sur la fiche.
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <p className="centered" style={{ marginTop: 'var(--s-5)' }}>
-        <span className="faint">Vous avez déjà un compte ? </span>
-        <Link to="/connexion">Se connecter</Link>
-      </p>
+        <section className="stack">
+          <h2>Vous venez pour autre chose ?</h2>
+          <div className="stack grid-cards">
+            <RowItem
+              icon="user"
+              title="Je suis professeur"
+              sub="Créez votre profil, passez le test, recevez des offres"
+              onClick={() => navigate('/inscription/enseignant')}
+            />
+            <RowItem
+              icon="briefcase"
+              tone="neutral"
+              title="Je représente une école"
+              sub="Publiez un poste et recevez des candidatures vérifiées"
+              onClick={() => navigate('/inscription/etablissement')}
+            />
+            <RowItem
+              icon="home"
+              tone="neutral"
+              title="Je suis parent ou élève"
+              sub="Cours à domicile, cours en direct, cours vidéo"
+              onClick={() => navigate('/inscription/parent')}
+            />
+          </div>
+        </section>
 
-    </div>
+        {/* Les listes publiques, atteignables depuis l'accueil : « aucun
+            compte nécessaire pour regarder » doit se vérifier d'un clic, pas
+            seulement se lire. */}
+        <nav
+          className="row centered"
+          style={{ gap: 'var(--s-4)', flexWrap: 'wrap' }}
+          aria-label="Listes publiques"
+        >
+          <Link to="/professeurs">Professeurs</Link>
+          <Link to="/direct">Cours en direct</Link>
+          <Link to="/cours">Cours vidéo</Link>
+          <Link to="/etablissements">Écoles</Link>
+          <Link to="/tests">Tests de certification</Link>
+        </nav>
+      </div>
+    </>
   )
 }
 

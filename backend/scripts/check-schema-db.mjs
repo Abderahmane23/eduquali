@@ -1198,6 +1198,169 @@ await invariant('auth.uid() rend null sans session, et l’identifiant avec', as
   )
 })
 
+await invariant('un retrait ne se demande pas deux fois', async () => {
+  /*
+   * Le double appui sur « Demander un retrait ».
+   *
+   * Deux demandes du meme montant parties a une seconde d'intervalle, et
+   * l'operateur paie deux fois. Un controle en lecture puis ecriture ne le
+   * tient pas : les deux requetes lisent « aucune demande en cours » avant
+   * que l'une ait ecrit. Seul l'index partiel le refuse.
+   */
+  const PROF = 'aaaa1111-0000-4000-8000-aaaa11110000'
+
+  await db.exec(`
+    insert into auth.users (id) values ('${PROF}');
+    insert into profiles (id, role, phone, first_name) values
+      ('${PROF}', 'TEACHER', '+224600000950', 'Sekou');
+    insert into teachers (id, user_id, city) values
+      ('prof_retrait', '${PROF}', 'Conakry');
+    insert into payout_requests (teacher_id, amount, method) values
+      ('prof_retrait', 200000, 'ORANGE');
+  `)
+
+  let refuse = false
+  try {
+    await db.exec(`
+      insert into payout_requests (teacher_id, amount, method) values
+        ('prof_retrait', 200000, 'ORANGE');
+    `)
+  } catch {
+    refuse = true
+  }
+  attendu(refuse, 'une seconde demande en cours a ete acceptee')
+
+  // Reglee, la suivante passe : l'index ne vise que les demandes ouvertes.
+  await db.exec(`
+    update payout_requests set status = 'PAID', settled_at = now()
+    where teacher_id = 'prof_retrait';
+    insert into payout_requests (teacher_id, amount, method) values
+      ('prof_retrait', 50000, 'MTN');
+  `)
+  const n = await un(`
+    select count(*)::int as n from payout_requests
+    where teacher_id = 'prof_retrait'
+  `)
+  attendu(n.n === 2, `${n.n} demandes au lieu de 2`)
+})
+
+await invariant('les revenus se calculent, et le retrait les diminue', async () => {
+  /*
+   * Ce que la fonction doit rendre, et pourquoi elle est `security definer`.
+   *
+   * Les places vendues appartiennent aux familles : leurs politiques les
+   * cachent au professeur, a juste titre. Sans `security definer`, la
+   * fonction rendrait zero — et zero se lit exactement comme « vous n'avez
+   * rien gagne », qui est le defaut repare par la migration 0028.
+   */
+  const PROF = 'bbbb2222-0000-4000-8000-bbbb22220000'
+  const FAMILLE = 'cccc3333-0000-4000-8000-cccc33330000'
+
+  await db.exec(`
+    insert into auth.users (id) values ('${PROF}'), ('${FAMILLE}');
+    insert into profiles (id, role, phone, first_name) values
+      ('${PROF}',    'TEACHER', '+224600000951', 'Mariama'),
+      ('${FAMILLE}', 'PARENT',  '+224600000952', 'Ibrahima');
+    insert into teachers (id, user_id, city) values
+      ('prof_revenu', '${PROF}', 'Conakry');
+    insert into parents (id, user_id, city) values
+      ('par_revenu', '${FAMILLE}', 'Conakry');
+
+    insert into subjects (id, name, code) values
+      ('mat_revenu', 'Mathematiques', 'MATH_REV')
+      on conflict (id) do nothing;
+    insert into levels (id, name, code, category) values
+      ('niv_revenu', 'Terminale', 'TERM_REV', 'LYCEE')
+      on conflict (id) do nothing;
+
+    insert into live_courses
+      (id, teacher_id, subject_id, level_id, title, price, seats, status)
+      values ('cours_revenu', 'prof_revenu', 'mat_revenu', 'niv_revenu',
+              'Limites', 10000, 15, 'PUBLISHED');
+    insert into live_sessions
+      (id, live_course_id, slot_id, starts_at, duration_minutes, status)
+      values ('seance_revenu', 'cours_revenu', 'MON_17', now(), 90, 'PLANNED');
+
+    -- Trois enfants : une place par enfant, comme dans la realite. Un index
+    -- unique interdit deux places pour le meme enfant sur la meme seance.
+    insert into children (id, parent_id, first_name) values
+      ('enf_1', 'par_revenu', 'Aissatou'),
+      ('enf_2', 'par_revenu', 'Mamadou'),
+      ('enf_3', 'par_revenu', 'Kadiatou');
+
+    -- Deux places payees, une annulee : seules les payees comptent.
+    insert into session_enrolments (id, session_id, parent_id, child_id, status)
+      values
+      ('place_1', 'seance_revenu', 'par_revenu', 'enf_1', 'CONFIRMED'),
+      ('place_2', 'seance_revenu', 'par_revenu', 'enf_2', 'CONFIRMED'),
+      ('place_3', 'seance_revenu', 'par_revenu', 'enf_3', 'CANCELLED');
+  `)
+
+  const lire = async () =>
+    await un(`select * from revenus_enseignant('prof_revenu')`)
+
+  let r = await lire()
+  // 10 000 GNF la place, 60 % au professeur, deux places payees : 12 000.
+  attendu(
+    Number(r.direct_gnf) === 12000,
+    `direct_gnf a rendu ${r.direct_gnf} au lieu de 12000`,
+  )
+  attendu(Number(r.places) === 2, `${r.places} places au lieu de 2`)
+  attendu(Number(r.retire_gnf) === 0, 'rien ne devait etre retire')
+
+  // Une demande en cours n'est pas encore payee, mais elle est deja engagee :
+  // la laisser hors du calcul permettrait de demander deux fois la meme somme.
+  await db.exec(`
+    insert into payout_requests (teacher_id, amount, method) values
+      ('prof_revenu', 5000, 'ORANGE');
+  `)
+  r = await lire()
+  attendu(
+    Number(r.en_cours_gnf) === 5000,
+    `en_cours_gnf a rendu ${r.en_cours_gnf} au lieu de 5000`,
+  )
+  attendu(Number(r.retire_gnf) === 0, 'une demande en cours n’est pas un retrait')
+
+  await db.exec(`
+    update payout_requests set status = 'PAID' where teacher_id = 'prof_revenu';
+  `)
+  r = await lire()
+  attendu(Number(r.retire_gnf) === 5000, `retire_gnf a rendu ${r.retire_gnf}`)
+  attendu(Number(r.en_cours_gnf) === 0, 'plus rien ne doit etre en cours')
+})
+
+await invariant('le compteur de l’assistant ne compte que les appels aboutis', async () => {
+  /*
+   * Un appel qui echoue ne consomme pas la limite du jour.
+   *
+   * Sinon une panne de Google de dix minutes epuiserait le quota de ceux qui
+   * ont essaye pendant — ils seraient punis d'une erreur qui n'est pas la
+   * leur.
+   */
+  const QUI = 'dddd4444-0000-4000-8000-dddd44440000'
+
+  await db.exec(`
+    insert into auth.users (id) values ('${QUI}');
+    insert into profiles (id, role, phone, first_name) values
+      ('${QUI}', 'TEACHER', '+224600000953', 'Alpha');
+    insert into ai_usage (owner_id, feature, model, cost_usd, status) values
+      ('${QUI}', 'HOMEWORK', 'gemini-test', 0.002, 'OK'),
+      ('${QUI}', 'HOMEWORK', 'gemini-test', 0.002, 'OK'),
+      ('${QUI}', 'HOMEWORK', 'gemini-test', 0,     'ERROR');
+  `)
+
+  const jour = await un(`select ai_messages_du_jour('${QUI}') as n`)
+  attendu(Number(jour.n) === 2, `${jour.n} messages comptes au lieu de 2`)
+
+  // Le cout du mois, lui, additionne tout ce qui a ete facture — et un appel
+  // en erreur coute zero, donc il ne change rien a la somme.
+  const mois = await un(`select ai_cout_du_mois() as usd`)
+  attendu(
+    Math.abs(Number(mois.usd) - 0.004) < 1e-9,
+    `cout du mois ${mois.usd} au lieu de 0.004`,
+  )
+})
+
 await db.close()
 
 console.log('')

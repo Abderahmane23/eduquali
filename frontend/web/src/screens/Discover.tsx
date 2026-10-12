@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import type { RankedCandidate } from '../api/types'
 import { useSession } from '../app/session'
@@ -22,6 +22,28 @@ export function Discover() {
   const navigate = useNavigate()
   const { session } = useSession()
   const query = (params.get('q') ?? '').trim()
+
+  /*
+   * Le mode, envoye par l'accueil.
+   *
+   * --- Le defaut que ceci corrige ---------------------------------------
+   *
+   * L'accueil du telephone demande depuis toujours « cours a domicile » ou
+   * « embauche » avant de chercher, parce que les deux cherchent des
+   * professeurs mais pas pour la meme chose : une famille cherche quelqu'un
+   * qui se deplace le soir, une ecole cherche quelqu'un a recruter. Melanger
+   * les deux listes donne des resultats que ni l'un ni l'autre ne peut
+   * utiliser.
+   *
+   * Le site posait la question — depuis le 11/10 — et jetait la reponse :
+   * `mode` arrivait dans l'adresse et cet ecran l'ignorait. Un parent qui
+   * choisissait « cours a domicile » obtenait la liste des professeurs a
+   * recruter, sans tarif, sans quartier et sans moyen de demander une
+   * seance.
+   */
+  if (params.get('mode') === 'domicile') {
+    return <Navigate to={`/domicile${query ? `?q=${encodeURIComponent(query)}` : ''}`} replace />
+  }
 
   const [candidates, setCandidates] = useState<RankedCandidate[]>()
   const [failed, setFailed] = useState(false)
