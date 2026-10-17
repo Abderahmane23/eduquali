@@ -3438,6 +3438,33 @@ const ENROLMENT_FIELDS = `
  * enseignant, un etudiant majeur — recoit `[]` : c'est une absence
  * d'enfants, pas une erreur.
  */
+/**
+ * Les noms d'ecoles deja saisis, pour l'autocompletion du parcours.
+ *
+ * Publique : ce sont des noms d'etablissements, pas des donnees de
+ * personnes, et le parcours d'inscription s'ouvre avant tout compte. La vue
+ * `ecoles_connues` n'expose que le nom — ni enfant, ni parent, ni
+ * professeur — et elle rassemble les trois endroits ou un nom existe deja :
+ * les comptes d'etablissement, ce que les familles ont tape, et les
+ * experiences declarees par les professeurs.
+ */
+app.get('/schools/names', async (c) => {
+  const { data, error } = await asService()
+    .from('ecoles_connues')
+    .select('nom')
+    .order('nom')
+    .limit(500)
+
+  if (error) throw error
+
+  return c.json(
+    (data ?? [])
+      .map((ligne) => String(ligne.nom ?? '').trim())
+      .filter((nom) => nom !== '')
+      .map((nom) => ({ value: nom, label: nom })),
+  )
+})
+
 app.get('/children', async (c) => {
   const { data, error } = await asUser(tokenOf(c))
     .from('children')

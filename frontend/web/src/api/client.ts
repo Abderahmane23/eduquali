@@ -158,6 +158,14 @@ export interface VeriprofApi {
   children(): Promise<Child[]>
 
   /**
+   * Les noms d'ecoles deja saisis, pour l'autocompletion du parcours.
+   *
+   * Publique : ce sont des noms d'etablissements, pas des donnees de
+   * personnes, et le parcours s'ouvre avant toute inscription.
+   */
+  ecolesConnues(): Promise<{ value: string; label: string }[]>
+
+  /**
    * Le professeur ouvre et ferme sa salle.
    *
    * Deux gestes explicites, et non une ouverture automatique a l'heure dite :
@@ -585,6 +593,9 @@ export class HttpApi implements VeriprofApi {
   }
   children() {
     return this.request<Child[]>('/children')
+  }
+  ecolesConnues() {
+    return this.request<{ value: string; label: string }[]>('/schools/names')
   }
   openRoom(sessionId: string) {
     return this.post<RoomState>(`/live/sessions/${sessionId}/open`, {})

@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { messageConnexion, messageInscription } from './auth-erreurs'
 import { ApiError, type RegisterInput, type VeriprofApi } from './client'
 import { scoreMatch } from './matching'
 import {
@@ -297,8 +298,11 @@ export class SupabaseApi implements VeriprofApi {
     })
     if (error) {
       // Un seul message pour « numero inconnu » et « mot de passe faux » :
-      // les distinguer dirait a un inconnu quels numeros ont un compte.
-      throw new ApiError('Numéro ou mot de passe incorrect.', 401)
+      // les distinguer dirait a un inconnu quels numeros ont un compte. Une
+      // limite de debit, elle, se dit — sinon la personne croit s'etre
+      // trompee de mot de passe et le change, ce qui ne regle rien.
+      const verdict = messageConnexion(error)
+      throw new ApiError(verdict.message, verdict.status)
     }
     return this.sessionOf(data.user.id)
   }
@@ -329,10 +333,18 @@ export class SupabaseApi implements VeriprofApi {
       password: input.password,
     })
     if (error || !data.user) {
-      throw new ApiError(
-        'Ce numéro a peut-être déjà un compte. Essayez de vous connecter.',
-        409,
-      )
+      /*
+       * Chaque cause a sa phrase.
+       *
+       * Toute erreur devenait « Ce numéro a peut-être déjà un compte » —
+       * y compris un `429`, c'est-à-dire « trop de tentatives depuis cette
+       * connexion ». La personne allait alors se connecter à un compte qui
+       * n'existait pas, la connexion échouait aussi, et le parcours
+       * s'arrêtait là. Un message faux coûte plus cher qu'un message vague :
+       * il envoie quelque part.
+       */
+      const verdict = messageInscription(error ?? {})
+      throw new ApiError(verdict.message, verdict.status)
     }
 
     const { error: profileError } = await this.insererTolerant(
@@ -940,6 +952,24 @@ export class SupabaseApi implements VeriprofApi {
             : undefined,
       }
     })
+  }
+
+  /**
+   * Les noms d'ecoles deja saisis.
+   *
+   * La vue `ecoles_connues` rassemble les comptes d'etablissement, les noms
+   * tapes par les familles et les experiences des professeurs — et n'expose
+   * que le nom. Un nom tape par une famille apparait donc pour la suivante,
+   * sans qu'aucun compte d'ecole ait a exister.
+   */
+  async ecolesConnues(): Promise<{ value: string; label: string }[]> {
+    const rows = await this.rows(() =>
+      this.db.from('ecoles_connues').select('nom').order('nom').limit(500),
+    )
+    return rows
+      .map((row) => text(row, 'nom'))
+      .filter((nom) => nom !== '')
+      .map((nom) => ({ value: nom, label: nom }))
   }
 
   /**

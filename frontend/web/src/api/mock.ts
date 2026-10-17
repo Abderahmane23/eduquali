@@ -428,6 +428,16 @@ export class MockApi implements VeriprofApi {
     return []
   }
 
+  async ecolesConnues(): Promise<{ value: string; label: string }[]> {
+    await delay()
+    const c = await this.load()
+    // Les ecoles du jeu de demonstration : la saisie libre reste possible,
+    // et c'est elle qui compte sans base.
+    const noms = new Set<string>()
+    for (const ecole of c.institutions ?? []) noms.add(ecole.name)
+    return [...noms].sort().map((nom) => ({ value: nom, label: nom }))
+  }
+
   async presenceProof(): Promise<PresenceProof> {
     /*
      * Pas de preuve inventee.

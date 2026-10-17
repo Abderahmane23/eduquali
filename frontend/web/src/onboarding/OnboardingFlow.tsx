@@ -925,6 +925,52 @@ function FormField({
     )
   }
 
+  /*
+   * Un `combo` se tape, un `dropdown` se choisit.
+   *
+   * Les deux etaient rendus par le meme `<select>` : `allowCustom` etait
+   * ignore, et une famille dont l'ecole manquait de la liste n'avait aucun
+   * recours — elle ne pouvait ni la taper, ni passer a l'etape suivante
+   * avec le bon nom.
+   *
+   * Un `<input>` avec sa `<datalist>` fait les deux a la fois : on tape ce
+   * qu'on veut, et le navigateur propose ce qu'il connait au fil de la
+   * frappe. C'est natif, cela tient sur le Chrome d'un Android d'entree de
+   * gamme, et cela ne coute aucune bibliotheque.
+   */
+  if (field.type === 'combo' && field.allowCustom) {
+    const parent = field.optionsFilter?.field
+    const waiting = parent != null && answers?.[parent] == null
+    const options = waiting
+      ? []
+      : filterOptions(dynamic.data ?? [], field.optionsFilter, answers ?? {})
+    const listeId = `liste-${field.id}`
+
+    return (
+      <label className="field">
+        <span className="field__label">{field.label}</span>
+        <input
+          className="field__input"
+          type="text"
+          list={listeId}
+          value={(value as string) ?? ''}
+          placeholder="Tapez le nom, ou choisissez dans la liste"
+          maxLength={160}
+          autoComplete="off"
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <datalist id={listeId}>
+          {options.map((option) => (
+            <option key={option.value} value={option.label} />
+          ))}
+        </datalist>
+        {field.hint ? (
+          <span className="field__hint">{field.hint}</span>
+        ) : null}
+      </label>
+    )
+  }
+
   if (field.type === 'dropdown' || field.type === 'combo') {
     // Cascade : tant que la reponse dont ce champ depend manque, la liste
     // complete n'a aucun sens — les 13 communes de Conakry n'ont rien a
@@ -1125,14 +1171,20 @@ async function resolveOptions(source?: string): Promise<Option[]> {
         { value: 'CI', label: 'Cote d’Ivoire' },
       ]
     case 'institutions': {
-      const candidates = await api.searchTeachers({})
-      const names = new Set<string>()
-      for (const candidate of candidates) {
-        for (const exp of candidate.profile.experiences) {
-          names.add(exp.institutionName)
-        }
-      }
-      return [...names].sort().map((name) => ({ value: name, label: name }))
+      /*
+       * Les ecoles, et non les anciens employeurs des professeurs.
+       *
+       * Cette branche lisait `teacher_experiences` : elle ne proposait donc
+       * que les ecoles ou un professeur **deja inscrit** avait travaille.
+       * Dans un pays ou la plupart des ecoles n'ont pas encore de compte,
+       * c'est une liste qui ne contient presque jamais celle qu'on cherche.
+       *
+       * La vue `ecoles_connues` rassemble les trois endroits ou un nom
+       * existe : les comptes d'etablissement, les noms tapes par les
+       * familles, et les experiences des professeurs. Un nom tape par une
+       * famille apparait donc pour la suivante.
+       */
+      return api.ecolesConnues()
     }
     default:
       return []
