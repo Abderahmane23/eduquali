@@ -389,37 +389,99 @@ app.get('/teachers', async (c) => {
   } = c.req.query()
 
   const db = asService()
+
+  /*
+   * Les candidats d'abord, les fiches ensuite.
+   *
+   * Cette route prenait tous les identifiants de la table, puis chargeait
+   * chaque fiche dans une boucle `await` — six requetes par professeur, en
+   * serie. Verifie le 17/10 sur le site en ligne : la requete ne revenait
+   * jamais, 60 s sans statut. L'annuaire est l'onglet principal d'une
+   * famille, d'un eleve, d'une ecole et d'un visiteur sans compte, et il
+   * ne s'affichait pas.
+   *
+   * On reduit donc l'ensemble en SQL avant de charger quoi que ce soit, en
+   * commencant par le filtre le plus selectif. Ces requetes ne lisent
+   * qu'une colonne d'identifiants : elles coutent un aller-retour chacune,
+   * quel que soit le nombre de professeurs.
+   */
+  /*
+   * Le croisement se fait sur place, et non dans une fermeture.
+   *
+   * Ecrit d'abord avec une fonction `croiser` qui reaffectait `candidats` :
+   * TypeScript ne suit pas l'effet d'une fermeture sur une variable locale,
+   * croyait la variable encore `null` au point de jonction, et reduisait
+   * `candidats !== null` a `never`. Le compilateur avait raison de s'en
+   * plaindre — la lecture aussi est plus simple ainsi.
+   */
+  let candidats: string[] | null = null
+
+  if (subjectId) {
+    const { data: enseignants, error: souci } = await db
+      .from('teacher_subjects')
+      .select('teacher_id')
+      .eq('subject_id', subjectId)
+    if (souci) throw souci
+    candidats = (enseignants ?? []).map((r) => String(r.teacher_id))
+  }
+
+  /*
+   * Le mode d'enseignement demande : « a domicile » par defaut cote famille.
+   *
+   * Une famille d'eleve cherche quelqu'un qui vient a la maison. Lui
+   * proposer d'abord des cours a distance ou « chez l'enseignant » lui fait
+   * parcourir une liste dont la moitie ne lui convient pas, et c'est la
+   * premiere liste qu'elle voit du produit.
+   *
+   * Le filtre passe par `tutoring_services` plutot que par la fiche : c'est
+   * la que l'enseignant declare ou il se deplace, et une fiche ne le dit
+   * pas.
+   */
+  if (mode) {
+    const { data: offres, error: souci } = await db
+      .from('tutoring_services')
+      .select('teacher_id')
+      .eq('mode', mode)
+      .eq('active', true)
+    if (souci) throw souci
+    const duMode = (offres ?? []).map((o) => String(o.teacher_id))
+    if (candidats === null) {
+      candidats = duMode
+    } else {
+      const garde = new Set(duMode)
+      candidats = candidats.filter((id) => garde.has(id))
+    }
+  }
+
   let request = db.from('teachers').select('id')
   if (city) request = request.eq('city', city)
   if (minExperience) {
     request = request.gte('years_experience', Number(minExperience))
   }
+  if (candidats !== null) {
+    // Aucun candidat ne survit aux filtres : inutile d'interroger la base.
+    if (candidats.length === 0) return c.json([])
+    request = request.in('id', candidats.slice(0, PAQUET_IDS))
+  }
+
+  /*
+   * Un plafond, et il est assume.
+   *
+   * Les filtres qui demandent la fiche assemblee — le palier, la classe, le
+   * score de certification — s'appliquent apres ce plafond : une liste tres
+   * filtree peut donc etre plus courte qu'elle ne devrait. C'est le prix
+   * d'une reponse, et une reponse incomplete vaut mieux qu'une requete qui
+   * ne revient pas. Les filtres selectifs sont deja passes en SQL plus
+   * haut, ce qui limite le cas aux recherches tres fines.
+   */
+  const PLAFOND = 120
+  const demande = Number(c.req.query('limit') ?? 0)
+  request = request.limit(
+    demande > 0 ? Math.min(demande, PLAFOND) : PLAFOND,
+  )
 
   const { data: rows, error } = await request
   if (error) throw error
-
-  /*
-   * Le mode d'enseignement demande : « a domicile » par defaut cote famille.
-   *
-   * Une famille d'eleve cherche quelqu'un qui vient a la maison. Lui proposer
-   * d'abord des cours a distance ou « chez l'enseignant » lui fait parcourir une
-   * liste dont la moitie ne lui convient pas, et c'est la premiere liste qu'elle
-   * voit du produit.
-   *
-   * Le filtre passe par `tutoring_services` plutot que par la fiche : c'est la
-   * que l'enseignant declare ou il se deplace, et une fiche ne le dit pas.
-   */
-  let enseignantsDuMode: Set<string> | null = null
-  if (mode) {
-    const { data: offres } = await db
-      .from('tutoring_services')
-      .select('teacher_id')
-      .eq('mode', mode)
-      .eq('active', true)
-    enseignantsDuMode = new Set(
-      (offres ?? []).map((o) => String(o.teacher_id)),
-    )
-  }
 
   const need: Requirement = {
     subjectId: subjectId || null,
@@ -429,13 +491,17 @@ app.get('/teachers', async (c) => {
     requiresCertification: certifiedOnly === 'true',
   }
 
+  // Toutes les fiches en six requetes, au lieu de six par professeur.
+  const fiches = await chargerProfesseurs(
+    (rows ?? []).map((row) => String(row.id)),
+  )
+
   const results = []
   for (const row of rows ?? []) {
-    const profile = await loadTeacher(row.id as string)
+    const profile = fiches.get(String(row.id))
     if (!profile) continue
 
     if (subjectId && !profile.subjects.some((s) => s.id === subjectId)) continue
-    if (enseignantsDuMode && !enseignantsDuMode.has(String(row.id))) continue
 
     // Le palier : un professeur qui n'enseigne a aucune classe de ce palier
     // n'est pas une reponse, c'est du bruit.
@@ -4236,45 +4302,70 @@ function shapeJob(row: any, levels: Map<string, { id: string; name: string }>) {
 }
 
 /** Profil complet, assemble avec la cle de service pour le calcul du score. */
-async function loadTeacher(teacherId: string) {
-  const db = asService()
+/*
+ * Les champs d'une fiche, ecrits une fois.
+ *
+ * La meme liste servait au chargement d'une fiche seule ; la dupliquer pour
+ * le chargement par lot ferait deux fiches legerement differentes selon
+ * qu'on arrive par l'annuaire ou par le lien direct.
+ */
+const CHAMPS_PROFESSEUR =
+  'id, headline, bio, city, years_experience, availability, identity_status, '
+  + 'diploma_status, boosted_until, user_id'
 
-  const { data: teacher } = await db
-    .from('teachers')
-    .select(
-      'id, headline, bio, city, years_experience, availability, identity_status, diploma_status, boosted_until, user_id',
-    )
-    .eq('id', teacherId)
-    .maybeSingle()
-  if (!teacher) return null
+/*
+ * La taille d'un paquet d'identifiants.
+ *
+ * PostgREST met le filtre `in` dans l'adresse. Une adresse trop longue est
+ * refusee par la passerelle, et le refus ressemble a une liste vide : on
+ * decoupe donc, plutot que de decouvrir la limite un jour ou l'annuaire
+ * aura grossi.
+ */
+const PAQUET_IDS = 200
 
-  const { data: profile } = await db
-    .from('profiles')
-    .select('first_name, last_name, photo_path')
-    .eq('id', teacher.user_id)
-    .maybeSingle()
+async function parPaquets<T>(
+  ids: string[],
+  lire: (lot: string[]) => Promise<T[]>,
+): Promise<T[]> {
+  const tout: T[] = []
+  for (let i = 0; i < ids.length; i += PAQUET_IDS) {
+    for (const ligne of await lire(ids.slice(i, i + PAQUET_IDS))) {
+      tout.push(ligne)
+    }
+  }
+  return tout
+}
 
-  const [subjects, levels, certs, experiences] = await Promise.all([
-    db.from('teacher_subjects').select('subject:subjects (id, name)').eq('teacher_id', teacherId),
-    db
-      .from('teacher_levels')
-      // `cycle` en plus du nom : c'est lui qui dit si un enseignant couvre
-      // le palier de l'eleve. Sans lui, la recherche comparait des
-      // identifiants exacts et proposait un professeur d'universite a une
-      // famille de 9eme.
-      .select('subject_id, level:levels (id, name, cycle)')
-      .eq('teacher_id', teacherId),
-    db
-      .from('teacher_certifications')
-      .select('id, score, issued_at, subject:subjects (id, name), level:levels (id, name)')
-      .eq('teacher_id', teacherId),
-    db
-      .from('teacher_experiences')
-      .select('id, institution_name, position, city, start_date, end_date, verification_status')
-      .eq('teacher_id', teacherId),
-  ])
+/** Regroupe des lignes par la colonne qui porte le professeur. */
+function parProfesseur<T extends Record<string, unknown>>(
+  lignes: T[],
+  colonne = 'teacher_id',
+): Map<string, T[]> {
+  const paquets = new Map<string, T[]>()
+  for (const ligne of lignes) {
+    const cle = String(ligne[colonne])
+    const liste = paquets.get(cle)
+    if (liste) liste.push(ligne)
+    else paquets.set(cle, [ligne])
+  }
+  return paquets
+}
 
-  const certifications = (certs.data ?? []).map((row) => ({
+/**
+ * Assemble une fiche a partir de lignes deja lues.
+ *
+ * Pure : aucune requete. C'est ce qui permet au chargement par lot et au
+ * chargement d'une fiche seule de produire exactement la meme forme.
+ */
+function assemblerProfesseur(
+  teacher: Record<string, any>,
+  profile: Record<string, any> | null,
+  subjects: any[],
+  levels: any[],
+  certs: any[],
+  experiences: any[],
+) {
+  const certifications = certs.map((row) => ({
     id: row.id,
     subject: one<any>(row.subject),
     level: one<any>(row.level),
@@ -4282,7 +4373,7 @@ async function loadTeacher(teacherId: string) {
     issuedAt: row.issued_at,
   }))
 
-  const verifiedExperience = (experiences.data ?? []).filter(
+  const verifiedExperience = experiences.filter(
     (e) => e.verification_status === 'VERIFIED',
   ).length
 
@@ -4308,7 +4399,7 @@ async function loadTeacher(teacherId: string) {
     completedRecruitments: 0,
   })
 
-  const subjectItems = (subjects.data ?? []).map((r) => one<any>(r.subject)).filter(Boolean)
+  const subjectItems = subjects.map((r) => one<any>(r.subject)).filter(Boolean)
 
   return {
     id: teacher.id as string,
@@ -4324,12 +4415,12 @@ async function loadTeacher(teacherId: string) {
     identityStatus: teacher.identity_status as string,
     diplomaStatus: teacher.diploma_status as string,
     subjects: subjectItems,
-    levels: (levels.data ?? []).map((r) => one<any>(r.level)).filter(Boolean),
-    levelPairs: (levels.data ?? []).map(
+    levels: levels.map((r) => one<any>(r.level)).filter(Boolean),
+    levelPairs: levels.map(
       (r) => pairKey(r.subject_id as string, (one<any>(r.level))?.id),
     ),
     certifications,
-    experiences: (experiences.data ?? []).map((e) => ({
+    experiences: experiences.map((e) => ({
       id: e.id,
       institutionName: e.institution_name,
       position: e.position,
@@ -4350,14 +4441,142 @@ async function loadTeacher(teacherId: string) {
       identity: identityVerified,
       diploma: diplomaVerified,
       subjects: subjectItems.length > 0,
-      levels: (levels.data ?? []).length > 0,
-      experience: (experiences.data ?? []).length > 0,
+      levels: levels.length > 0,
+      experience: experiences.length > 0,
       availability: true,
       certification: certifications.length > 0,
     }),
   }
 }
 
+/**
+ * Charge plusieurs fiches en six requetes, quel que soit leur nombre.
+ *
+ * --- Le defaut que cette fonction corrige -------------------------------
+ *
+ * `GET /teachers` appelait `loadTeacher` dans une boucle `await`. Chaque
+ * fiche coute six requetes en trois vagues, si bien que la liste entiere
+ * valait 3N allers-retours en serie. Verifie le 17/10 sur le site en
+ * ligne : la requete ne revenait jamais — 60 s sans statut, deux fois de
+ * suite, quand les autres routes repondaient en moins de trois secondes.
+ *
+ * Le defaut ne se voyait pas en developpement, ou la base tient quelques
+ * professeurs de demonstration et ou chaque aller-retour coute une
+ * milliseconde. Il apparait avec les vraies donnees, c'est-a-dire chez la
+ * personne a qui on montre le produit.
+ */
+async function chargerProfesseurs(ids: string[]) {
+  const fiches = new Map<string, ReturnType<typeof assemblerProfesseur>>()
+  if (ids.length === 0) return fiches
+
+  const db = asService()
+
+  const professeurs = await parPaquets(ids, async (lot) => {
+    const { data, error } = await db
+      .from('teachers')
+      .select(CHAMPS_PROFESSEUR)
+      .in('id', lot)
+    if (error) throw error
+    return (data ?? []) as Record<string, any>[]
+  })
+  if (professeurs.length === 0) return fiches
+
+  const presents = professeurs.map((t) => String(t.id))
+
+  /*
+   * Les cinq lectures restantes partent ensemble.
+   *
+   * Elles ne dependent pas l'une de l'autre : les enchainer ajouterait
+   * quatre allers-retours a une route qu'on vient precisement de corriger
+   * pour cela.
+   */
+  const comptes = professeurs
+    .map((t) => String(t.user_id))
+    .filter((v) => v && v !== 'null')
+
+  const [profils, matieres, paliers, certifications, experiences] =
+    await Promise.all([
+      parPaquets(comptes, async (lot) => {
+        const { data, error } = await db
+          .from('profiles')
+          .select('id, first_name, last_name, photo_path')
+          .in('id', lot)
+        if (error) throw error
+        return (data ?? []) as Record<string, any>[]
+      }),
+      parPaquets(presents, async (lot) => {
+        const { data, error } = await db
+          .from('teacher_subjects')
+          .select('teacher_id, subject:subjects (id, name)')
+          .in('teacher_id', lot)
+        if (error) throw error
+        return (data ?? []) as Record<string, any>[]
+      }),
+      parPaquets(presents, async (lot) => {
+        const { data, error } = await db
+          .from('teacher_levels')
+          // `cycle` en plus du nom : c'est lui qui dit si un enseignant
+          // couvre le palier de l'eleve. Sans lui, la recherche comparait
+          // des identifiants exacts et proposait un professeur
+          // d'universite a une famille de 9eme.
+          .select('teacher_id, subject_id, level:levels (id, name, cycle)')
+          .in('teacher_id', lot)
+        if (error) throw error
+        return (data ?? []) as Record<string, any>[]
+      }),
+      parPaquets(presents, async (lot) => {
+        const { data, error } = await db
+          .from('teacher_certifications')
+          .select(
+            'teacher_id, id, score, issued_at, subject:subjects (id, name), '
+            + 'level:levels (id, name)',
+          )
+          .in('teacher_id', lot)
+        if (error) throw error
+        return (data ?? []) as Record<string, any>[]
+      }),
+      parPaquets(presents, async (lot) => {
+        const { data, error } = await db
+          .from('teacher_experiences')
+          .select(
+            'teacher_id, id, institution_name, position, city, start_date, '
+            + 'end_date, verification_status',
+          )
+          .in('teacher_id', lot)
+        if (error) throw error
+        return (data ?? []) as Record<string, any>[]
+      }),
+    ])
+
+  const parCompte = new Map(profils.map((p) => [String(p.id), p]))
+  const matieresDe = parProfesseur(matieres)
+  const paliersDe = parProfesseur(paliers)
+  const certsDe = parProfesseur(certifications)
+  const experiencesDe = parProfesseur(experiences)
+
+  for (const teacher of professeurs) {
+    const id = String(teacher.id)
+    fiches.set(
+      id,
+      assemblerProfesseur(
+        teacher,
+        parCompte.get(String(teacher.user_id)) ?? null,
+        matieresDe.get(id) ?? [],
+        paliersDe.get(id) ?? [],
+        certsDe.get(id) ?? [],
+        experiencesDe.get(id) ?? [],
+      ),
+    )
+  }
+
+  return fiches
+}
+
+/** Une seule fiche : le meme chargement, pour un identifiant. */
+async function loadTeacher(teacherId: string) {
+  const fiches = await chargerProfesseurs([teacherId])
+  return fiches.get(teacherId) ?? null
+}
 function toCandidate(profile: Awaited<ReturnType<typeof loadTeacher>>): Candidate {
   return {
     subjectIds: profile!.subjects.map((s: any) => s.id),
