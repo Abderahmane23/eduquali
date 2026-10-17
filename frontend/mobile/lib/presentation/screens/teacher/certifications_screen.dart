@@ -100,7 +100,7 @@ class CertificationsScreen extends ConsumerWidget {
                                 ),
                               ),
                               StatusPill(
-                                label: '${history[i].score ?? 0} %',
+                                label: '${history[i].score ?? 0} %',
                                 tone: history[i].passed
                                     ? StatusTone.success
                                     : StatusTone.warning,
@@ -206,7 +206,7 @@ class _CertificationCard extends StatelessWidget {
                     SizedBox(
                       width: 40,
                       child: Text(
-                        '${domains[i].percentage} %',
+                        '${domains[i].percentage} %',
                         textAlign: TextAlign.end,
                         style: text.labelMedium,
                       ),

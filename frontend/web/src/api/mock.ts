@@ -14,7 +14,10 @@ import type {
   LiveCourse,
   LivePresence,
   LiveSession,
+  Child,
+  MaPromotion,
   MySession,
+  PresenceProof,
   Promotion,
   PurchaseRequest,
   PurchaseState,
@@ -418,6 +421,28 @@ export class MockApi implements VeriprofApi {
     return []
   }
 
+  async children(): Promise<Child[]> {
+    await delay()
+    // Pas de compte, pas d'enfants. Vide, et non une erreur : c'est aussi ce
+    // que lit un etudiant majeur sur un vrai serveur.
+    return []
+  }
+
+  async presenceProof(): Promise<PresenceProof> {
+    /*
+     * Pas de preuve inventee.
+     *
+     * Le reste de la demonstration affiche des professeurs et des ecoles
+     * fictifs, et l'ossature le dit en toutes lettres. Une preuve de presence
+     * fictive serait d'une autre nature : c'est le document qui atteste qu'un
+     * enfant etait en cours, et en fabriquer un apprendrait a s'en mefier.
+     */
+    throw new ApiError(
+      'La preuve de presence demande le serveur. Configurez-le.',
+      501,
+    )
+  }
+
   async openRoom(): Promise<RoomState> {
     throw new ApiError(
       'Ouvrir une salle demande le serveur et LiveKit. Configurez-les.',
@@ -512,6 +537,27 @@ export class MockApi implements VeriprofApi {
 
   // --- Mises en avant ---------------------------------------------------
 
+  async mesPromotions(): Promise<MaPromotion[]> {
+    await delay()
+    // Aucune ecole sans base : la liste est vide, et c'est aussi ce que voit
+    // un vrai compte qui n'a encore rien publie.
+    return []
+  }
+
+  async creerPromotion(): Promise<never> {
+    throw new ApiError(
+      'Publier une mise en avant demande le serveur. Configurez-le.',
+      501,
+    )
+  }
+
+  async terminerPromotion(): Promise<void> {
+    throw new ApiError(
+      'Retirer une mise en avant demande le serveur. Configurez-le.',
+      501,
+    )
+  }
+
   async promotions(query: { city?: string } = {}): Promise<Promotion[]> {
     await delay()
     const c = await this.load()
@@ -590,7 +636,7 @@ export class MockApi implements VeriprofApi {
           teacherId: raw.teacherId,
           teacherName: teacher
             ? `${teacher.firstName} ${teacher.lastName}`
-            : 'Professeur Eduquali',
+            : 'Professeur EduQuali',
           subject: subjects.find((s) => s.id === raw.subjectId),
           levels: levels.filter((l) => raw.levelIds.includes(l.id)),
           price: raw.price,
@@ -608,6 +654,13 @@ export class MockApi implements VeriprofApi {
   async videoCourse(id: string): Promise<VideoCourse | null> {
     const all = await this.videoCourses()
     return all.find((course) => course.id === id) ?? null
+  }
+
+  async courseLecture(): Promise<CourseChapterPreview[]> {
+    await delay()
+    // Rien n'est achete sans base : le sommaire reste ferme, ce qui est
+    // aussi ce que voit un vrai compte qui n'a pas paye.
+    return []
   }
 
   async courseProgramme(courseId: string): Promise<CourseChapterPreview[]> {

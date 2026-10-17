@@ -207,7 +207,7 @@ class _DiplomaFormScreenState extends ConsumerState<DiplomaFormScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Enregistrer'),
+                    : const Text('Enregistrer ce diplôme'),
               ),
             ),
           ),
@@ -238,7 +238,7 @@ class _DiplomaFormScreenState extends ConsumerState<DiplomaFormScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Capture impossible : $error')));
+      ).showSnackBar(SnackBar(content: Text('Capture impossible : $error')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

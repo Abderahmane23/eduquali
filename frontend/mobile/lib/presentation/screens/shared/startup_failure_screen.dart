@@ -113,7 +113,7 @@ class StartupFailureScreen extends StatelessWidget {
               ),
               const Gap(AppSpacing.md),
               Text(
-                'Assistance : ${AppConstants.supportPhone}',
+                'Assistance : ${AppConstants.supportPhone}',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 14,

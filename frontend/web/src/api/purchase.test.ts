@@ -121,15 +121,50 @@ describe('l’écran dit la vérité', () => {
   const ecran = code('src/screens/Courses.tsx')
 
   it('ne dit jamais « acheté » avant le règlement', () => {
-    // La confirmation d'achat n'apparait que dans la branche `PAID`, celle que
-    // seul un webhook signe peut atteindre.
-    const avantPaiement = ecran.slice(0, ecran.indexOf("if (statut === 'PAID')"))
-    expect(avantPaiement).not.toMatch(/Paiement confirmé|cours est à vous/)
+    /*
+     * La confirmation d'achat n'apparait que dans la branche `PAID`, celle
+     * que seul un webhook signe peut atteindre.
+     *
+     * --- Pourquoi le decoupage vise `BuyCourse` et non le fichier --------
+     *
+     * Le test lisait tout ce qui precede la branche `PAID`. Il a signale
+     * `Ouvrir`, le bloc qui s'affiche quand le cours est **deja** paye et
+     * qui dit « Ce cours est a vous ». La phrase y est vraie, et elle ne
+     * vient pas du parcours de paiement : elle vient de `courseLecture`,
+     * donc de RLS, qui n'ouvre `course_items` qu'a qui a regle.
+     *
+     * On vise donc le parcours de paiement lui-meme. Deplacer `Ouvrir` plus
+     * bas dans le fichier aurait fait passer le test sans rien changer au
+     * produit — c'est exactement ce qu'il ne faut pas faire d'un test qui
+     * signale quelque chose.
+     */
+    const parcours = ecran.slice(
+      ecran.indexOf('function BuyCourse'),
+      ecran.indexOf("if (statut === 'PAID')"),
+    )
+    expect(parcours.length).toBeGreaterThan(500)
+    expect(parcours).not.toMatch(/Paiement confirmé|cours est à vous/)
 
     // Et ce qui s'affiche avant dit que rien n'est preleve.
     // Fragment court : une phrase entiere se coupe au retour a la ligne
     // de JSX, et le test echouerait au premier reformatage.
     expect(ecran).toMatch(/est débité avant votre validation/)
+  })
+
+  it('« ce cours est à vous » n’est dit que sur la foi de la base', () => {
+    /*
+     * La phrase la plus engageante de l'ecran. Elle ne doit jamais dependre
+     * d'un drapeau pose par le client : `courseLecture` lit `course_items`,
+     * que RLS ferme a qui n'a pas paye, et une liste vide vaut « pas
+     * achete ». C'est la base qui tranche.
+     */
+    expect(ecran).toContain('api.courseLecture(')
+    expect(ecran).toMatch(/aLui\s*\?/)
+    const ouvrir = ecran.slice(
+      ecran.indexOf('function Ouvrir'),
+      ecran.indexOf('function BuyCourse'),
+    )
+    expect(ouvrir).toContain('cours est à vous')
   })
 
   it('l’état affiché vient du serveur, jamais de l’URL', () => {

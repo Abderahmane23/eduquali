@@ -52,7 +52,7 @@ class _AvailabilityState extends ConsumerState<TutoringAvailabilityScreen> {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
             Text(
-              'Quand pouvez-vous donner des cours ?',
+              'Quand pouvez-vous donner des cours ?',
               style: text.titleMedium,
             ),
             const Gap(AppSpacing.xs),

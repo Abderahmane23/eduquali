@@ -312,10 +312,22 @@ class ChoiceRow extends StatelessWidget {
 
 /// Oui / Non.
 class YesNoChoice extends StatelessWidget {
-  const YesNoChoice({super.key, required this.value, required this.onChanged});
+  const YesNoChoice({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.labelNon = 'Non',
+  });
 
   final bool? value;
   final ValueChanged<bool> onChanged;
+
+  /// Le libelle de la reponse negative.
+  ///
+  /// « Non » pour une question de fait. « Pas encore » pour une question qui
+  /// porte sur ce que quelqu'un sait faire, ou ou il en est : les deux
+  /// reponses d'un ecran restent aimables, et la seconde ouvre sur la suite.
+  final String labelNon;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -330,7 +342,20 @@ class YesNoChoice extends StatelessWidget {
       const Gap(AppSpacing.md),
       Expanded(
         child: ChoiceRow(
-          label: 'Non',
+          /*
+           * « Non » est le bon mot **ici**, et c'est la nuance.
+           *
+           * La charte interdit « Non » au point de controle — « avez-vous
+           * compris ? » — parce qu'un eleve de quinze ans devant quinze
+           * camarades ne le dira pas, et repondra « Oui » en decrochant.
+           *
+           * Une question factuelle, elle, appelle une reponse factuelle :
+           * « avez-vous un diplome ? » n'a pas de « pas encore » honnete,
+           * et le remplacer laisserait croire que la reponse est
+           * provisoire. D'ou le parametre : on choisit le mot quand il
+           * compte, sans l'imposer partout.
+           */
+          label: labelNon,
           selected: value == false,
           onTap: () => onChanged(false),
         ),

@@ -174,7 +174,7 @@ class TeacherSearchScreen extends ConsumerWidget {
                     icon: Icons.person_search_outlined,
                     title: 'Aucun enseignant trouve',
                     message:
-                        'Élargissez vos critères : matière, niveau, ville ou '
+                        'Élargissez vos critères : matière, niveau, ville ou '
                         'exigence de certification.',
                     actionLabel: filters.activeCount > 0
                         ? 'Reinitialiser les filtres'
@@ -442,7 +442,7 @@ class _AdvancedFilters extends ConsumerWidget {
 
             const Gap(AppSpacing.lg),
             Text(
-              'Score minimum au test : ${filters.minScore ?? 0} %',
+              'Score minimum au test : ${filters.minScore ?? 0} %',
               style: text.titleSmall,
             ),
             Slider(
@@ -450,7 +450,7 @@ class _AdvancedFilters extends ConsumerWidget {
               max: 100,
               divisions: 20,
               activeColor: AppColors.primary,
-              label: '${filters.minScore ?? 0} %',
+              label: '${filters.minScore ?? 0} %',
               onChanged: (value) => notifier.update(
                 (f) => value == 0
                     ? f.copyWith(clearMinScore: true)
@@ -460,7 +460,7 @@ class _AdvancedFilters extends ConsumerWidget {
 
             const Gap(AppSpacing.sm),
             Text(
-              'Expérience minimale : ${filters.minExperience ?? 0} an(s)',
+              'Expérience minimale : ${filters.minExperience ?? 0} an(s)',
               style: text.titleSmall,
             ),
             Slider(

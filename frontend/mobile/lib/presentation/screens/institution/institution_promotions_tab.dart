@@ -197,7 +197,7 @@ class _PromotionCard extends ConsumerWidget {
     final confirme = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Retirer cette promotion ?'),
+        title: const Text('Retirer cette promotion ?'),
         content: const Text(
           'Elle ne sera plus montrée aux familles. Vous pourrez en mettre '
           'une autre en ligne quand vous voudrez.',

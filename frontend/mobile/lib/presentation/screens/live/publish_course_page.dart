@@ -169,7 +169,7 @@ class _PublishCoursePageState extends ConsumerState<PublishCoursePage> {
                 ),
                 const Gap(AppSpacing.sm),
                 const MetaText(
-                  'La classe décide à qui le cours est proposé : un collégien '
+                  'La classe décide à qui le cours est proposé : un collégien '
                   'ne verra pas un cours de licence.',
                 ),
               ],
@@ -202,7 +202,7 @@ class _PublishCoursePageState extends ConsumerState<PublishCoursePage> {
                   onChanged: (v) => setState(() => _places = v.round()),
                 ),
                 const MetaText(
-                  'Quinze au maximum, et c’est voulu : au-delà, vous ne pouvez '
+                  'Quinze au maximum, et c’est voulu : au-delà, vous ne pouvez '
                   'plus répondre à chacun pendant les pauses — ce qui est '
                   'exactement ce que l’élève paie.',
                 ),

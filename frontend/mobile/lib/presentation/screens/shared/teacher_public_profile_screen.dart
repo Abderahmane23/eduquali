@@ -337,7 +337,7 @@ class _Body extends ConsumerWidget {
                                         if (capability.isCertified(level.id))
                                           StatusPill(
                                             label:
-                                                '${capability.certifiedScores[level.id]} %',
+                                                '${capability.certifiedScores[level.id]} %',
                                             tone: StatusTone.success,
                                             icon: Icons.verified,
                                           )
@@ -382,7 +382,7 @@ class _Body extends ConsumerWidget {
                         Expanded(
                           child: StatTile(
                             value: '${profile.reputation.platformRecruitments}',
-                            label: 'Recrutements plateforme',
+                            label: 'Recrutements par EduQuali',
                           ),
                         ),
                         const SizedBox(width: AppSpacing.md),
@@ -390,7 +390,7 @@ class _Body extends ConsumerWidget {
                           child: StatTile(
                             value: profile.reputation.satisfaction == null
                                 ? '—'
-                                : '${profile.reputation.satisfaction!.round()} %',
+                                : '${profile.reputation.satisfaction!.round()} %',
                             label: 'Satisfaction',
                             tone: StatusTone.success,
                           ),

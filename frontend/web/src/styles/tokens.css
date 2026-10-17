@@ -148,6 +148,17 @@
   /* Le bon point : points gagnés, récompenses, tirages. Rien d'autre —
      ce n'est pas une couleur d'alerte. */
   --bon-point: #f5c61a;
+
+  /* La surface d'une vidéo : noire, et nommée.
+   *
+   * Elle était écrite en dur à trois endroits, hors palette. Une couleur
+   * sans jeton se recopie, dérive, et finit à trois valeurs voisines —
+   * c'est ce que « Fondements » reproche à l'état d'avant.
+   *
+   * Pourquoi pas `encre` : une vidéo se regarde sur du noir, c'est la
+   * convention de tous les lecteurs, et l'encre de la marque est un bleu
+   * nuit qui teinterait l'image. */
+  --scene: #0b0b10;
   --sur-bon-point: #141038;
   --bon-point-pale: #fcf1c6;
   --bon-point-fonce: #6b5000;

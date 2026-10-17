@@ -73,6 +73,30 @@
   gap: var(--espace-3);
 }
 
+/* Le chiffre et son unite posent sur la meme ligne de pied.
+ *
+ * « 52 minutes sur 60 » : centrer verticalement ferait flotter « minutes »
+ * au milieu d'un chiffre de 44 px, et la phrase cesserait de se lire comme
+ * une phrase. La charte aligne sur la ligne de pied. */
+.row--baseline {
+  align-items: baseline;
+  gap: var(--espace-2);
+}
+
+/* Une rangee d'actions, qui passe a la ligne plutot que de se couper.
+ *
+ * « Payer 450 000 GNF » et « Refuser » cote a cote sur un telephone de 390
+ * points : le premier libelle passait sur deux lignes dans sa pastille. Le
+ * montant reste dans le bouton — c'est la regle quand une action coute de
+ * l'argent — et c'est la rangee qui cede. */
+.row--actions {
+  flex-wrap: wrap;
+}
+
+.row--actions > .btn {
+  flex: 1 1 auto;
+}
+
 .row--between {
   justify-content: space-between;
 }
@@ -149,6 +173,18 @@
   text-transform: uppercase;
   color: var(--crayon);
   margin-bottom: var(--espace-3);
+}
+
+/* Le titre d'une carte : le nom de la chose dont la carte parle.
+ *
+ * Plus grand que le corps, plus petit qu'un titre d'ecran, et surtout **sans
+ * surlignage** : le signe de marque dit « ce qu'il faut retenir », et pose
+ * sur chaque titre de carte il cesse de vouloir dire quelque chose. */
+.card-title {
+  font-size: var(--t-titre-carte);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
 /* --- Carte ----------------------------------------------------------- */
@@ -279,7 +315,28 @@
   border: var(--trait-fin) solid var(--ligne);
   border-radius: var(--rayon-champ);
   background: var(--feuille);
+  /*
+   * La couleur du texte, qui manquait.
+   *
+   * La règle posait un fond `feuille` — donc blanc — et laissait la couleur
+   * s'hériter. Dans un bloc violette, l'ancêtre pose `sur-violette`, c'est-
+   * à-dire du blanc : le champ affichait alors du blanc sur du blanc, et ce
+   * qu'on tapait disparaissait. Cela se voyait sur la boîte de recherche de
+   * l'accueil, posée dans le bandeau violette, et nulle part ailleurs — un
+   * défaut qui n'apparaît qu'à un endroit est le plus long à trouver.
+   *
+   * Le fond et la couleur se posent désormais ensemble, comme ils doivent
+   * toujours l'être.
+   */
+  color: var(--encre);
+  font: inherit;
   transition: border-color 0.15s ease;
+}
+
+/* L'invite est une aide, pas une valeur : elle se distingue du texte saisi. */
+.field__input::placeholder {
+  color: var(--crayon);
+  opacity: 1;
 }
 
 .field__input:focus-visible {
@@ -335,6 +392,12 @@
   font-weight: 600;
   background: var(--papier);
   color: var(--crayon);
+  /* Une pastille porte deux ou trois mots : elle ne se coupe pas.
+   *
+   * « 45 000 GNF » passait sur deux lignes dans la carte d'un cours vidéo,
+   * et un prix coupé en deux se lit comme un défaut d'affichage — c'est
+   * justement le chiffre qu'on vient vérifier. */
+  white-space: nowrap;
 }
 
 .chip--success {
@@ -569,6 +632,14 @@
   min-height: 60px;
 }
 
+/* La marque de l'enseigne : l'icone de la charte, a la hauteur du mot. */
+.topbar__marque {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: block;
+}
+
 .topbar__brand {
   flex: none;
   display: inline-flex;
@@ -774,12 +845,87 @@
   background: var(--violette-pale);
 }
 
-@keyframes shimmer {
+/* --- L'attente d'un écran ----------------------------------------------
+ *
+ * --- Ce qu'elle remplace ------------------------------------------------
+ *
+ * Quatre blocs gris empilés. Ils gardent la forme d'une page quand on sait
+ * laquelle arrive — et c'est leur rôle à l'intérieur d'un écran, où ils
+ * restent. Mais entre deux écrans, on ne sait pas encore quelle forme
+ * prendra la page : quatre blocs au hasard annoncent une mise en page qui ne
+ * viendra pas.
+ *
+ * --- Ce qui bouge, et pourquoi ------------------------------------------
+ *
+ * La marque respire, et un coup de surligneur passe dessous. Le surligneur
+ * est le geste de la marque — « ce qu'on passe sur ce qui compte » — et il
+ * ne coûte rien : une barre pleine qui glisse, sans dégradé ni ombre, que la
+ * charte refuse l'un comme l'autre.
+ *
+ * Le fichier de l'icône est celui de la charte, servi tel quel. Redessiner
+ * le Q en SVG inline ici en ferait une troisième copie de la même géométrie,
+ * après le fichier et le générateur d'icônes Android — et trois copies
+ * divergent. */
+.chargement {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--espace-5);
+  min-height: 55vh;
+  padding: var(--espace-7) var(--gutter);
+}
+
+.chargement__marque {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--rayon-carte);
+  animation: respire 1.8s ease-in-out infinite;
+}
+
+/* Le rail du surligneur : un creux, pas une ombre. */
+.chargement__trait {
+  position: relative;
+  width: 168px;
+  max-width: 60vw;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--ligne);
+  overflow: hidden;
+}
+
+.chargement__trait::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  border-radius: 99px;
+  background: var(--surligneur);
+  animation: coup-de-surligneur 1.5s ease-in-out infinite;
+}
+
+.chargement__mot {
+  font-size: var(--t-secondaire);
+  color: var(--crayon);
+}
+
+@keyframes respire {
+  0%,
+  100% {
+    opacity: 0.82;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes coup-de-surligneur {
   0% {
-    background-position: 100% 50%;
+    transform: translateX(-110%);
   }
   100% {
-    background-position: 0 50%;
+    transform: translateX(230%);
   }
 }
 
@@ -923,7 +1069,7 @@ a:focus-visible,
 .hero-illustration {
   margin: 0 0 var(--espace-5);
   border-radius: var(--rayon-carte);
-  background: #f2f6fd;
+  background: var(--papier);
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -991,9 +1137,15 @@ a:focus-visible,
 }
 
 .rolebtn[aria-checked='true'] {
+  /* Le trait de marque, et non une bordure doublee d'une ombre interieure.
+   *
+   * La regle posait `border-color` **et** `box-shadow: inset 0 0 0 1px` de
+   * la meme couleur : deux declarations pour epaissir un trait, dont une
+   * que la charte interdit. `--trait-fort` fait exactement cela, et c’est
+   * son role. */
   border-color: var(--violette);
+  border-width: var(--trait-fort);
   background: var(--violette-pale);
-  box-shadow: inset 0 0 0 1px var(--violette);
 }
 
 .rolebtn__label {
@@ -1120,7 +1272,7 @@ a:focus-visible,
  * suivantes tiennent dans un bandeau. Quinze vignettes de meme taille ne servent
  * personne. */
 .room {
-  background: #0b0b10;
+  background: var(--scene);
   border-radius: var(--rayon-carte);
   display: flex;
   flex-wrap: wrap;
@@ -1145,7 +1297,7 @@ a:focus-visible,
 }
 
 .room__preview {
-  background: #0b0b10;
+  background: var(--scene);
   border-radius: var(--rayon-champ);
   max-height: 220px;
   object-fit: cover;
@@ -1299,7 +1451,7 @@ a:focus-visible,
  * d'entree de gamme.
  */
 .replay {
-  background: #0b0b10;
+  background: var(--scene);
   border-radius: var(--rayon-carte);
   overflow: hidden;
 }
@@ -1403,7 +1555,15 @@ a:focus-visible,
  * ligne de saisie large de 1400 px ne se lit pas. */
 
 /* Un raccourci de recherche : l'etiquette devient cliquable. */
+/* Une suggestion est une phrase, pas une étiquette.
+ *
+ * `.chip` est devenue insécable le jour où « 45 000 GNF » s'est coupé en
+ * deux dans la carte d'un cours. La règle vaut pour un prix et pour un
+ * niveau — deux ou trois mots — mais pas pour « Explique-moi le théorème de
+ * Thalès avec un exemple », qui sortait alors de l'écran par la droite. */
 .chip--action {
+  white-space: normal;
+  text-align: left;
   cursor: pointer;
   border: var(--trait-fin) solid var(--ligne);
   background: var(--feuille);
@@ -1530,7 +1690,7 @@ h2,
   font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: #fff;
+  color: var(--sur-violette);
 }
 
 /*
@@ -1557,7 +1717,7 @@ h2,
   border-radius: var(--rayon-pastille);
   border: 1px solid rgba(255, 255, 255, 0.34);
   background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  color: var(--sur-violette);
   font-size: var(--t-secondaire);
   font-weight: 700;
   white-space: nowrap;
@@ -1600,15 +1760,15 @@ h2,
 }
 
 .pill-solid {
-  background: #fff;
+  background: var(--sur-violette);
   color: var(--marque-violette);
   border: 0;
 }
 
 .pill-outline {
   background: transparent;
-  color: #fff;
-  border: 1.6px solid #fff;
+  color: var(--sur-violette);
+  border: 1.6px solid var(--sur-violette);
 }
 
 .pill-outline:hover {
@@ -1737,7 +1897,7 @@ h2,
   font-weight: 800;
   line-height: var(--lh-titre);
   margin: 0;
-  color: #fff;
+  color: var(--sur-violette);
 }
 
 .pagehead__lede {
@@ -1868,8 +2028,9 @@ h2,
   background: var(--feuille);
   text-align: left;
   color: inherit;
-  transition: border-color var(--motion-fast) ease,
-    box-shadow var(--motion-fast) ease;
+  /* Plus d'ombre a animer : la charte n'en laisse aucune, et la regle qui
+   * en posait une a disparu avec le theme d'avant. */
+  transition: border-color var(--motion-fast) ease;
 }
 
 .rowitem:hover {
@@ -2194,6 +2355,16 @@ h2,
   line-height: 1;
 }
 
+/* Le meme chiffre, dans une liste.
+ *
+ * Quinze seances passees portent chacune leurs minutes : a la taille pleine,
+ * la liste devient une colonne de grands nombres et plus aucun ne ressort.
+ * Le chiffre garde sa fonte et son graisse — c'est le meme signe, plus bas
+ * dans la hierarchie. */
+.chiffre--petit {
+  font-size: var(--t-prix);
+}
+
 /* Un prix. Toujours avec « GNF » et une espace entre les milliers. */
 .prix {
   font-family: var(--font-titre);
@@ -2385,6 +2556,211 @@ h2,
   flex: 1;
 }
 
+/* --- Le fil de l'assistant ---------------------------------------------
+ *
+ * --- Pourquoi des tours et non des bulles -------------------------------
+ *
+ * Les bulles alternées gauche-droite conviennent à une conversation de trois
+ * mots. Une réponse d'assistant fait dix lignes : coupée à 78 % de la
+ * largeur et poussée à gauche, elle se lit mal, et la colonne de blanc à
+ * droite ne sert à rien.
+ *
+ * Un tour prend la largeur, avec la marque en tête pour dire qui parle. La
+ * question garde un fond — c'est ce qu'on relit pour se rappeler ce qu'on a
+ * demandé — et la réponse n'en a pas : elle se lit comme un texte, parce que
+ * c'en est un. Les discussions entre personnes, elles, gardent leurs bulles :
+ * c'est un autre usage et un autre écran.
+ */
+.tour {
+  display: flex;
+  gap: var(--espace-3);
+  align-items: flex-start;
+  padding: var(--espace-3) 0;
+}
+
+.tour--moi {
+  background: var(--violette-pale);
+  border-radius: var(--rayon-carte);
+  padding: var(--espace-3) var(--espace-4);
+}
+
+/* La marque de celui qui parle : carrée, à la taille d'une ligne. */
+.tour__qui {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--feuille);
+  border: var(--trait-fin) solid var(--ligne);
+  color: var(--crayon);
+  overflow: hidden;
+}
+
+.tour__qui img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tour__corps {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-2);
+}
+
+.tour__nom {
+  font-size: var(--t-etiquette);
+  font-weight: 600;
+  letter-spacing: var(--ls-etiquette);
+  text-transform: uppercase;
+  color: var(--crayon);
+}
+
+.tour__texte {
+  /* Un message collé sans espace garde ses retours à la ligne. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  /* Plus aéré que le corps courant : on lit dix lignes d'affilée ici. */
+  line-height: 1.65;
+}
+
+/* Trois points qui respirent, décalés d'un tiers de cycle.
+ *
+ * On ne sait pas combien de temps la réponse prendra : une barre de
+ * progression qui avance toute seule ment, une attente franche non. */
+.tour__attente {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  height: 20px;
+}
+
+.tour__attente i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--crayon);
+  animation: pense 1.2s ease-in-out infinite;
+}
+
+.tour__attente i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.tour__attente i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes pense {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+/* --- La boîte de saisie -------------------------------------------------
+ *
+ * Une seule boîte, cernée d'un trait, qui porte le champ et ses actions.
+ * Le champ grandit avec le texte : une question d'élève tient en une ligne,
+ * une consigne de professeur en fait cinq, et un champ d'une ligne faisait
+ * défiler le texte à l'intérieur — on ne relisait jamais ce qu'on venait
+ * d'écrire avant d'envoyer.
+ */
+.compose {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-2);
+  padding: var(--espace-3);
+  border-top: var(--trait-fin) solid var(--ligne);
+  background: var(--papier);
+}
+
+.compose__champ {
+  width: 100%;
+  min-height: 44px;
+  max-height: 180px;
+  padding: var(--espace-3);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-champ);
+  background: var(--feuille);
+  color: var(--encre);
+  font: inherit;
+  line-height: 1.5;
+  resize: none;
+  overflow-y: auto;
+}
+
+.compose__champ::placeholder {
+  color: var(--crayon);
+  opacity: 1;
+}
+
+.compose__champ:focus-visible {
+  border-color: var(--violette);
+  outline: var(--focus-ring);
+}
+
+.compose__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-2);
+}
+
+/* L'envoi a droite, toujours.
+ *
+ * L'aide « Entrée pour envoyer » le poussait la — mais elle disparait sous
+ * 600 px, ou l'on n'a pas de touche Maj, et les deux boutons se retrouvaient
+ * colles a gauche. La marge automatique tient le bouton a droite dans les
+ * deux cas. */
+.compose__actions > .btn:last-child {
+  margin-left: auto;
+}
+
+/* L'aide disparaît sous 600 px : au doigt, on n'a pas de touche Maj. */
+.compose__aide {
+  flex: 1;
+  font-size: var(--t-etiquette);
+  color: var(--crayon);
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .compose__aide {
+    display: block;
+  }
+}
+
+/* La pièce jointe, au-dessus du champ : on voit ce qu'on envoie. */
+.compose__piece {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-2);
+  padding: var(--espace-2) var(--espace-3);
+  border: var(--trait-fin) solid var(--ligne);
+  border-radius: var(--rayon-pastille);
+  background: var(--feuille);
+  font-size: var(--t-secondaire);
+}
+
+.compose__nom {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /*
  * Une bulle.
  *
@@ -2431,6 +2807,35 @@ h2,
 
 .bubble--mine .bubble__time {
   color: rgba(255, 255, 255, 0.72);
+}
+
+/* --- L'assistant -------------------------------------------------------
+ *
+ * --- Le defaut que ceci corrige --------------------------------------
+ *
+ * Cinq blocs s'empilaient avant le fil : un titre, une phrase d'explication,
+ * la bascule, un bandeau eventuel et le compteur du jour. Sur un telephone,
+ * environ 240 px — et la boite de saisie, qui est la seule chose qu'on vient
+ * faire ici, passait sous la ligne de flottaison.
+ *
+ * Le fil prend desormais la hauteur qui reste : la boite de saisie est
+ * toujours en bas de l'ecran, et c'est le fil qui defile. Meme calcul que
+ * `.chat`, et pour la meme raison — un fil qui deborde la page fait defiler
+ * la page entiere, et l'on perd le champ ou l'on ecrit.
+ */
+.assistant {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-3);
+  padding-bottom: var(--espace-5);
+  height: calc(100dvh - 60px - var(--espace-5) - var(--espace-5));
+  min-height: 420px;
+}
+
+/* Le fil mange ce qui reste une fois la bascule posee. */
+.assistant .chat__room {
+  flex: 1;
+  min-height: 0;
 }
 
 /* --- Le dépôt d'un fichier -------------------------------------------- */

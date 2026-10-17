@@ -6,6 +6,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/remote/points_api.dart';
 import '../../providers/core_providers.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/kit.dart';
 
@@ -213,6 +214,11 @@ class _LotCardState extends ConsumerState<_LotCard> {
                           ? '${Fmt.money(lot.pointsPrice, withCurrency: false)} points l’entrée'
                           : '${Fmt.money(lot.pointsPrice, withCurrency: false)} points',
                       style: const TextStyle(
+                        // Un nombre : la police des chiffres, nommee. Sans
+                        // elle, le 800 n'existe pas dans Lexend et le
+                        // moteur l'epaissit lui-meme — plus lourd, moins
+                        // net, et different du reste des chiffres.
+                        fontFamily: AppTheme.fontTitre,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primary,
@@ -222,7 +228,7 @@ class _LotCardState extends ConsumerState<_LotCard> {
                     // dire seul. Ce n'est PAS un prix de vente — rien ne
                     // s'achète ici avec de l'argent.
                     if (lot.valueGnf > 0)
-                      MetaText('≈ ${Fmt.money(lot.valueGnf)}'),
+                      MetaText('soit ${Fmt.money(lot.valueGnf)}'),
                   ],
                 ),
               ),
@@ -253,6 +259,24 @@ class _LotCardState extends ConsumerState<_LotCard> {
                 ),
               const Spacer(),
               FilledButton(
+                /*
+                 * La largeur minimale, redite ici, et pourquoi.
+                 *
+                 * Le theme pose `minimumSize: Size.fromHeight(56)` — ce qui
+                 * veut dire `Size(infinity, 56)` : un bouton large par
+                 * defaut. Dans une colonne, le parent borne cette largeur et
+                 * tout va bien. Dans une **rangee**, l'enfant sans `flex`
+                 * est mesure sans borne : le bouton reclame alors une
+                 * largeur infinie, et la mise en page leve.
+                 *
+                 * Quatre autres ecrans ont le meme montage. Corriger le
+                 * theme les reglerait tous d'un coup, mais rendrait sa
+                 * largeur de contenu a chaque bouton de l'application : ce
+                 * n'est pas une retouche a glisser dans une livraison.
+                 */
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, AppSpacing.cible),
+                ),
                 onPressed: echangeable ? _echanger : null,
                 child: Text(
                   _envoi

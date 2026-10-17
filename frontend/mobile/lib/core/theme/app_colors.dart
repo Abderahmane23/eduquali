@@ -1,135 +1,292 @@
 import 'package:flutter/material.dart';
 
-/// Palette Eduquali — §54 Design UI/UX.
-/// Fond majoritairement blanc, une seule couleur principale (violet/indigo
-/// profond), peu de couleurs simultanees, aucun effet visuel inutile.
+/// La trousse d'EduQuali.
+///
+/// Source : le système de design EduQuali, version 1, versionné dans
+/// `design/charte/tokens.json`. Les valeurs sont recopiées, pas
+/// réinterprétées, et les noms sont les siens — `papier`, `encre`, `crayon`,
+/// `violette`, `surligneur`, `rouge` pour le stylo rouge, `bonPoint` pour la
+/// récompense.
+///
+/// **Chaque couleur garde un seul rôle**, écrit à côté d'elle. C'est la règle
+/// qui a le plus de valeur ici : l'application portait trois violets
+/// différents — un dans le logo, un à la connexion, un sur le profil — et
+/// « une couleur de marque ne se reconnaît que si elle est la même partout ».
+///
+/// --- Ce qui change par rapport au 24/09 -----------------------------------
+///
+/// Le bleu #1E40AF devient `violette` #3A2FC9 ; le jaune de mise en avant
+/// devient `surligneur`, un vert, qui ne sert plus qu'à **montrer** ; et il
+/// n'y a plus ni dégradé ni ombre — le relief vient du contour.
+///
+/// --- Les anciens noms --------------------------------------------------
+///
+/// Ils sont conservés en bas du fichier, comme alias. 816 usages les
+/// nomment ; les renommer d'un bloc ferait un diff illisible et ne dirait
+/// rien de plus. Ils sont marqués `@Deprecated` : l'analyseur signale chaque
+/// emploi, et le fichier se vide à mesure que les écrans sont reprise.
 abstract final class AppColors {
-  // Couleur principale.
+  // =========================================================================
+  // La trousse
+  // =========================================================================
+
+  /// Fond des écrans et des documents. Un blanc à peine violet, comme une
+  /// page de cahier.
+  static const Color papier = Color(0xFFF6F5FB);
+
+  /// Surface des cartes, des champs et des feuilles posées sur [papier].
+  static const Color feuille = Color(0xFFFFFFFF);
+
+  /// Texte courant, titres et trait des icônes. Toujours sur [papier],
+  /// [feuille] ou un fond pâle. 15,8:1 sur [papier].
+  static const Color encre = Color(0xFF141038);
+
+  /// Texte secondaire, couleur de crayon à papier : précisions, dates,
+  /// légendes. **Jamais sous 14 px.**
+  static const Color crayon = Color(0xFF55536F);
+
+  /// Contour des cartes et des champs, places libres, fond de la ligne du
+  /// temps. Au moins 3:1 sur [papier] et [feuille].
+  static const Color ligne = Color(0xFF8B89A8);
+
+  /// L'encre violette de la marque : bouton principal, lien, onglet actif,
+  /// place prise. **Un seul bouton [violette] par écran.** 8:1 sur [papier].
+  static const Color violette = Color(0xFF3A2FC9);
+
+  /// Texte et icône posés sur [violette].
+  static const Color surViolette = Color(0xFFFFFFFF);
+
+  /// Fond de ce qui est choisi ou en attente : tuile sélectionnée, bloc
+  /// d'information, statut « En attente ».
+  static const Color violettePale = Color(0xFFE8E6FA);
+
+  /// Le violet d'un bouton pressé.
+  ///
+  /// Il n'est pas dans la trousse : la charte en tient un seul, et interdit
+  /// « trois violets différents d'un écran à l'autre ». Celui-ci n'est pas un
+  /// second violet de marque — c'est le même, assombri de 12 %, et il
+  /// n'apparaît que sous le doigt. Sans lui, un bouton ne répond pas au
+  /// toucher, et l'on appuie deux fois.
+  static const Color violetteAppuyee = Color(0xFF2E25A1);
+
+  /// Le surligneur : ce qui compte. Minutes de présence, place à vous, mot
+  /// clé d'une phrase, coup de surligneur des icônes.
+  ///
+  /// **Jamais un bouton. Jamais du texte.** S'il devient une couleur de
+  /// bouton, il cesse de dire « voici ce qui compte » et dit « appuyez ici ».
+  static const Color surligneur = Color(0xFF4FE39A);
+
+  /// Texte posé sur [surligneur]. Fixe dans les deux thèmes : l'encre
+  /// s'éclaircit sur le thème Tableau et deviendrait illisible sur le vert.
+  static const Color surSurligneur = Color(0xFF141038);
+
+  /// Fond des statuts favorables : « Présent », « Payé », « Disponible ».
+  static const Color surligneurPale = Color(0xFFDBF8E8);
+
+  /// Texte et icône des statuts favorables, sur [surligneurPale], [papier]
+  /// ou [feuille].
+  static const Color vertFonce = Color(0xFF0A6B3E);
+
+  /// Le stylo rouge : pastille « En direct », erreur, absence.
+  /// **Jamais décoratif.**
+  static const Color rouge = Color(0xFFCE2D3B);
+  static const Color surRouge = Color(0xFFFFFFFF);
+
+  /// Fond des statuts « Absent » et des messages d'erreur.
+  static const Color rougePale = Color(0xFFFBE1E3);
+
+  /// Texte et icône sur [rougePale].
+  static const Color rougeFonce = Color(0xFF93192A);
+
+  /// Le bon point : points gagnés, récompenses, tirages. **Rien d'autre** —
+  /// ce n'est pas une couleur d'alerte.
+  static const Color bonPoint = Color(0xFFF5C61A);
+  static const Color surBonPoint = Color(0xFF141038);
+  static const Color bonPointPale = Color(0xFFFCF1C6);
+
+  /// Texte et icône couleur bon point sur fond clair.
+  static const Color bonPointFonce = Color(0xFF6B5000);
+
+  // =========================================================================
+  // Les couleurs fixes de la marque
   //
-  // Bleu #1E40AF depuis le 24/09. L'application etait violette et le logo
-  // marine et vert : ils n'ont jamais ete d'accord, et chaque retouche de
-  // palette deplacait le probleme au lieu de le regler. Ce bleu-la vient du
-  // marine du logo, en plus sature.
+  // Logo, icône de l'application, affiches, supports imprimés. Elles ne
+  // changent pas avec le thème : une affiche reste la même sur un tableau
+  // noir, et un logo imprimé ne connaît pas le réglage du téléphone.
+  // =========================================================================
+
+  static const Color marqueViolette = Color(0xFF3A2FC9);
+  static const Color marqueSurligneur = Color(0xFF4FE39A);
+  static const Color marqueEncre = Color(0xFF141038);
+  static const Color marquePapier = Color(0xFFF6F5FB);
+
+  // =========================================================================
+  // Le thème Tableau
   //
-  // 8,72:1 sur blanc, et le blanc pose dessus tient le meme rapport — un
-  // bouton plein n'a pas besoin d'une seconde teinte pour son libelle.
-  static const Color primary = Color(0xFF1E40AF);
-  static const Color primaryDark = Color(0xFF1E3A8A);
-  static const Color primaryLight = Color(0xFF3B82F6);
+  // Le second thème de la charte, au choix de l'utilisateur. Cahier reste le
+  // thème par défaut. Les quatre couleurs `marque*`, le [surligneur] et le
+  // [bonPoint] n'y figurent pas : ils ne changent pas.
+  // =========================================================================
 
-  /// Fond des chips / encarts d'accent (bleu très clair).
-  static const Color primarySurface = Color(0xFFDBEAFE);
-  static const Color primarySurfaceStrong = Color(0xFFBFDBFE);
+  static const Color tableauPapier = Color(0xFF0F0D26);
+  static const Color tableauFeuille = Color(0xFF1A1740);
+  static const Color tableauEncre = Color(0xFFF3F2FB);
+  static const Color tableauCrayon = Color(0xFFB7B5D2);
+  static const Color tableauLigne = Color(0xFF74729B);
+  static const Color tableauViolette = Color(0xFFB0AAFF);
+  static const Color tableauSurViolette = Color(0xFF120E3A);
+  static const Color tableauViolettePale = Color(0xFF2A2668);
 
-  /// Le dégradé des en-têtes, du haut-gauche au bas-droit.
+  /// La violette d'un bouton presse, sur le theme Tableau.
   ///
-  /// Deux pas seulement, et proches : un dégradé qui traverse la roue des
-  /// teintes attire l'œil sur le fond, alors que l'en-tête est là pour
-  /// porter un titre.
-  static const Color heroStart = Color(0xFF1E40AF);
-  static const Color heroEnd = Color(0xFF1D4ED8);
+  /// Eclaircie et non assombrie : assombrir une violette deja pale la ferait
+  /// disparaitre dans le fond marine. Comme [violetteAppuyee], elle n'est pas
+  /// un second violet de marque — c'est le meme, sous le doigt.
+  static const Color tableauVioletteAppuyee = Color(0xFFC8C4FF);
+  static const Color tableauSurligneurPale = Color(0xFF11392A);
+  static const Color tableauVertFonce = Color(0xFF8FF0BF);
+  static const Color tableauRouge = Color(0xFFFF6F78);
+  static const Color tableauSurRouge = Color(0xFF2E0509);
+  static const Color tableauRougePale = Color(0xFF4A141B);
+  static const Color tableauRougeFonce = Color(0xFFFFB5BA);
+  static const Color tableauBonPointPale = Color(0xFF3D3206);
+  static const Color tableauBonPointFonce = Color(0xFFF8DD74);
 
-  /// Le mot mis en avant dans un titre, et rien d'autre.
-  ///
-  /// Jamais un fond, jamais un statut : c'est le seul procede qui fasse lire
-  /// un titre de trois lignes en entier.
-  ///
-  /// 5,70:1 sur le bleu principal, 4,37:1 au bout clair du degrade, 10,4:1
-  /// sur le marine. Au-dessus du plancher de 3:1 des grands titres partout,
-  /// ce qui suffit : c'est le seul endroit ou il sert. En corps de texte sur
-  /// le degrade il ne passerait pas, et un jaune employe comme surface
-  /// redeviendrait illisible des qu'on poserait du texte dessus.
-  static const Color accent = Color(0xFFFACC15);
-
-  /// La seconde surface sombre : cartes marine posees sur du blanc.
-  ///
-  /// C'est le marine du logo. Il sert a marquer une section sans la teinter
-  /// en bleu vif, qui se disputerait avec les boutons.
-  static const Color surfaceDark = Color(0xFF0F1E4D);
-
-  /// La bande de section, bleu tres pale.
-  ///
-  /// Elle alterne avec le blanc pour decouper une page longue sans tracer
-  /// une seule ligne de separation.
-  static const Color bandSoft = Color(0xFFEFF4FF);
-
-  /// Les surfaces posées *sur* l'en-tête : panneau de chiffres, champ de
-  /// recherche, pastilles d'action. Du blanc transparent, pas une teinte
-  /// fixe — ainsi elles suivent le dégradé au lieu de le trancher.
-  static const Color onHeroSurface = Color(0x26FFFFFF);
-  static const Color onHeroBorder = Color(0x33FFFFFF);
-  static const Color onHeroMuted = Color(0xCCFFFFFF);
-
-  // Fonds.
+  // =========================================================================
+  // Les anciens noms
   //
-  // Le fond est un blanc legerement fume, les cartes restent d'un blanc
-  // franc : c'est cet ecart qui les detache. Sur du blanc pur, une carte
-  // blanche ne tient que par sa bordure — et une bordure d'un pixel
-  // disparait en plein soleil, precisement la ou l'application sert.
-  static const Color background = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFFFFFFF);
+  // 816 usages les nomment. Les garder en alias laisse les 90 écrans
+  // compiler et s'afficher dans la nouvelle charte dès ce fichier-ci ; les
+  // renommer d'un bloc aurait fait un diff de 816 lignes qui ne dit rien de
+  // plus qu'un `sed`.
+  //
+  // Chacun pointe vers son équivalent de la charte. Deux n'en ont pas, et
+  // c'est voulu :
+  //
+  //   * `heroStart` et `heroEnd` servaient aux dégradés d'en-tête. La charte
+  //     n'en laisse aucun : les deux rendent la violette fixe, donc un
+  //     dégradé qui les emploie encore est un aplat — visuellement correct,
+  //     et l'avertissement dit où le retirer.
+  //   * `accent` était le jaune de mise en avant. Il rend le [surligneur],
+  //     mais **la règle a changé avec la valeur** : le surligneur est un fond
+  //     avec du texte sombre dessus, jamais une couleur de texte. Un
+  //     `color: AppColors.accent` qui compilait hier donne aujourd'hui du
+  //     vert clair sur du clair. Ces emplois sont repris un par un.
+  // =========================================================================
 
-  /// Le fond des ecrans : #F6F5FB, un blanc legerement lavande.
-  ///
-  /// L'ecart avec le blanc des cartes est de 1,084:1 — assez pour que la
-  /// carte se detache sans son trait de bordure, trop peu pour que la page
-  /// paraisse grise.
-  static const Color surfaceMuted = Color(0xFFF6F5FB);
-  static const Color scaffoldAlt = Color(0xFFF6F5FB);
+  @Deprecated('Charte EduQuali : utiliser `violette`.')
+  static const Color primary = violette;
 
-  // Texte.
-  /// #0F1724 : 16,6:1 sur le fond de page. Un noir bleute plutot qu'un noir
-  /// pur, qui vibre sur un ecran OLED.
-  static const Color textPrimary = Color(0xFF0F1724);
+  @Deprecated('Charte EduQuali : utiliser `violetteAppuyee`.')
+  static const Color primaryDark = violetteAppuyee;
 
-  /// 5,9:1 sur blanc — au-dessus du plancher AA de 4,5:1.
-  static const Color textSecondary = Color(0xFF4A4A5E);
+  @Deprecated('Charte EduQuali : utiliser `violette`.')
+  static const Color primaryLight = violette;
 
-  /// Était #8E8EA3, soit 3,1:1 : sous le plancher pour du texte.
-  ///
-  /// Assombri une seconde fois (#6E6E85 → #656579) le 23/09 : le fond des
-  /// écrans étant passé au blanc fumé, cette teinte retombait à 4,45:1 —
-  /// juste sous le plancher. Assombrir le texte plutôt qu'éclaircir le fond
-  /// préserve le relief qu'on venait de gagner.
-  static const Color textTertiary = Color(0xFF656579);
-  static const Color textOnPrimary = Color(0xFFFFFFFF);
+  @Deprecated('Charte EduQuali : utiliser `violettePale`.')
+  static const Color primarySurface = violettePale;
 
-  // Bordures / separateurs.
-  /// Bordure visible : 1,3:1 ne se voyait pas en plein soleil.
-  static const Color border = Color(0xFFD5D5E2);
-  static const Color borderStrong = Color(0xFFD3D3E0);
+  @Deprecated('Charte EduQuali : utiliser `violettePale`.')
+  static const Color primarySurfaceStrong = violettePale;
 
-  // États semantiques (usage parcimonieux).
-  static const Color success = Color(0xFF16A34A);
-  static const Color successSurface = Color(0xFFE8F7EE);
-  static const Color warning = Color(0xFFD97706);
-  static const Color warningSurface = Color(0xFFFEF3E2);
-  static const Color danger = Color(0xFFDC2626);
-  static const Color dangerSurface = Color(0xFFFDECEC);
-  static const Color info = Color(0xFF2563EB);
-  static const Color infoSurface = Color(0xFFE8F0FE);
-  static const Color neutralSurface = Color(0xFFF1F1F5);
+  @Deprecated('Charte EduQuali : pas de degrade. Aplat `marqueViolette`.')
+  static const Color heroStart = marqueViolette;
+
+  @Deprecated('Charte EduQuali : pas de degrade. Aplat `marqueViolette`.')
+  static const Color heroEnd = marqueViolette;
+
+  @Deprecated(
+    'Charte EduQuali : le surligneur est un FOND avec du texte sombre '
+    'dessus, jamais une couleur de texte. Utiliser le widget Surlignage.',
+  )
+  static const Color accent = surligneur;
+
+  @Deprecated('Charte EduQuali : utiliser `marqueEncre`.')
+  static const Color surfaceDark = marqueEncre;
+
+  @Deprecated('Charte EduQuali : utiliser `violettePale`.')
+  static const Color bandSoft = violettePale;
+
+  /// Les surfaces posées sur un en-tête. Du blanc transparent : elles
+  /// suivaient le dégradé au lieu de le trancher, et elles suivent
+  /// maintenant l'aplat.
+  static const Color onHeroSurface = Color(0x24FFFFFF);
+  static const Color onHeroBorder = Color(0x57FFFFFF);
+  static const Color onHeroMuted = Color(0xD1FFFFFF);
+
+  @Deprecated('Charte EduQuali : utiliser `feuille`.')
+  static const Color background = feuille;
+
+  @Deprecated('Charte EduQuali : utiliser `feuille`.')
+  static const Color surface = feuille;
+
+  @Deprecated('Charte EduQuali : utiliser `papier`.')
+  static const Color surfaceMuted = papier;
+
+  @Deprecated('Charte EduQuali : utiliser `papier`.')
+  static const Color scaffoldAlt = papier;
+
+  @Deprecated('Charte EduQuali : utiliser `encre`.')
+  static const Color textPrimary = encre;
+
+  @Deprecated('Charte EduQuali : utiliser `crayon`.')
+  static const Color textSecondary = crayon;
+
+  @Deprecated('Charte EduQuali : utiliser `crayon`.')
+  static const Color textTertiary = crayon;
+
+  @Deprecated('Charte EduQuali : utiliser `surViolette`.')
+  static const Color textOnPrimary = surViolette;
+
+  @Deprecated('Charte EduQuali : utiliser `ligne`.')
+  static const Color border = ligne;
+
+  @Deprecated('Charte EduQuali : utiliser `ligne`.')
+  static const Color borderStrong = ligne;
+
+  @Deprecated('Charte EduQuali : utiliser `vertFonce`.')
+  static const Color success = vertFonce;
+
+  @Deprecated('Charte EduQuali : utiliser `surligneurPale`.')
+  static const Color successSurface = surligneurPale;
+
+  @Deprecated('Charte EduQuali : utiliser `bonPointFonce`.')
+  static const Color warning = bonPointFonce;
+
+  @Deprecated('Charte EduQuali : utiliser `bonPointPale`.')
+  static const Color warningSurface = bonPointPale;
+
+  @Deprecated('Charte EduQuali : utiliser `rouge`.')
+  static const Color danger = rouge;
+
+  @Deprecated('Charte EduQuali : utiliser `rougePale`.')
+  static const Color dangerSurface = rougePale;
+
+  @Deprecated('Charte EduQuali : utiliser `violette`.')
+  static const Color info = violette;
+
+  @Deprecated('Charte EduQuali : utiliser `violettePale`.')
+  static const Color infoSurface = violettePale;
+
+  @Deprecated('Charte EduQuali : utiliser `papier`.')
+  static const Color neutralSurface = papier;
 
   /// La barre d'un score, au repos.
   ///
   /// **Une seule teinte, pas une par catégorie.** Ces barres portent une
   /// *même* mesure — le score — répétée sur plusieurs domaines. Le nom du
   /// domaine est déjà écrit à côté : lui donner en plus une couleur propre
-  /// n'ajoute aucune information et fait entrer cinq teintes en
-  /// concurrence pour l'attention.
-  ///
-  /// La règle : garder l'essentiel en gris neutre, et réserver l'accent au
-  /// point qui mérite le regard.
-  static const Color chartBar = Color(0xFF8E8EA8);
+  /// n'ajoute aucune information et fait entrer cinq teintes en concurrence.
+  static const Color chartBar = ligne;
 
   /// La barre du domaine qui mérite le regard — le plus faible.
   ///
-  /// L'information n'est pas portée par la couleur seule : le pourcentage
-  /// est écrit en toutes lettres au bout de chaque barre.
-  static const Color chartHighlight = primary;
+  /// L'information n'est pas portée par la couleur seule : le pourcentage est
+  /// écrit en toutes lettres au bout de chaque barre.
+  static const Color chartHighlight = violette;
 
   /// Couleurs des états réseau (§42).
-  static const Color networkOffline = Color(0xFF8E8EA3);
-  static const Color networkPartial = Color(0xFFD97706);
-  static const Color networkOnline = Color(0xFF16A34A);
+  static const Color networkOffline = crayon;
+  static const Color networkPartial = bonPointFonce;
+  static const Color networkOnline = vertFonce;
 }

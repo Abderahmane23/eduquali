@@ -153,7 +153,7 @@ class _BookSheetState extends ConsumerState<_BookSheet> {
               ),
 
               const Gap(AppSpacing.xl),
-              Text('Pour quel enfant ?', style: text.titleSmall),
+              Text('Pour quel enfant ?', style: text.titleSmall),
               const Gap(AppSpacing.sm),
               if (children.isEmpty)
                 const InfoBanner(
@@ -176,7 +176,7 @@ class _BookSheetState extends ConsumerState<_BookSheet> {
                 ),
 
               const Gap(AppSpacing.xl),
-              Text('À partir de quand ? (facultatif)', style: text.titleSmall),
+              Text('À partir de quand ? (facultatif)', style: text.titleSmall),
               const Gap(AppSpacing.sm),
               OutlinedButton.icon(
                 onPressed: _pickDate,

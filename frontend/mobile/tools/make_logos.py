@@ -1,17 +1,39 @@
-"""Fabrique les logos de l'application a partir des deux sources.
+"""Fabrique l'icone du telephone a partir du symbole de la charte.
 
-Deux images, deux emplois :
+--- Ce qui a change le 12/10 -----------------------------------------------
 
-  Eduqualiflutter_app_logo.png  le Q a la toque, carre. Icone du telephone,
-                                et marque dans l'application.
-  logo_eduquali.png             le mot « EduQuali » en entier. Page de
-                                connexion, et elle seule : c'est le seul
-                                ecran ou l'on ne sait pas encore ou l'on est.
+Ce script detourait deux PNG poses sur du blanc : le Q a la toque et le mot
+« EduQuali ». Les deux ont disparu de la charte EduQuali — « la toque est le
+signe de presque toutes les applications scolaires ; elle parle du diplome,
+alors qu'EduQuali vend la presence » — et le logo vit desormais en six
+fichiers vectoriels, dans `assets/logos/`.
 
-Les sources sont posees sur du blanc. Ce script les detoure — methode
-« couleur vers alpha » : recomposee sur du blanc, l'image detouree redonne
-exactement la source, et sur le blanc fume de l'application l'ecart reste
-invisible. Sans cela le logo trainerait un rectangle blanc derriere lui.
+L'application les affiche directement, par `flutter_svg` : rien a fabriquer.
+
+Reste **l'icone du lanceur Android**, qui exige des PNG a cinq resolutions.
+C'est tout ce que fait ce script, et il les dessine a partir de la geometrie
+exacte du fichier `eduquali-icone-app.svg` plutot que d'en rasteriser le
+contenu : la forme est un carre arrondi, un anneau et un triangle, et trois
+primitives dessinees a la bonne resolution valent mieux qu'une image
+agrandie.
+
+--- Les deux jeux de fichiers, et pourquoi ils ne se ressemblent pas -------
+
+  `ic_launcher.png`              l'icone complete : fond violette, anneau
+                                 blanc, queue surligneur. C'est elle que
+                                 montrent les anciens telephones.
+
+  `ic_launcher_foreground.png`   le symbole seul, transparent, sur une toile
+                                 de 108 unites dont **les 72 du centre
+                                 seulement** sont garanties visibles. Android
+                                 8 et au-dela la recadre en cercle, en carre
+                                 arrondi ou en goutte selon le lanceur, et
+                                 anime le fond separement. Un symbole dessine
+                                 jusqu'au bord se ferait donc rogner.
+
+Le fond de l'icone adaptative passe du blanc a la violette, dans
+`values/ic_launcher_background.xml` : c'est la charte, et un symbole blanc
+sur un fond blanc ne se verrait pas.
 
 Usage : python tools/make_logos.py
 """
@@ -22,171 +44,182 @@ import pathlib
 import sys
 
 try:
-    from PIL import Image
-    import numpy as np
+    from PIL import Image, ImageDraw
 except ImportError:  # pragma: no cover
-    sys.exit('Il manque Pillow et numpy : pip install pillow numpy')
+    sys.exit('Il manque Pillow : pip install pillow')
 
-RACINE = pathlib.Path(__file__).resolve().parents[3]
 MOBILE = pathlib.Path(__file__).resolve().parents[1]
-ASSETS = MOBILE / 'assets' / 'img'
 RES = MOBILE / 'android' / 'app' / 'src' / 'main' / 'res'
 
-# En deca, c'est du bruit de compression dans le fond, pas du dessin.
-PLANCHER = 8.0
+# --- Les couleurs de la charte, fixes dans les fichiers du logo -----------
+VIOLETTE = (0x3A, 0x2F, 0xC9, 0xFF)
+SURLIGNEUR = (0x4F, 0xE3, 0x9A, 0xFF)
+BLANC = (0xFF, 0xFF, 0xFF, 0xFF)
 
-# Les cinq densites d'Android, en multiples du point de base.
+# --- La geometrie, lue dans `eduquali-icone-app.svg` ----------------------
+#
+# Son `viewBox` est "-14 -16 128 128". Les coordonnees ci-dessous sont donc
+# exprimees dans ce repere, et ramenees a [0,1] par `_normaliser`.
+VUE = (-14.0, -16.0, 128.0, 128.0)
+
+# L'anneau : le Q. `stroke-width` 24 autour d'un rayon de 26.
+ANNEAU_CENTRE = (50.0, 47.0)
+ANNEAU_RAYON = 26.0
+ANNEAU_TRAIT = 24.0
+
+# La queue : le coup de surligneur, en biseau.
+QUEUE = [(39.0, 52.0), (69.0, 52.0), (107.0, 90.0), (77.0, 90.0)]
+
+# Le rayon des coins du carre, dans le meme repere.
+COIN = 29.0
+
+# Les cinq densites d'Android, et la taille de chaque fichier.
 DENSITES = {
-    'mdpi': 1.0,
-    'hdpi': 1.5,
-    'xhdpi': 2.0,
-    'xxhdpi': 3.0,
-    'xxxhdpi': 4.0,
+    'mdpi': (48, 108),
+    'hdpi': (72, 162),
+    'xhdpi': (96, 216),
+    'xxhdpi': (144, 324),
+    'xxxhdpi': (192, 432),
 }
 
+# Le facteur de suréchantillonnage. On dessine en grand puis on reduit : les
+# bords d'un cercle trace directement a 48 px sont crenelés, et une icone
+# crenelée se voit sur l'ecran d'accueil, qui est le seul endroit ou elle
+# apparait.
+SURECH = 8
 
-def detourer(im: Image.Image) -> Image.Image:
-    """Retire le blanc du fond, en gardant les bords adoucis.
 
-    Pour chaque pixel : alpha = (255 - canal le plus sombre) / 255, puis la
-    couleur est « demelangee » du blanc. Les bords anticrenelees gardent donc
-    leur degrade au lieu de devenir un escalier, et le contre-poinçon du Q
-    laisse passer le fond comme il doit.
+def _normaliser(x: float, y: float) -> tuple[float, float]:
+    """Du repere du SVG vers [0,1]."""
+    vx, vy, vw, vh = VUE
+    return ((x - vx) / vw, (y - vy) / vh)
+
+
+def _dessiner(cote: int, *, fond: bool, marge: float = 0.0) -> Image.Image:
+    """Le symbole, sur un carre de `cote` points.
+
+    `fond` pose le carre arrondi de violette. `marge` reduit le symbole vers
+    le centre : c'est ce qui laisse a Android la place de recadrer.
     """
-    a = np.array(im.convert('RGBA')).astype(float)
-    rgb, alpha_source = a[..., :3], a[..., 3:4] / 255.0
+    grand = cote * SURECH
+    toile = Image.new('RGBA', (grand, grand), (0, 0, 0, 0))
+    dessin = ImageDraw.Draw(toile)
 
-    alpha = (255.0 - rgb.min(axis=2, keepdims=True)) / 255.0
-    sur = alpha > 1e-4
-    couleur = np.where(sur, 255.0 + (rgb - 255.0) / np.where(sur, alpha, 1.0), 0.0)
+    def point(x: float, y: float) -> tuple[float, float]:
+        nx, ny = _normaliser(x, y)
+        # La marge recentre : 0,25 de marge laisse le symbole dans la moitie
+        # centrale de la toile.
+        nx = 0.5 + (nx - 0.5) * (1 - marge)
+        ny = 0.5 + (ny - 0.5) * (1 - marge)
+        return (nx * grand, ny * grand)
 
-    opacite = np.clip(alpha * alpha_source * 255.0, 0, 255)
-    # Le fond des sources n'est pas tout a fait blanc — 254 par endroits, ce
-    # qui laisse un alpha de 1/255 sur toute la surface. Sans ce plancher, le
-    # rognage ne trouve aucune marge a couper et le logo garde son cadre.
-    opacite[opacite < PLANCHER] = 0.0
+    if fond:
+        _, _, vw, _ = VUE
+        rayon = COIN / vw * grand
+        dessin.rounded_rectangle(
+            [(0, 0), (grand - 1, grand - 1)], radius=rayon, fill=VIOLETTE
+        )
 
-    sortie = np.concatenate([np.clip(couleur, 0, 255), opacite], axis=2)
-    return Image.fromarray(sortie.astype('uint8'), 'RGBA')
-
-
-def rogner(im: Image.Image) -> Image.Image:
-    """Coupe la marge transparente : la taille demandee devient la taille vue."""
-    a = np.array(im)
-    a[..., 3][a[..., 3] < PLANCHER] = 0
-    im = Image.fromarray(a, 'RGBA')
-    return im.crop(im.getbbox())
-
-
-def poser(art: Image.Image, cote: int, part: float) -> Image.Image:
-    """Centre `art` sur un carre transparent de `cote` px, occupant `part`."""
-    cible = cote * part
-    facteur = min(cible / art.width, cible / art.height)
-    reduit = art.resize(
-        (max(1, round(art.width * facteur)), max(1, round(art.height * facteur))),
-        Image.LANCZOS,
+    # L'anneau. Pillow n'a pas de « cercle avec epaisseur » centre sur le
+    # trace : on dessine donc une ellipse de contour, dont `width` croit vers
+    # l'interieur ET l'exterieur a parts egales, comme le `stroke` du SVG.
+    cx, cy = ANNEAU_CENTRE
+    _, _, vw, _ = VUE
+    echelle = grand / vw * (1 - marge)
+    r = ANNEAU_RAYON * echelle
+    trait = ANNEAU_TRAIT * echelle
+    centre = point(cx, cy)
+    #
+    # L'anneau est **blanc dans les deux cas**, et c'est le point qui m'avait
+    # echappe : le premier plan de l'icone adaptative se pose sur le fond
+    # violette declare dans `ic_launcher_background.xml`. Un anneau violette
+    # y serait invisible — c'est exactement ce que la premiere version
+    # dessinait, et seule une planche de controle l'a montre.
+    #
+    # Le centre de l'anneau, lui, differe : sur l'icone complete il laisse
+    # voir la violette du carre ; sur le premier plan il doit etre
+    # **transparent**, pour que le fond d'Android s'y voie et que le lanceur
+    # puisse l'animer separement.
+    dessin.ellipse(
+        [
+            (centre[0] - r - trait / 2, centre[1] - r - trait / 2),
+            (centre[0] + r + trait / 2, centre[1] + r + trait / 2),
+        ],
+        fill=BLANC,
     )
-    toile = Image.new('RGBA', (cote, cote), (0, 0, 0, 0))
-    toile.paste(
-        reduit,
-        ((cote - reduit.width) // 2, (cote - reduit.height) // 2),
-        reduit,
-    )
-    return toile
-
-
-def eclaircir(mot: Image.Image) -> Image.Image:
-    """Le mot-symbole pour fond sombre : blanc a gauche, vert vif a droite.
-
-    Sur le violet des en-tetes, le « Edu » marine tombe a 1,4:1 : il
-    disparait. Tenter de n'eclaircir que le marine donnait un gris terne,
-    parce que la source passe du marine au vert par un degrade continu et
-    qu'aucun seuil ne separe proprement les deux.
-
-    On garde donc la *forme* — le canal alpha — et on la remplit d'un degrade
-    horizontal blanc vers vert, la bascule tombant sur le Q. C'est exactement
-    ce que montre la maquette, et les deux teintes tiennent leur contraste
-    sur le violet : 8,98:1 pour le blanc, 4,67:1 pour le vert.
-    """
-    a = np.array(mot.convert('RGBA'))
-    alpha = a[..., 3:4].astype(float)
-
-    largeur_px = a.shape[1]
-    x = np.linspace(0.0, 1.0, largeur_px)[None, :, None]
-    # Transition douce entre 45 % et 62 % de la largeur : le Q est la.
-    t = np.clip((x - 0.45) / (0.62 - 0.45), 0.0, 1.0)
-    t = t * t * (3.0 - 2.0 * t)
-
-    blanc = np.array([255.0, 255.0, 255.0])
-    vert = np.array([52.0, 211.0, 153.0])
-    remplissage = blanc + (vert - blanc) * t
-
-    return Image.fromarray(
-        np.concatenate(
-            [np.broadcast_to(remplissage, a[..., :3].shape), alpha], axis=2
-        ).astype('uint8'),
-        'RGBA',
+    dessin.ellipse(
+        [
+            (centre[0] - r + trait / 2, centre[1] - r + trait / 2),
+            (centre[0] + r - trait / 2, centre[1] + r - trait / 2),
+        ],
+        fill=VIOLETTE if fond else (0, 0, 0, 0),
     )
 
+    # La queue, par-dessus : c'est elle qui ferme le Q.
+    #
+    # Le fichier lui donne un lisere de violette de 5 unites, en
+    # `paint-order="stroke"` — donc sous le remplissage. Il separe la queue
+    # de l'anneau blanc qu'elle traverse ; sans lui, les deux formes se
+    # touchent et le Q perd sa lecture a petite taille.
+    coins = [point(x, y) for x, y in QUEUE]
+    if fond:
+        dessin.polygon(
+            coins,
+            fill=SURLIGNEUR,
+            outline=VIOLETTE,
+            width=max(1, round(5 * echelle)),
+        )
+    else:
+        # Sur le premier plan, pas de lisere : il se poserait sur de la
+        # transparence et dessinerait un trait violette dans le vide.
+        dessin.polygon(coins, fill=SURLIGNEUR)
 
-def largeur(art: Image.Image, px: int) -> Image.Image:
-    return art.resize((px, round(art.height * px / art.width)), Image.LANCZOS)
+    return toile.resize((cote, cote), Image.LANCZOS)
 
 
-def main() -> None:
-    marque = rogner(detourer(Image.open(RACINE / 'Eduqualiflutter_app_logo.png')))
-    mot = rogner(Image.open(RACINE / 'logo_eduquali.png').convert('RGBA'))
+def principal() -> int:
+    if not RES.is_dir():
+        print(f'Introuvable : {RES}', file=sys.stderr)
+        return 1
 
-    ASSETS.mkdir(parents=True, exist_ok=True)
-
-    # --- Dans l'application -------------------------------------------------
-    # Trois fois la taille affichee : l'ecran d'un telephone est dense, et une
-    # image juste a la bonne taille y parait floue.
-    poser(marque, 288, 1.0).save(ASSETS / 'logo_mark.png')
-    largeur(mot, 720).save(ASSETS / 'logo_wordmark.png')
-    largeur(eclaircir(mot), 720).save(ASSETS / 'logo_wordmark_light.png')
-
-    # --- Icone du telephone -------------------------------------------------
-    # Le systeme decoupe l'icone adaptative dans un cercle, un carre arrondi ou
-    # une goutte selon le telephone : l'art tient dans la zone sure, sinon la
-    # toque du Q se fait rogner sur la moitie des appareils.
-    for suffixe, facteur in DENSITES.items():
-        dossier = RES / f'mipmap-{suffixe}'
+    for densite, (complet, premier_plan) in DENSITES.items():
+        dossier = RES / f'mipmap-{densite}'
         dossier.mkdir(parents=True, exist_ok=True)
 
-        poser(marque, round(108 * facteur), 0.60).save(
+        _dessiner(complet, fond=True).save(dossier / 'ic_launcher.png')
+
+        # Le premier plan : pas de fond, et le symbole ramene dans les 72
+        # unites centrales de la toile de 108 — soit un tiers de marge.
+        _dessiner(premier_plan, fond=False, marge=1 / 3).save(
             dossier / 'ic_launcher_foreground.png'
         )
 
-        # L'icone d'avant Android 8, pour les telephones qui ignorent la
-        # precedente : elle porte son propre fond, personne ne le lui donnera.
-        cote = round(48 * facteur)
-        ancienne = Image.new('RGBA', (cote, cote), (255, 255, 255, 255))
-        ancienne.alpha_composite(poser(marque, cote, 0.74))
-        ancienne.convert('RGB').save(dossier / 'ic_launcher.png')
+        print(f'  mipmap-{densite:8} {complet}px + {premier_plan}px')
 
-    (RES / 'mipmap-anydpi-v26').mkdir(parents=True, exist_ok=True)
-    (RES / 'mipmap-anydpi-v26' / 'ic_launcher.xml').write_text(
+    # Le fond de l'icone adaptative : la violette de la marque.
+    fond = RES / 'values' / 'ic_launcher_background.xml'
+    fond.write_text(
         '<?xml version="1.0" encoding="utf-8"?>\n'
-        '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
-        '    <background android:drawable="@color/ic_launcher_background" />\n'
-        '    <foreground android:drawable="@mipmap/ic_launcher_foreground" />\n'
-        '</adaptive-icon>\n',
-        encoding='utf-8',
-    )
-    (RES / 'values' / 'ic_launcher_background.xml').write_text(
-        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<!--\n'
+        '  Le fond de l icone adaptative.\n'
+        '\n'
+        '  La violette de la marque, et non du blanc : le symbole du premier\n'
+        '  plan est blanc, et un symbole blanc sur un fond blanc ne se voit\n'
+        '  pas. Ecrit par tools/make_logos.py.\n'
+        '-->\n'
         '<resources>\n'
-        '    <color name="ic_launcher_background">#FFFFFF</color>\n'
+        '    <color name="ic_launcher_background">#3A2FC9</color>\n'
         '</resources>\n',
         encoding='utf-8',
     )
+    print(f'  {fond.relative_to(MOBILE)} : fond violette')
 
-    print('marque  :', marque.size, '->', ASSETS / 'logo_mark.png')
-    print('mot     :', mot.size, '->', ASSETS / 'logo_wordmark.png')
-    print('mot clair:', mot.size, '->', ASSETS / 'logo_wordmark_light.png')
-    print('icones  :', ', '.join(DENSITES))
+    print(
+        '\nL icone du lanceur est refaite. Le logo de l application, lui,\n'
+        'vient des six fichiers de assets/logos/ : rien a fabriquer.'
+    )
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(principal())

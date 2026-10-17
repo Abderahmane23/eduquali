@@ -40,7 +40,7 @@ class _TestIntroScreenState extends ConsumerState<TestIntroScreen> {
       setState(() => _starting = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Demarrage impossible : $error')));
+      ).showSnackBar(SnackBar(content: Text('Demarrage impossible : $error')));
     }
   }
 
@@ -94,7 +94,7 @@ class _TestIntroScreenState extends ConsumerState<TestIntroScreen> {
                     const Gap(AppSpacing.xl),
 
                     Text(
-                      'Test : ${test.subject.name}',
+                      'Test : ${test.subject.name}',
                       style: text.titleMedium,
                     ),
                     const SizedBox(height: 4),
@@ -138,7 +138,7 @@ class _TestIntroScreenState extends ConsumerState<TestIntroScreen> {
                           const SizedBox(height: 12),
                           _IntroRow(
                             icon: Icons.flag_outlined,
-                            label: 'Score minimum : ${test.passingScore} %',
+                            label: 'Score minimum : ${test.passingScore} %',
                           ),
                         ],
                       ),
@@ -174,7 +174,7 @@ class _TestIntroScreenState extends ConsumerState<TestIntroScreen> {
 
                     if (test.isCertified)
                       InfoBanner(
-                        title: 'Déjà certifié a ${test.certification!.score} %',
+                        title: 'Déjà certifié a ${test.certification!.score} %',
                         message:
                             'Repasser le test remplacera votre certification '
                             'actuelle pour ${test.subject.name} — '
@@ -183,7 +183,7 @@ class _TestIntroScreenState extends ConsumerState<TestIntroScreen> {
                       )
                     else
                       Text(
-                        'En cas de réussite, une certification « ${test.subject.name} — '
+                        'En cas de réussite, une certification « ${test.subject.name} — '
                         '${test.level.name} » sera ajoutee a votre profil et '
                         'visible par les établissements.',
                         style: text.bodySmall,

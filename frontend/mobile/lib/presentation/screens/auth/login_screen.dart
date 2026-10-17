@@ -12,6 +12,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/common.dart';
 import '../../widgets/interactions.dart';
+import '../../widgets/marque.dart';
 
 /// Connexion, d'après les maquettes du 23/09.
 ///
@@ -214,7 +215,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(_busy ? 'Un instant…' : 'Commencer'),
+                              // « Un bouton dit ce qui va se passer »,
+                              // surtout quand il engage. « Commencer » ne dit
+                              // rien ; ici il part un SMS, et l'on attend un
+                              // code — autant l'annoncer.
+                              Text(
+                                _busy
+                                    ? 'Un instant…'
+                                    : 'Recevoir mon code par SMS',
+                              ),
                               if (!_busy) ...[
                                 const SizedBox(width: AppSpacing.sm),
                                 const Icon(Icons.arrow_forward, size: 20),
@@ -306,43 +315,59 @@ class _Brand extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [AppColors.heroStart, AppColors.heroEnd],
-      ),
-    ),
+    // Un aplat, pas un degrade : la charte n en laisse aucun, et la
+        // violette de la marque se suffit.
+        decoration: const BoxDecoration(color: AppColors.marqueViolette),
     child: SafeArea(
       bottom: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg,
-          AppSpacing.xl,
-          AppSpacing.lg,
-          AppSpacing.xxl,
+          AppSpacing.espace4,
+          AppSpacing.espace5,
+          AppSpacing.espace4,
+          AppSpacing.espace5,
         ),
         child: Column(
           children: [
-            // La marque sur une tuile blanche : le Q est marine et vert, il
-            // lui faut un fond clair. Le nom, lui, a sa variante claire.
-            Container(
-              width: 84,
-              height: 84,
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-              ),
-              child: const AppLogo.mark(size: 60),
-            ),
-            const Gap(AppSpacing.lg),
+            /*
+             * Le nom, et rien d'autre.
+             *
+             * Une tuile blanche de 84 px portait le symbole juste au-dessus :
+             * le Q etait donc dessine deux fois, une fois seul et une fois
+             * dans le logotype. La charte tranche — « utiliser le symbole
+             * seul sous 18 px de haut, ou quand le nom est deja present ».
+             * Il l'est, une ligne plus bas.
+             *
+             * Cent pixels gagnes, et le premier champ passe au-dessus de la
+             * ligne de flottaison sur un telephone de 640.
+             */
             const AppLogo.wordmarkLight(width: 190),
-            const Gap(AppSpacing.sm),
-            const Text(
-              'La plateforme éducative de confiance',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, color: AppColors.onHeroMuted),
+            const Gap(AppSpacing.espace3),
+            /*
+             * La signature de la marque.
+             *
+             * Elle remplace « La plateforme educative de confiance », et la
+             * charte dit pourquoi en une ligne : « la confiance ne s'annonce
+             * pas, elle se prouve, et la preuve de presence s'en charge ».
+             * Une phrase qui se reclame de la confiance en demande ; celle-ci
+             * dit ce qui distingue le produit — un professeur en direct, a
+             * heure fixe, et non une bibliotheque de videos.
+             *
+             * Le mot surligne est « est la » : c'est la difference.
+             */
+            const Affiche(
+              avant: 'Le professeur ',
+              surligne: 'est là.',
+              // 19 px : la signature tient alors sur une seule ligne dans les
+              // 320 px utiles d'un telephone de 360. A 22, elle passait a la
+              // ligne et coutait une hauteur de texte entiere.
+              style: TextStyle(
+                fontFamily: AppTheme.fontTitre,
+                fontSize: 19,
+                height: 1.2,
+                fontWeight: FontWeight.w700,
+              ),
+              couleur: AppColors.marquePapier,
             ),
           ],
         ),

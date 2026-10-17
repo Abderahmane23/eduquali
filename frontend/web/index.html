@@ -3,22 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#4F2BD9" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#16161d" media="(prefers-color-scheme: dark)" />
 
-    <title>Acalia — Professeurs vérifiés, écoles et familles</title>
+    <!--
+      La couleur de la barre du navigateur, dans les deux thèmes de la charte.
+      Elle valait #4F2BD9, un violet d'avant la charte qu'aucun jeton ne
+      porte : la barre du téléphone ne s'accordait avec aucun écran.
+    -->
+    <meta name="theme-color" content="#3A2FC9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f0d26" media="(prefers-color-scheme: dark)" />
+
+    <!--
+      Le nom, et la promesse.
+
+      Le titre, la description et les métadonnées de partage annonçaient
+      « Acalia » — le nom d'avant VeriProf, donc deux noms en arrière. Ce sont
+      les seules lignes que voient un moteur de recherche et un lien partagé
+      sur WhatsApp : c'est là que le nom compte le plus.
+    -->
+    <title>EduQuali — Trouvez le professeur qu'il vous faut</title>
     <meta
       name="description"
-      content="Trouvez un poste, recrutez un professeur ou inscrivez votre enfant. Sur Acalia, chaque professeur passe trois contrôles : identité, diplôme, niveau."
+      content="Des cours en direct, à quinze élèves, sur le programme guinéen. Chaque professeur passe trois contrôles : identité, diplôme, compétence."
     />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Acalia" />
+    <meta property="og:site_name" content="EduQuali" />
     <meta property="og:locale" content="fr_GN" />
-    <meta property="og:title" content="Acalia — Professeurs vérifiés" />
+    <meta property="og:title" content="EduQuali — Trouvez le professeur qu'il vous faut" />
     <meta
       property="og:description"
-      content="Chaque professeur passe trois contrôles : identité, diplôme, niveau."
+      content="Des cours en direct, à quinze élèves, sur le programme guinéen."
     />
     <meta property="og:image" content="/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -28,30 +42,31 @@
     <link rel="manifest" href="/manifest.webmanifest" />
 
     <!--
-      Inter est declaree dans tokens.css : sans ce chargement, toute la
-      typographie retombait silencieusement sur la police systeme.
-      Deux graisses seulement (400, 600) : chaque graisse en plus est un
-      fichier a telecharger sur un reseau ou la bande passante se paie.
+      Les polices sont servies d'ici, pas de Google.
+
+      Cette page préchargeait Inter et Poppins depuis `fonts.googleapis.com`.
+      Ce sont les polices **d'avant la charte** : plus une seule règle ne les
+      nomme depuis que Lexend et Gabarito les ont remplacées. Chaque
+      chargement de page allait donc chercher deux familles inutilisées —
+      deux connexions, deux allers-retours sur un réseau guinéen, et l'adresse
+      IP de chaque visiteur envoyée à Google pour rien.
+
+      `tokens.css` déclare les sept fichiers depuis `/polices/`, en woff2.
     -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;800&display=swap"
+      as="font"
+      type="font/woff2"
+      href="/polices/Lexend-400.woff2"
+      crossorigin
     />
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;800&display=swap"
-      media="print"
-      onload="this.media='all'"
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/polices/Gabarito-800.woff2"
+      crossorigin
     />
-    <noscript>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;800&display=swap"
-      />
-    </noscript>
   </head>
   <body>
     <div id="root"></div>

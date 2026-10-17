@@ -258,7 +258,7 @@ class _Welcome extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
       children: [
-        Text('Qu’est-ce qu’on fait aujourd’hui ?', style: text.headlineSmall),
+        Text('Qu’est-ce qu’on fait aujourd’hui ?', style: text.headlineSmall),
         const Gap(AppSpacing.xl),
         for (final (icone, titre, detail, branche) in propositions) ...[
           AppCard(
@@ -498,7 +498,7 @@ class _ImproveDialogState extends State<_ImproveDialog> {
       ),
       FilledButton(
         onPressed: () => Navigator.pop(context, _controller.text.trim()),
-        child: const Text('Envoyer'),
+        child: const Text('Envoyer à l’assistant'),
       ),
     ],
   );

@@ -98,7 +98,7 @@ class _CourseFormScreenState extends ConsumerState<CourseFormScreen> {
 
             _Label('Ce que les élèves doivent apprendre', text),
             Text(
-              'Une notion par ligne : chaque ligne devient un chapitre.',
+              'Une notion par ligne : chaque ligne devient un chapitre.',
               style: text.bodySmall,
             ),
             const Gap(AppSpacing.sm),

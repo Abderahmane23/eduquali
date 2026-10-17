@@ -166,7 +166,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                     color: AppColors.primary,
                   ),
                   title: Text(
-                    'Ajouter « $_libre »',
+                    'Ajouter « $_libre »',
                     style: text.titleSmall?.copyWith(color: AppColors.primary),
                   ),
                   onTap: () => Navigator.pop(context, _libre),

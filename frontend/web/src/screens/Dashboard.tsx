@@ -56,7 +56,7 @@ export function Dashboard() {
       <div className="screen stack stack--loose">
         <h1 className="page-title">Tableau de bord</h1>
         <Banner tone="warning">
-          Cette page lit vos séances et vos revenus sur le serveur Eduquali,
+          Cette page lit vos séances et vos revenus sur le serveur EduQuali,
           qui n’est pas relié à ce site. Les listes publiques restent
           consultables.
         </Banner>

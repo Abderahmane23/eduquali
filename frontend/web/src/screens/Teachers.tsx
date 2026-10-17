@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useSession } from '../app/session'
 import { AppGate } from '../components/AppGate'
+import { PageHead } from '../components/kit'
 import {
   AppBar,
   Avatar,
@@ -72,8 +73,14 @@ export function Teachers() {
 
   return (
     <>
-      <AppBar title="Professeurs" />
-      <div className="screen stack">
+      <div className="screen stack stack--loose">
+        <PageHead
+          title="Professeurs"
+          lede={
+            'Chaque profil est vérifié pièce par pièce : identité, diplôme, ' +
+            'puis un test sur le programme guinéen.'
+          }
+        />
         <Select
           value={city}
           onChange={(e) => setChosenCity(e.target.value)}

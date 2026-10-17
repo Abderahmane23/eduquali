@@ -1,19 +1,25 @@
-import { useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import {
   assistant,
+  lireEnBase64,
   serveurDisponible,
+  PIECE_FORMATS,
+  PIECE_POIDS_MAX,
   type MessageIA,
   type UsageAssistant,
 } from '../api/server'
-import { useSession } from '../app/session'
 import { SegmentedToggle } from '../components/kit'
 import {
   Banner,
   Button,
   EmptyState,
   Icon,
-  Skeleton,
-  TextInput,
 } from '../components/ui'
 import { useAsync } from '../lib/useAsync'
 
@@ -42,21 +48,40 @@ import { useAsync } from '../lib/useAsync'
  * lendemain l'élève est devant la même difficulté.
  */
 
-const USAGES: { value: UsageAssistant; label: string; invite: string }[] = [
+/*
+ * Deux libellés par usage, et pourquoi.
+ *
+ * `label` tient dans la bascule — un mot. « Aide aux devoirs » passait sur
+ * trois lignes sur un téléphone de 390 points, et la bascule mangeait alors
+ * le tiers de la hauteur du fil : il restait 274 points pour lire une
+ * réponse de dix lignes.
+ *
+ * `titre` reprend la phrase entière dans l'en-tête, où il y a la place et
+ * où elle dit ce que fait l'assistant au moment de taper.
+ */
+const USAGES: {
+  value: UsageAssistant
+  label: string
+  titre: string
+  invite: string
+}[] = [
   {
     value: 'HOMEWORK',
-    label: 'Aide aux devoirs',
-    invite: 'Je ne comprends pas comment résoudre…',
+    label: 'Devoirs',
+    titre: 'Aide aux devoirs',
+    invite: 'Une question sur un exercice…',
   },
   {
     value: 'COURSE',
-    label: 'Préparer un cours',
-    invite: 'Prépare-moi un cours de 90 minutes sur…',
+    label: 'Cours',
+    titre: 'Préparer un cours',
+    invite: 'Un cours de 90 minutes sur…',
   },
   {
     value: 'GENERAL',
-    label: 'Autre question',
-    invite: 'Comment fonctionne…',
+    label: 'Autre',
+    titre: 'Autre question',
+    invite: 'Votre question…',
   },
 ]
 
@@ -79,20 +104,117 @@ const SUGGESTIONS: Record<UsageAssistant, string[]> = {
 }
 
 export function Assistant() {
-  const { session } = useSession()
   const [usage, setUsage] = useState(0)
   const [messages, setMessages] = useState<MessageIA[]>([])
   const [filId, setFilId] = useState<string>()
   const [texte, setTexte] = useState('')
   const [occupe, setOccupe] = useState(false)
   const [erreur, setErreur] = useState<string>()
-  const bas = useRef<HTMLDivElement>(null)
+  const [piece, setPiece] = useState<File>()
+  const fil = useRef<HTMLDivElement>(null)
+  const champ = useRef<HTMLTextAreaElement>(null)
+  const fichier = useRef<HTMLInputElement>(null)
 
   const quota = useAsync(() => assistant.quota(), [])
 
+  /**
+   * Suit-on encore le fil, ou est-on remonté lire plus haut ?
+   *
+   * Tant qu'on est près du bas, chaque message fait descendre. Dès qu'on
+   * remonte, on arrête : rien n'est plus agaçant qu'un fil qui vous arrache
+   * au paragraphe qu'on était en train de relire.
+   */
+  const suit = useRef(true)
+
+  /**
+   * Le défilement en cours vient-il de nous ?
+   *
+   * Sans cette distinction, la descente se saborde : elle déclenche un
+   * événement `scroll`, l'écouteur mesure une distance au bas encore grande
+   * — le texte ne s'est pas encore replié — et en conclut que la personne
+   * est remontée lire. Le suivi se coupe, et la descente suivante refuse de
+   * s'exécuter.
+   */
+  const nous = useRef(false)
+
+  /**
+   * Descendre au dernier message.
+   *
+   * --- Pourquoi `scrollTop` et non `scrollIntoView` ---------------------
+   *
+   * L'écran appelait `scrollIntoView` sur une ancre vide en bas du fil.
+   * Cette méthode remonte la chaîne des parents et choisit elle-même qui
+   * faire défiler : avec un fil en hauteur fixe à l'intérieur d'une page qui
+   * ne défile pas, elle ne bougeait rien. Il fallait faire défiler à la main
+   * pour voir partir sa propre question.
+   *
+   * On écrit donc dans le conteneur qui défile. Il n'y a qu'un candidat, et
+   * il ne peut pas se tromper.
+   */
+  const descendre = useCallback((force = false) => {
+    const boite = fil.current
+    if (!boite) return
+    if (!force && !suit.current) return
+    nous.current = true
+    boite.scrollTop = boite.scrollHeight
+  }, [])
+
+  /*
+   * Descendre **avant** la peinture, puis à chaque fois que le fil grandit.
+   *
+   * --- Pourquoi `useEffect` seul ne suffisait pas ------------------------
+   *
+   * Mesure faite sur une vraie conversation : après une réponse, il restait
+   * 1 596 points sous le dernier message, alors que forcer `scrollTop` à la
+   * main fonctionnait. Le conteneur défilait donc bien — c'était le moment
+   * de la mesure qui était faux.
+   *
+   * La hauteur lue après la peinture est celle d'avant le repli du texte :
+   * Lexend et Gabarito arrivent en différé, le texte se replie sur deux fois
+   * plus de lignes, et le fil grandit **après** la descente. Une trame
+   * d'animation plus tard n'y suffit pas non plus — le repli peut venir
+   * plusieurs centaines de millisecondes après.
+   *
+   * On observe donc la taille réelle du contenu, et l'on redescend quand
+   * elle change. Une réponse qui arriverait par morceaux ferait exactement
+   * la même chose.
+   */
+  useLayoutEffect(() => {
+    // Un nouveau message : on suit de nouveau, même si l'on avait remonté.
+    suit.current = true
+    descendre(true)
+  }, [messages.length, occupe, descendre])
+
   useEffect(() => {
-    bas.current?.scrollIntoView({ block: 'end' })
-  }, [messages.length, occupe])
+    const boite = fil.current
+    if (!boite) return
+
+    const oeil = new ResizeObserver(() => descendre())
+    // Le conteneur **et** son contenu : le premier change quand le clavier
+    // du téléphone s'ouvre, le second quand le texte se replie.
+    oeil.observe(boite)
+    for (const enfant of Array.from(boite.children)) oeil.observe(enfant)
+
+    const surDefilement = () => {
+      // Un défilement que nous avons provoqué ne dit rien de l'intention de
+      // la personne : on le laisse passer sans juger.
+      if (nous.current) {
+        nous.current = false
+        return
+      }
+      const reste =
+        boite.scrollHeight - boite.clientHeight - boite.scrollTop
+      // Quarante points de tolérance : un défilement par inertie ne
+      // s'arrête jamais exactement au pixel près.
+      suit.current = reste < 40
+    }
+    boite.addEventListener('scroll', surDefilement, { passive: true })
+
+    return () => {
+      oeil.disconnect()
+      boite.removeEventListener('scroll', surDefilement)
+    }
+  }, [messages, occupe, descendre])
 
   const choisi = USAGES[usage]
 
@@ -101,7 +223,7 @@ export function Assistant() {
       <div className="screen stack stack--loose">
         <h1 className="page-title">Assistant</h1>
         <Banner tone="warning">
-          L’assistant passe par le serveur Eduquali, qui détient l’unique clé
+          L’assistant passe par le serveur EduQuali, qui détient l’unique clé
           du modèle. Il n’est pas relié à ce site.
         </Banner>
       </div>
@@ -115,6 +237,8 @@ export function Assistant() {
     setOccupe(true)
     setErreur(undefined)
     setTexte('')
+    const jointe = piece
+    setPiece(undefined)
 
     // La question apparaît tout de suite : une réponse met trois à huit
     // secondes, et une page qui ne bouge pas pendant ce temps se lit comme
@@ -122,7 +246,10 @@ export function Assistant() {
     const provisoire: MessageIA = {
       id: `local-${Date.now()}`,
       role: 'USER',
-      body: corps,
+      // La mention de la pièce, comme le serveur l'écrira dans le fil : les
+      // deux doivent dire la même chose, sinon un rechargement change le
+      // texte sous les yeux.
+      body: jointe ? `${corps}\n\n[Image jointe : ${jointe.name}]` : corps,
       createdAt: new Date().toISOString(),
     }
     setMessages((avant) => [...avant, provisoire])
@@ -132,6 +259,15 @@ export function Assistant() {
         message: corps,
         feature: choisi.value,
         conversationId: filId,
+        ...(jointe
+          ? {
+              attachment: {
+                mimeType: jointe.type,
+                data: await lireEnBase64(jointe),
+                name: jointe.name,
+              },
+            }
+          : {}),
       })
       setFilId(reponse.conversationId)
       setMessages((avant) => [
@@ -166,16 +302,16 @@ export function Assistant() {
     quota.data && quota.data.remaining !== undefined && quota.data.remaining <= 0
 
   return (
-    <div className="screen screen--narrow stack stack--loose">
-      <div className="stack stack--tight">
-        <h1 className="page-title">Assistant</h1>
-        <p className="page-lede" style={{ marginBottom: 0 }}>
-          {session?.role === 'TEACHER'
-            ? 'Un plan de cours, des exercices, des corrigés — sur le programme guinéen.'
-            : 'Il explique la méthode, pas la réponse : c’est à cette condition qu’on apprend quelque chose.'}
-        </p>
-      </div>
+    /*
+      `assistant` et non `stack--loose` : les blocs se touchent de plus pres
+      et le fil prend la hauteur qui reste, pour que la boite de saisie soit
+      toujours visible sans defiler.
 
+      La phrase d'explication a quitte cet en-tete : elle vit dans le fil
+      vide, ou elle a la place et ou elle se lit au bon moment — juste avant
+      la premiere question.
+    */
+    <div className="screen screen--narrow assistant">
       <SegmentedToggle
         label="Ce que vous cherchez"
         labels={USAGES.map((u) => u.label)}
@@ -187,6 +323,7 @@ export function Assistant() {
           // préparateur de cours. On repart d'un fil neuf.
           setFilId(undefined)
           setMessages([])
+          setPiece(undefined)
         }}
       />
 
@@ -197,28 +334,52 @@ export function Assistant() {
         </Banner>
       ) : null}
 
-      {quota.data && !indispo ? (
-        <span className="faint micro">
-          {quota.data.used} message{quota.data.used > 1 ? 's' : ''} aujourd’hui
-          sur {quota.data.limit}. Le compteur repart demain.
-        </span>
-      ) : null}
+      <section className="chat__room">
+        {/*
+          L'en-tete du fil : ce qu'on fait, et ou l'on en est de sa journee.
+          Le compteur etait un bloc a lui seul au-dessus ; c'est une
+          precision, pas une annonce, et sa place est a cote de ce qu'il
+          precise.
+        */}
+        <header className="chat__head">
+          <strong>{choisi.titre}</strong>
+          {quota.data && !indispo ? (
+            <span className="faint small" style={{ marginLeft: 'auto' }}>
+              {quota.data.used} / {quota.data.limit} aujourd’hui
+            </span>
+          ) : null}
+        </header>
+        <div className="chat__thread" ref={fil}>
+          {/*
+            Le fil ne dépend pas du compteur.
 
-      <section className="chat__room" style={{ minHeight: 360 }}>
-        <div className="chat__thread">
-          {quota.loading ? (
-            <Skeleton height={48} count={2} />
-          ) : messages.length === 0 ? (
+            Il affichait un squelette tant que `quota` chargeait — et
+            `quota.reload()` est appelé après **chaque** réponse. La
+            conversation entière disparaissait donc une fraction de seconde
+            à chaque tour, le contenu du conteneur était détruit, et le
+            défilement retombait à zéro : on se retrouvait en haut du fil
+            juste après avoir reçu la réponse qu'on attendait.
+
+            Le compteur est une précision dans l'en-tête ; il n'a pas à
+            gouverner ce qu'on lit.
+          */}
+          {messages.length === 0 ? (
             <div className="stack">
               <EmptyState
                 icon="sparkle"
-                title={choisi.label}
+                title={
+                  choisi.value === 'HOMEWORK'
+                    ? 'La méthode, pas la réponse'
+                    : choisi.value === 'COURSE'
+                      ? 'Un cours prêt à donner'
+                      : 'Une question sur EduQuali'
+                }
                 message={
                   choisi.value === 'HOMEWORK'
-                    ? 'Posez la question telle qu’elle est dans le cahier. L’assistant ne donnera pas la réponse : il montrera comment y arriver.'
+                    ? 'Posez la question telle qu’elle est dans le cahier. L’assistant ne donne pas la réponse : il montre comment y arriver.'
                     : choisi.value === 'COURSE'
-                      ? 'Dites la matière, le niveau et la durée. Vous repartez avec un déroulé minute par minute et des exercices corrigés.'
-                      : 'Une question sur Eduquali, les tests, la scolarité en Guinée.'
+                      ? 'Dites la matière, le niveau et la durée. Vous repartez avec un déroulé minute par minute et des exercices corrigés, sur le programme guinéen.'
+                      : 'Les tests, la scolarité en Guinée, le fonctionnement d’EduQuali.'
                 }
               />
               <div className="suggests">
@@ -237,57 +398,190 @@ export function Assistant() {
             </div>
           ) : (
             messages.map((message) => (
-              <div
+              /*
+                Un tour, et non une bulle.
+
+                Les bulles alternées gauche-droite conviennent à une
+                conversation de trois mots. Une réponse d'assistant fait dix
+                lignes : coupée à 78 % de la largeur et poussée à gauche, elle
+                se lit mal, et la colonne de blanc à droite ne sert à rien.
+
+                La question reste dans une carte — c'est ce qu'on relit pour
+                se rappeler ce qu'on a demandé. La réponse prend la largeur,
+                avec la marque en tête de tour pour dire qui parle.
+              */
+              <article
                 key={message.id}
-                className={`bubble${message.role === 'USER' ? ' bubble--mine' : ''}`}
+                className={`tour${message.role === 'USER' ? ' tour--moi' : ''}`}
               >
-                <span className={message.role === 'MODEL' ? 'aireply' : undefined}>
-                  {message.body}
+                <span className="tour__qui" aria-hidden="true">
+                  {message.role === 'USER' ? (
+                    <Icon name="user" size={16} />
+                  ) : (
+                    <img src="/favicon.svg" alt="" />
+                  )}
                 </span>
-              </div>
+                <div className="tour__corps">
+                  <span className="tour__nom">
+                    {message.role === 'USER' ? 'Vous' : 'EduQuali'}
+                  </span>
+                  <div className="tour__texte">{message.body}</div>
+                </div>
+              </article>
             ))
           )}
 
           {occupe ? (
-            <div className="bubble">
-              <span className="faint">L’assistant réfléchit…</span>
-            </div>
+            <article className="tour">
+              <span className="tour__qui" aria-hidden="true">
+                <img src="/favicon.svg" alt="" />
+              </span>
+              <div className="tour__corps">
+                <span className="tour__nom">EduQuali</span>
+                {/* Trois points qui respirent : on ne sait pas combien de
+                    temps la réponse prendra, et une barre de progression qui
+                    ment est pire qu'une attente franche. */}
+                <span className="tour__attente" aria-label="L’assistant répond">
+                  <i /><i /><i />
+                </span>
+              </div>
+            </article>
           ) : null}
-
-          <div ref={bas} />
         </div>
 
         {erreur ? <Banner tone="warning">{erreur}</Banner> : null}
 
         <form
-          className="chat__compose"
+          className="compose"
           onSubmit={(event) => {
             event.preventDefault()
             demander(texte)
           }}
         >
-          <TextInput
+          {piece ? (
+            <div className="compose__piece">
+              <Icon name="file" size={16} />
+              <span className="compose__nom">{piece.name}</span>
+              <button
+                type="button"
+                className="iconbtn"
+                aria-label="Retirer l’image"
+                onClick={() => setPiece(undefined)}
+              >
+                ×
+              </button>
+            </div>
+          ) : null}
+
+          {/*
+            Un `textarea` qui grandit, et non un champ d'une ligne.
+
+            Une question d'élève tient en une ligne ; une consigne de
+            professeur en fait cinq. Le champ s'ouvrait sur une ligne et
+            faisait défiler le texte à l'intérieur : on ne relisait jamais
+            ce qu'on venait d'écrire avant d'envoyer.
+
+            Entrée envoie, Maj+Entrée passe à la ligne — la convention de
+            tous les fils de discussion.
+          */}
+          <textarea
+            ref={champ}
+            className="compose__champ"
             value={texte}
-            onChange={(e) => setTexte(e.target.value)}
+            rows={1}
+            onChange={(e) => {
+              setTexte(e.target.value)
+              const zone = e.currentTarget
+              zone.style.height = 'auto'
+              zone.style.height = `${Math.min(zone.scrollHeight, 180)}px`
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                demander(texte)
+              }
+            }}
             placeholder={choisi.invite}
             maxLength={4000}
             aria-label="Votre question"
             disabled={Boolean(indispo) || Boolean(epuise)}
           />
-          <Button
-            type="submit"
-            disabled={occupe || texte.trim() === '' || Boolean(indispo)}
-          >
-            <Icon name="send" size={18} />
-            <span className="sr-only">Envoyer</span>
-          </Button>
+
+          <div className="compose__actions">
+            <input
+              ref={fichier}
+              type="file"
+              accept={PIECE_FORMATS.join(',')}
+              hidden
+              onChange={(e) => {
+                const choisiFichier = e.target.files?.[0]
+                e.target.value = ''
+                if (!choisiFichier) return
+                /*
+                 * Les deux refus se disent avant l'envoi.
+                 *
+                 * Un fichier trop lourd ou d'un format que le modèle ne lit
+                 * pas revient en erreur du serveur après une minute de
+                 * téléversement sur un réseau guinéen. Le dire ici coûte
+                 * zéro octet.
+                 */
+                if (!PIECE_FORMATS.includes(choisiFichier.type)) {
+                  setErreur(
+                    'Seules les images JPEG, PNG et WebP sont lisibles par ' +
+                      'l’assistant.',
+                  )
+                  return
+                }
+                if (choisiFichier.size > PIECE_POIDS_MAX) {
+                  setErreur(
+                    'Image trop lourde : 3 Mo au plus. Une photo prise au ' +
+                      'téléphone tient largement dedans.',
+                  )
+                  return
+                }
+                setErreur(undefined)
+                setPiece(choisiFichier)
+              }}
+            />
+            <button
+              type="button"
+              className="iconbtn"
+              aria-label="Joindre une image"
+              disabled={Boolean(indispo) || Boolean(epuise) || occupe}
+              onClick={() => fichier.current?.click()}
+            >
+              <Icon name="upload" size={18} />
+            </button>
+
+            <span className="compose__aide">
+              Entrée pour envoyer · Maj + Entrée pour aller à la ligne
+            </span>
+
+            <Button
+              type="submit"
+              disabled={occupe || texte.trim() === '' || Boolean(indispo)}
+            >
+              <Icon name="send" size={18} />
+              <span className="sr-only">Envoyer</span>
+            </Button>
+          </div>
         </form>
       </section>
 
-      <p className="faint micro measure">
-        Vos questions partent chez le fournisseur du modèle, sans votre nom ni
-        aucun identifiant. Ne collez pas de données personnelles — ni numéro,
-        ni adresse, ni nom d’élève : elles ne servent pas à la réponse.
+      {/*
+        Une ligne, pas quatre. Elle dit la seule chose qui engage le lecteur —
+        ne pas coller de donnees personnelles — et la raison en trois mots.
+        Le detail de ce qui part chez le fournisseur appartient a la page de
+        confidentialite, pas au bas d'un ecran de saisie.
+      */}
+      <p className="faint small centered">
+        {/*
+          La photo d'un cahier porte souvent le prénom de l'enfant. Le
+          serveur ne garde pas l'image — seulement la mention qu'il y en
+          avait une — et c'est ce qui permet de le dire sans détour.
+        */}
+        Ne collez ni numéro, ni adresse, ni nom d’élève. Les images ne sont
+        pas conservées.
       </p>
     </div>
   )

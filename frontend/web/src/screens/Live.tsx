@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useSession } from '../app/session'
 import { AppGate } from '../components/AppGate'
+import { PageHead, SegmentedToggle } from '../components/kit'
 import {
   AppBar,
   Banner,
@@ -64,13 +65,23 @@ export function LiveGrid() {
 
   return (
     <>
-      <AppBar title="Cours en direct" />
-      <div className="screen stack">
-        <p className="muted small measure">
-          Un professeur, quinze élèves au maximum, à heure fixe. Vous levez la
-          main pour parler, et le professeur réexplique ce qui n’est pas passé
-          avant de continuer.
-        </p>
+      <div className="screen stack stack--loose">
+        {/*
+          Le bandeau de la charte, et non une barre de navigation.
+
+          `AppBar` porte un titre et un bouton retour. Sur un ecran de
+          detail elle sert ; sur un onglet de premier rang il n'y a pas de
+          retour a proposer, et l'onglet est deja surligne dans la barre du
+          haut. Elle ne faisait donc que repeter le nom de la page, en
+          remplacant le bandeau que la charte donne a chaque ecran.
+        */}
+        <PageHead
+          title="Cours en direct"
+          lede={
+            'Quinze élèves au maximum, à heure fixe. Vous levez la main ' +
+            'pour parler, et le professeur réexplique avant de continuer.'
+          }
+        />
 
         {/* Ses propres séances d'abord : quelqu'un qui a déjà payé vient
             pour retrouver son cours, pas pour en chercher un autre. */}
@@ -155,7 +166,14 @@ function MesSeances({ grille }: { grille?: SlotGrid }) {
 
   return (
     <section className="stack stack--tight">
-      <h2 className="section-title">Mes séances</h2>
+      <div className="row row--between">
+        <h2 className="section-title">Mes séances</h2>
+        {/* Cette grille sert à réserver ; `/seances` sert à relire ce qu'on a
+            payé. Le lien dit laquelle est laquelle. */}
+        <Link className="card-link" to="/seances">
+          Toutes mes séances
+        </Link>
+      </div>
       <div className="stack grid-cards">
         {seances.map((seance) => (
           <MaSeanceCard key={seance.enrolmentId} seance={seance} grille={grille} />
@@ -196,10 +214,17 @@ function MaSeanceCard({
         <div className="muted small">
           {grille ? longDayLabel(debut, grille.weekdayLabels) : ''}
           {' · '}
-          {debut.toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+          {/*
+            `timeLabel`, comme la grille juste en dessous.
+
+            Deux defauts dans une seule expression : `toLocaleTimeString`
+            lit l'heure du navigateur — la Guinee est a UTC toute l'annee et
+            le reste du site lit en UTC — et il ecrit « 17:00 » la ou le
+            francais ecrit « 17 h 00 ». La meme carte portait donc
+            « samedi 17 octobre · 17:00 » sous une grille qui annonce
+            « 18 h - 19 h 30 ».
+          */}
+          {timeLabel(debut)}
           {seance.level ? ` · ${seance.level.name}` : ''}
         </div>
 
@@ -215,6 +240,17 @@ function MaSeanceCard({
         ) : payee && ouvrable ? (
           <Link className="card-link" to={`/direct/${seance.sessionId}/salle`}>
             {seance.status === 'LIVE' ? 'Rejoindre maintenant' : 'Entrer dans la salle'}
+          </Link>
+        ) : null}
+
+        {/* La preuve de présence, avant la rediffusion.
+            C'est ce qu'une famille vient chercher après coup — « y était-il,
+            et combien de temps ? ». L'écran existe depuis le 17/10 et rien
+            n'y menait : la rediffusion était le seul lien d'une séance
+            passée, et elle répond à une autre question. */}
+        {passee && payee ? (
+          <Link className="card-link" to={`/seances/${seance.sessionId}`}>
+            La preuve de présence
           </Link>
         ) : null}
 
@@ -345,6 +381,19 @@ function EnrolForm({ seance }: { seance: LiveSession }) {
   const [envoi, setEnvoi] = useState(false)
   const [methode, setMethode] = useState<WalletMethod>()
 
+  /*
+   * Pour qui ?
+   *
+   * `POST /live/enrol` accepte un `childId` et le site ne l'envoyait jamais :
+   * toute place prise ici partait avec `child_id = null`. Un parent de deux
+   * enfants ne pouvait donc pas reserver deux places sur la meme seance — le
+   * serveur rendait la premiere inscription comme « deja inscrit » — et la
+   * preuve de presence disait « Vous etiez la » au lieu de nommer l'enfant.
+   */
+  const enfants = useAsync(() => api.children(), [])
+  const liste = enfants.data ?? []
+  const [pourQui, setPourQui] = useState(0)
+
   const reserver = async (choisie: WalletMethod) => {
     setEnvoi(true)
     setErreur(undefined)
@@ -352,6 +401,7 @@ function EnrolForm({ seance }: { seance: LiveSession }) {
     try {
       const r = await api.enrolInSession(seance.id, {
         method: choisie,
+        childId: liste[pourQui]?.id,
         payerPhone: payerPhone.trim() === '' ? undefined : payerPhone.trim(),
       })
       setResultat(r)
@@ -407,6 +457,22 @@ function EnrolForm({ seance }: { seance: LiveSession }) {
   return (
     <div className="stack stack--tight">
       {erreur ? <Banner tone="warning">{erreur}</Banner> : null}
+
+      {/*
+        Le choix n'apparait qu'a partir de deux enfants.
+        Avec un seul, la question est deja repondue ; la poser quand meme
+        ajouterait un geste a chaque reservation pour ne rien decider.
+      */}
+      {liste.length > 1 ? (
+        <Field label="Pour qui ?">
+          <SegmentedToggle
+            label="L’enfant qui suivra la séance"
+            labels={liste.map((enfant) => enfant.firstName)}
+            selected={pourQui}
+            onSelect={setPourQui}
+          />
+        </Field>
+      ) : null}
 
       <Field
         label="Numéro qui paie"

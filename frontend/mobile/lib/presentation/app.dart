@@ -27,7 +27,20 @@ class EduqualiApp extends ConsumerWidget {
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
+      /*
+       * Les deux themes de la charte EduQuali.
+       *
+       * Cahier par defaut, Tableau au choix de l'utilisateur — et le reglage
+       * du telephone **est** ce choix tant qu'il n'y a pas de selecteur dans
+       * l'application. C'est ce que les gens attendent d'un telephone, et
+       * c'est aussi ce que fait le site.
+       *
+       * Les deux sont construits par la meme fonction, a partir de deux
+       * palettes : ajouter un composant au theme le dote des deux d'un coup,
+       * et il n'y a pas d'endroit ou l'oublier.
+       */
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: router,
       locale: const Locale('fr'),
       supportedLocales: const [Locale('fr'), Locale('en')],

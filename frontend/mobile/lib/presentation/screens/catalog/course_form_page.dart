@@ -641,7 +641,10 @@ class _Commission extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(
-            'La plateforme retient $part % — hébergement des vidéos et '
+            // « Parler d'argent sans detour : le prix, la part du
+            // professeur, la part d'EduQuali. » Une « plateforme » qui
+            // retient de l'argent n'a pas de nom ; EduQuali en a un.
+            'EduQuali retient $part % — hébergement des vidéos et '
             'encaissement. Le prix affiché à l’élève est celui que vous '
             'fixez.',
             style: text.bodySmall,

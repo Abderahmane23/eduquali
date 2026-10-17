@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { api } from '../api'
 import { useSession } from '../app/session'
 import { AppGate } from '../components/AppGate'
+import { PageHead, Statut } from '../components/kit'
 import {
   AppBar,
   Banner,
@@ -49,12 +50,14 @@ export function Courses() {
 
   return (
     <>
-      <AppBar title="Cours vidéo" />
-      <div className="screen stack">
-        <p className="muted small">
-          Des cours enregistrés par des professeurs guinéens. Payés une fois,
-          revus autant de fois qu’il faut.
-        </p>
+      <div className="screen stack stack--loose">
+        <PageHead
+          title="Cours vidéo"
+          lede={
+            'Enregistrés par des professeurs guinéens. Payés une fois, ' +
+            'revus autant de fois qu’il faut.'
+          }
+        />
 
         <Select
           value={subjectId}
@@ -136,6 +139,14 @@ export function CourseDetail() {
   const { id = '' } = useParams()
   const course = useAsync(() => api.videoCourse(id), [id])
   const programme = useAsync(() => api.courseProgramme(id), [id])
+  const { session } = useSession()
+  // Seul un compte connecte peut avoir achete : on evite une lecture a
+  // chaque visiteur du catalogue.
+  const lecture = useAsync(
+    () => (session ? api.courseLecture(id) : Promise.resolve([])),
+    [id, session?.userId],
+  )
+  const aLui = (lecture.data ?? []).length > 0
 
   if (course.loading) {
     return (
@@ -197,7 +208,15 @@ export function CourseDetail() {
             <p className="muted measure">{c.description}</p>
           ) : null}
 
-          <BuyCourse course={c} />
+          {/*
+            Deja achete ? On ouvre, on ne revend pas.
+
+            La reponse vient de `courseLecture` : RLS rend une liste vide a
+            qui n'a pas paye, et des chapitres a qui a paye. C'est la base
+            qui tranche, pas un drapeau pose par le client — et c'est la
+            seule reponse qu'on ne peut pas contourner depuis un navigateur.
+          */}
+          {aLui ? <Ouvrir courseId={c.id} /> : <BuyCourse course={c} />}
         </aside>
 
         <section className="detail__main stack stack--tight">
@@ -287,6 +306,24 @@ function duree(secondes: number): string {
  * **Rien ici ne decide qu'un cours est paye.** L'etat vient du serveur, qui le
  * tient d'un webhook signe. Cet ecran interroge et affiche ; il ne conclut pas.
  */
+/** Le cours est deja paye : une seule action, et elle ouvre. */
+function Ouvrir({ courseId }: { courseId: string }) {
+  const navigate = useNavigate()
+  return (
+    <div className="stack stack--tight">
+      <Statut ton="ok" icon="check">
+        Ce cours est à vous
+      </Statut>
+      <Button block onClick={() => navigate(`/cours/${courseId}/lecture`)}>
+        Lire le cours
+      </Button>
+      <p className="faint micro">
+        Payé une fois, revu autant de fois qu’il faut.
+      </p>
+    </div>
+  )
+}
+
 function BuyCourse({ course }: { course: VideoCourse }) {
   const { session } = useSession()
   const [method, setMethod] = useState<WalletMethod>()

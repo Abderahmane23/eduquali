@@ -57,7 +57,7 @@ class _Body extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${completion.rate} %', style: text.headlineMedium),
+                Text('${completion.rate} %', style: text.headlineMedium),
                 Text('complété', style: text.bodySmall),
               ],
             ),
@@ -69,7 +69,7 @@ class _Body extends StatelessWidget {
           child: Text(
             completion.isComplete
                 ? 'Votre profil est complet.'
-                : 'Votre profil est complété a ${completion.rate} %',
+                : 'Votre profil est complété a ${completion.rate} %',
             style: text.titleMedium,
           ),
         ),
@@ -112,7 +112,7 @@ class _Body extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Cet indice agrege des éléments verifiables : identité, '
+                      'Cet indice agrege des éléments verifiables : identité, '
                       'diplôme, compétence, experience, reputation et '
                       'historique.',
                       style: text.bodySmall,
@@ -173,7 +173,7 @@ class _StepRow extends StatelessWidget {
             ),
           ),
           Text(
-            '+${step.weight} %',
+            '+${step.weight} %',
             style: text.labelMedium?.copyWith(
               color: step.done ? AppColors.success : AppColors.textTertiary,
             ),

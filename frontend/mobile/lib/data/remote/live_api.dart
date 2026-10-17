@@ -159,6 +159,22 @@ class LiveApi {
     return SessionReplay.fromJson(reponse);
   }
 
+  /// La preuve de presence d'une seance.
+  ///
+  /// Reservee a la famille qui detient la place et au professeur du cours :
+  /// « les minutes de presence d'un eleve ne s'affichent qu'a son parent et
+  /// a son professeur ». Le serveur rend 404 a tout autre compte, et le meme
+  /// 404 qu'a une seance inexistante — dire « vous n'avez pas de place sur
+  /// cette seance » confirmerait qu'elle existe et qui la suit.
+  Future<PresenceProof> presenceProof(String sessionId) async {
+    final reponse = await _appel<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/live/sessions/${Uri.encodeComponent(sessionId)}/presence',
+      ),
+    );
+    return PresenceProof.fromJson(reponse);
+  }
+
   /// Qui, parmi les siens, suit un cours en ce moment.
   Future<List<LivePresence>> presence() async {
     final data = await _liste('/live/presence');

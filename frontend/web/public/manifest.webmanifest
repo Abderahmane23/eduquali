@@ -1,15 +1,28 @@
 {
-  "name": "Acalia — Professeurs vérifiés",
-  "short_name": "Acalia",
-  "description": "Trouvez un poste, recrutez un professeur ou inscrivez votre enfant.",
+  "name": "EduQuali — Trouvez le professeur qu'il vous faut",
+  "short_name": "EduQuali",
+  "description": "Des cours en direct, à quinze, sur le programme guinéen.",
   "lang": "fr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#4F2BD9",
+  "background_color": "#f6f5fb",
+  "theme_color": "#3A2FC9",
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    { "src": "/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "/icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

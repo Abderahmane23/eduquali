@@ -389,7 +389,7 @@ class _Saisie extends StatelessWidget {
           IconButton.filled(
             onPressed: occupe ? null : onSend,
             icon: const Icon(Icons.send_rounded, size: 20),
-            tooltip: 'Envoyer',
+            tooltip: 'Envoyer au groupe',
           ),
         ],
       ),

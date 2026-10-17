@@ -141,6 +141,68 @@ describe('la palette est celle de la charte, valeur par valeur', () => {
   })
 })
 
+describe('aucune couleur hors de la palette', () => {
+  /*
+   * Le cinquième interdit, implicite mais réel.
+   *
+   * La feuille d'application portait trois surfaces vidéo en `#0b0b10` et un
+   * fond d'illustration en `#f2f6fd` — quatre couleurs sans jeton, sans nom,
+   * introuvables dans la charte. Une couleur écrite en dur se recopie,
+   * dérive, et finit à trois valeurs voisines : c'est exactement ce que
+   * « Fondements » reproche à l'état d'avant, trois bleus différents selon
+   * l'écran.
+   *
+   * Le blanc et le noir purs restent admis : ils servent de base aux jetons
+   * eux-mêmes.
+   */
+  const brut = readFileSync('src/styles/app.css', 'utf-8')
+  const sansCommentaires = brut.replace(/\/\*[\s\S]*?\*\//g, '')
+
+  it('la feuille d’application n’écrit aucune couleur de la palette', () => {
+    /*
+     * La règle, et pourquoi elle est formulée ainsi.
+     *
+     * Une première version vérifiait que chaque hexadécimal se retrouvait
+     * dans `tokens.css`. Elle laissait passer `#0b0b10` écrit en dur dès
+     * lors qu'un jeton portait la même valeur — donc exactement le défaut
+     * qu'elle devait attraper.
+     *
+     * Une seconde interdisait tout hexadécimal, avec une exception pour
+     * `mask-image`. L'exception demandait de regarder en arrière dans le
+     * texte, ce qui est fragile : une accolade de plus et elle cesse de
+     * reconnaître le cas.
+     *
+     * Celle-ci est plus simple et attrape les deux défauts réels :
+     * `app.css` n'écrit **que** du noir et du blanc purs — les bornes d'un
+     * masque de défilement, qui ne sont pas des couleurs mais des opacités.
+     * Toute autre valeur appartient à la palette et se nomme.
+     */
+    // `Array.from` plutot qu'un etalement de `Set` sur plusieurs lignes.
+    //
+    // La meme expression, ecrite en etalant un `Set` sur plusieurs lignes,
+    // rendait un tableau vide la ou sa version sur une seule ligne rendait
+    // la bonne reponse. Le test passait donc en ne verifiant rien — ce qui
+    // est pire que pas de test du tout. `Array.from` ne pose pas la
+    // question, et le passage ci-dessous est verifie en cassant la regle
+    // avant de la livrer.
+    const toutes = Array.from(
+      new Set(
+        Array.from(
+          sansCommentaires.matchAll(/#[0-9a-fA-F]{3,8}/g),
+          (m) => m[0].toLowerCase(),
+        ),
+      ),
+    )
+    const neutres = ['#000', '#fff', '#000000', '#ffffff']
+    const fautives = toutes.filter((c) => !neutres.includes(c))
+
+    expect(
+      fautives,
+      `couleurs écrites en dur : ${fautives.join(', ')}`,
+    ).toEqual([])
+  })
+})
+
 describe('les quatre interdits de la charte', () => {
   const app = readFileSync('src/styles/app.css', 'utf-8')
   const feuilles = (tokens + '\n' + app).replace(/\/\*[\s\S]*?\*\//g, '')

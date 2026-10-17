@@ -75,6 +75,20 @@ export interface GeminiUsage {
 export interface GeminiTurn {
   role: 'USER' | 'MODEL'
   body: string
+  /**
+   * Une image jointe au tour, encodée en base64.
+   *
+   * --- Pourquoi une seule, et seulement sur le dernier tour --------------
+   *
+   * Une photo de cahier coûte environ 260 jetons à basse définition, plus si
+   * le modèle la relit à chaque tour. Renvoyer l'historique des images à
+   * chaque question multiplierait la facture par le nombre d'échanges, sans
+   * rien apporter : le modèle a déjà décrit l'image dans sa réponse, et
+   * c'est ce texte qui fait le contexte.
+   *
+   * L'appelant n'en joint donc qu'au tour courant.
+   */
+  attachment?: { mimeType: string; data: string }
 }
 
 export class GeminiError extends Error {
@@ -143,7 +157,25 @@ export class Gemini {
               // ce que nous nommons `USER`. La traduction se fait ici, une
               // fois : les tables et le reste du code gardent nos noms.
               role: tour.role === 'MODEL' ? 'model' : 'user',
-              parts: [{ text: tour.body }],
+              /*
+               * L'image **avant** le texte.
+               *
+               * C'est l'ordre que Google recommande pour une question qui
+               * porte sur une image : le modèle lit la piece, puis la
+               * consigne. Dans l'autre sens, il commence a repondre avant
+               * d'avoir regarde.
+               */
+              parts: tour.attachment
+                ? [
+                    {
+                      inline_data: {
+                        mime_type: tour.attachment.mimeType,
+                        data: tour.attachment.data,
+                      },
+                    },
+                    { text: tour.body },
+                  ]
+                : [{ text: tour.body }],
             })),
       ...(options.system
         ? { systemInstruction: { parts: [{ text: options.system }] } }

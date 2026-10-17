@@ -3,7 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:veriprof/core/theme/app_colors.dart';
+import 'package:veriprof/presentation/theme/app_theme.dart';
 
 /// Lisibilité des couleurs (WCAG 2.2 AA).
 ///
@@ -122,14 +122,48 @@ void main() {
     });
 
     test('la cible tactile minimale est posée une fois', () {
-      // Calculer la hauteur à partir des marges et du texte donne un
-      // résultat qui bouge dès qu'on touche à la typographie.
-      final theme = File(
-        'lib/presentation/theme/app_theme.dart',
+      /*
+       * Calculer la hauteur à partir des marges et du texte donne un résultat
+       * qui bouge dès qu'on touche à la typographie. Une contrainte explicite
+       * ne bouge pas.
+       *
+       * --- Où elle vit depuis le 12/10 -----------------------------------
+       *
+       * Dans `core/theme/app_spacing.dart`. Elle était déclarée dans le
+       * thème, et l'échelle d'espacement existait **en double** — ici et dans
+       * `core` — avec des valeurs différentes pour les mêmes noms : `md`
+       * valait 12 d'un côté et 16 de l'autre. Une seule source désormais, et
+       * le thème la re-exporte.
+       *
+       * Le test lit donc la source, pas le ré-export : chercher dans le thème
+       * ne trouvait plus rien, et `match!` levait — le test échouait pour la
+       * mauvaise raison, ce qui est encore le meilleur cas.
+       */
+      final echelle = File(
+        'lib/core/theme/app_spacing.dart',
       ).readAsStringSync();
-      final match = RegExp(r'touchTarget = (\d+)').firstMatch(theme);
-      expect(match, isNotNull);
+      final match = RegExp(r'double cible = (\d+)').firstMatch(echelle);
+      expect(match, isNotNull, reason: '`cible` introuvable');
       expect(int.parse(match!.group(1)!), greaterThanOrEqualTo(44));
+
+      // Et elle n'est posée qu'une fois : une seconde déclaration ailleurs
+      // rouvrirait exactement la dérive qu'on vient de fermer.
+      final doublons = Directory('lib')
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'))
+          .where(
+            (f) => RegExp(
+              r'(abstract final )?class AppSpacing',
+            ).hasMatch(f.readAsStringSync()),
+          )
+          .map((f) => f.path)
+          .toList();
+      expect(
+        doublons.length,
+        1,
+        reason: 'AppSpacing est déclaré ${doublons.length} fois : $doublons',
+      );
     });
 
     test('aucune contrainte de 40 px ne traîne', () {
@@ -237,13 +271,28 @@ void main() {
     });
 
     test('la bande de section reste une bande, pas une carte', () {
-      // Assez pale pour porter du texte encre, assez marquee pour decouper
-      // une page longue sans tracer de ligne.
+      /*
+       * --- Ce que ce test attendait avant la charte ---------------------
+       *
+       * Il lisait `bandSoft`, un bleu tres pale. La charte EduQuali n'a pas
+       * de couleur de bande : elle a `papier`, le fond des ecrans, et
+       * `feuille`, la surface des cartes posees dessus. C'est l'ecart entre
+       * ces deux-la qui decoupe une page longue, et il vaut 1,08:1.
+       *
+       * La regle que le test tient ne change pas : assez pale pour porter du
+       * texte encre, assez marquee pour qu'on voie le decoupage, jamais
+       * assez pour se lire comme une carte.
+       */
       expect(
-        contrast(AppColors.textPrimary, AppColors.bandSoft),
+        contrast(AppColors.encre, AppColors.papier),
         greaterThanOrEqualTo(4.5),
       );
-      expect(contrast(AppColors.background, AppColors.bandSoft), lessThan(1.2));
+      expect(contrast(AppColors.feuille, AppColors.papier), lessThan(1.2));
+      expect(
+        contrast(AppColors.feuille, AppColors.papier),
+        greaterThan(1.03),
+        reason: 'une bande qui ne se voit pas ne decoupe rien',
+      );
     });
   });
 
@@ -303,36 +352,56 @@ void main() {
     });
   });
 
-  group('Les ombres posent les éléments', () {
-    final theme = File(
-      'lib/presentation/theme/app_theme.dart',
-    ).readAsStringSync();
+  group('La charte ne laisse aucune ombre', () {
+    /*
+     * --- Ce que ce groupe attendait avant la charte -------------------
+     *
+     * Que chaque ombre porte **deux couches** : une courte et dense au
+     * contact, une longue et diffuse dessous. Le raisonnement etait bon —
+     * c'est ainsi que la lumiere se comporte, et une seule couche large
+     * donne un halo flou qui grise le fond sans poser l'element.
+     *
+     * La charte EduQuali tranche autrement, et le dit en une ligne : « Pas
+     * d'ombre, pas de degrade, pas de carte a bord colore. » Le relief vient
+     * du contour — `AppTrait.fin` en `ligne`, `AppTrait.fort` en `encre` —
+     * et la raison est concrete : un trait se voit en plein soleil la ou une
+     * ombre de 12 px disparait, ce qui est precisement la condition dans
+     * laquelle ce produit sert.
+     *
+     * Les trois listes restent declarees, vides : huit fichiers les nomment,
+     * et les retirer d'un coup aurait casse huit ecrans en meme temps que le
+     * changement de palette.
+     */
+    test('les trois listes sont vides', () {
+      expect(AppShadows.card, isEmpty);
+      expect(AppShadows.raised, isEmpty);
+      expect(AppShadows.overlay, isEmpty);
+    });
 
-    List<String> shadowsOf(String name) {
-      // Chaine brute pour la partie echappee : dans une chaine ordinaire,
-      // Dart avale le backslash et « \[ » devient une classe de caracteres.
-      final block = RegExp(
-        'List<BoxShadow> $name'
-        r' = \[(.*?)\];',
-        dotAll: true,
-      ).firstMatch(theme);
-      return RegExp(
-        r'BoxShadow\(',
-      ).allMatches(block?.group(1) ?? '').map((m) => m.group(0)!).toList();
-    }
+    test('et le theme ne porte aucune elevation', () {
+      final theme = File(
+        'lib/presentation/theme/app_theme.dart',
+      ).readAsStringSync();
+      final elevations = RegExp(r'elevation:\s*([0-9.]+)')
+          .allMatches(theme)
+          .map((m) => double.parse(m.group(1)!))
+          .where((v) => v > 0)
+          .toList();
+      expect(
+        elevations,
+        isEmpty,
+        reason: 'une elevation Material dessine une ombre : \$elevations',
+      );
+    });
 
-    for (final name in ['card', 'raised', 'overlay']) {
-      test('« $name » porte deux couches', () {
-        // Une seule couche large donne un halo flou qui grise le fond sans
-        // poser l'élément. Une courte et dense au contact, une longue et
-        // diffuse dessous : c'est ainsi que la lumière se comporte.
-        expect(
-          shadowsOf(name),
-          hasLength(2),
-          reason: '« $name » est retombée à une seule couche',
-        );
-      });
-    }
+    test('le trait a remplace l ombre', () {
+      // Les deux epaisseurs de la charte, et leurs deux couleurs : c'est ce
+      // qui pose un element maintenant.
+      expect(AppTrait.fin, 1.5);
+      expect(AppTrait.fort, 2.5);
+      expect(AppTrait.repos.color, AppColors.ligne);
+      expect(AppTrait.marque.color, AppColors.encre);
+    });
   });
 
   group('Taille du texte de contenu', () {
@@ -341,9 +410,24 @@ void main() {
     ).readAsStringSync();
 
     double sizeOf(String style) {
+      /*
+       * `fontFamily` passe desormais avant `fontSize` : chaque style nomme sa
+       * police, parce que la charte en a trois et que deux groupes de styles
+       * n'ont pas la meme.
+       *
+       * L'expression s'arretait a `const TextStyle(` suivi immediatement de
+       * `fontSize`. Elle ne trouvait donc plus rien, et `match!` levait — le
+       * test echouait pour la mauvaise raison, ce qui est encore le meilleur
+       * cas : une expression un peu plus large aurait pu trouver le
+       * `fontSize` du style suivant et passer en mesurant autre chose.
+       *
+       * D'ou les deux garde-fous : on borne la recherche au style demande, et
+       * on verifie qu'on a bien trouve quelque chose.
+       */
       final match = RegExp(
-        '$style: const TextStyle\\(\\s*fontSize: ([0-9.]+)',
+        '$style: const TextStyle\\((?:\\s*\\w+: [^,]+,){0,3}\\s*fontSize: ([0-9.]+)',
       ).firstMatch(theme);
+      expect(match, isNotNull, reason: 'style \$style introuvable');
       return double.parse(match!.group(1)!);
     }
 

@@ -193,7 +193,7 @@ class _Offers extends ConsumerWidget {
                   icon: Icons.home_work_outlined,
                   title: 'Donnez des cours près de chez vous',
                   message:
-                      'Quatre questions : vos jours, vos créneaux, ce que '
+                      'Quatre questions : vos jours, vos créneaux, ce que '
                       'vous enseignez, vos conditions. Les parents de votre '
                       'quartier verront ensuite votre offre.',
                   // Un seul chemin d'entree, guide : sans disponibilites la

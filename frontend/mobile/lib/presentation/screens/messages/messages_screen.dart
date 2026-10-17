@@ -225,7 +225,7 @@ class _ConversationState extends ConsumerState<ConversationScreen> {
                     const SizedBox(width: AppSpacing.sm),
                     IconButton.filled(
                       onPressed: _busy ? null : _send,
-                      tooltip: 'Envoyer',
+                      tooltip: 'Envoyer le message',
                       icon: const Icon(Icons.send, size: 20),
                     ),
                   ],

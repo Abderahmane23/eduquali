@@ -9,7 +9,10 @@ import type {
   LiveCourseInput,
   LivePresence,
   LiveSession,
+  Child,
+  MaPromotion,
   MySession,
+  PresenceProof,
   Promotion,
   PurchaseRequest,
   PurchaseState,
@@ -137,6 +140,24 @@ export interface VeriprofApi {
   mySessions(): Promise<MySession[]>
 
   /**
+   * La preuve de presence d'une seance passee.
+   *
+   * Reservee a la famille qui detient l'inscription et au professeur du
+   * cours ; le serveur rend le meme 404 a tout autre compte qu'a une seance
+   * inexistante, parce que « vous n'avez pas de place sur cette seance »
+   * confirmerait qu'elle existe et qui la suit.
+   */
+  presenceProof(sessionId: string): Promise<PresenceProof>
+
+  /**
+   * Les enfants du compte parent connecte.
+   *
+   * Liste vide pour tout autre role — un etudiant majeur suit pour lui-meme,
+   * et c'est une absence d'enfants, pas une erreur.
+   */
+  children(): Promise<Child[]>
+
+  /**
    * Le professeur ouvre et ferme sa salle.
    *
    * Deux gestes explicites, et non une ouverture automatique a l'heure dite :
@@ -221,6 +242,31 @@ export interface VeriprofApi {
   /** Les mises en avant actives, toutes ecoles confondues. */
   promotions(query?: { city?: string }): Promise<Promotion[]>
 
+  /**
+   * Les mises en avant de l'etablissement connecte, toutes etats confondus.
+   *
+   * Vide pour tout autre role : RLS n'ouvre la table qu'a l'ecole qui les a
+   * creees, et c'est une absence de promotions, pas une erreur.
+   */
+  mesPromotions(): Promise<MaPromotion[]>
+
+  /**
+   * Met une promotion en ligne.
+   *
+   * Elle part directement en `ACTIVE` : une ecole qui ecrit une annonce veut
+   * qu'elle paraisse. Un brouillon ajouterait une etape a un geste qui n'en
+   * demande pas, et la table garde `DRAFT` pour le jour ou un bareme
+   * existera.
+   */
+  creerPromotion(entree: {
+    title: string
+    message?: string
+    endsAt?: string
+  }): Promise<MaPromotion>
+
+  /** Retire une promotion de la mise en avant. Definitif, et dit comme tel. */
+  terminerPromotion(id: string): Promise<void>
+
   /** Les offres de cours a domicile d'un enseignant. */
   tutoringOffers(teacherId: string): Promise<TutoringOffer[]>
 
@@ -234,6 +280,14 @@ export interface VeriprofApi {
   videoCourses(query?: { subjectId?: string }): Promise<VideoCourse[]>
   videoCourse(id: string): Promise<VideoCourse | null>
   courseProgramme(courseId: string): Promise<CourseChapterPreview[]>
+
+  /**
+   * Le contenu d'un cours achete : les chapitres et leurs elements.
+   *
+   * Liste vide quand le cours n'est pas achete — c'est RLS qui le dit, et
+   * non un drapeau pose par le client.
+   */
+  courseLecture(courseId: string): Promise<CourseChapterPreview[]>
 
   /**
    * Les tests de competence.
@@ -524,6 +578,14 @@ export class HttpApi implements VeriprofApi {
   mySessions() {
     return this.request<MySession[]>('/live/my-sessions')
   }
+  presenceProof(sessionId: string) {
+    return this.request<PresenceProof>(
+      `/live/sessions/${sessionId}/presence`,
+    )
+  }
+  children() {
+    return this.request<Child[]>('/children')
+  }
   openRoom(sessionId: string) {
     return this.post<RoomState>(`/live/sessions/${sessionId}/open`, {})
   }
@@ -585,6 +647,19 @@ export class HttpApi implements VeriprofApi {
   promotions(query: { city?: string } = {}) {
     return this.request<Promotion[]>(`/promotions${this.query({ ...query })}`)
   }
+  mesPromotions() {
+    return this.request<MaPromotion[]>('/promotions/mine')
+  }
+  creerPromotion(entree: {
+    title: string
+    message?: string
+    endsAt?: string
+  }) {
+    return this.post<MaPromotion>('/promotions', entree)
+  }
+  async terminerPromotion(id: string) {
+    await this.post<void>(`/promotions/${id}/end`, {})
+  }
 
   tutoringOffers(teacherId: string) {
     return this.request<TutoringOffer[]>(
@@ -600,6 +675,11 @@ export class HttpApi implements VeriprofApi {
   }
   courseProgramme(courseId: string) {
     return this.request<CourseChapterPreview[]>(`/courses/${courseId}/programme`)
+  }
+  courseLecture(courseId: string) {
+    return this.request<CourseChapterPreview[]>(
+      `/courses/${courseId}/lecture`,
+    )
   }
 
   tests(teacherId?: string) {

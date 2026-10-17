@@ -49,13 +49,9 @@ class GradientHero extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.heroStart, AppColors.heroEnd],
-        ),
-      ),
+      // Un aplat, pas un degrade : la charte n en laisse aucun, et la
+        // violette de la marque se suffit.
+        decoration: const BoxDecoration(color: AppColors.marqueViolette),
       child: ClipRect(
         child: Stack(
           children: [
@@ -162,7 +158,10 @@ class _Halo extends StatelessWidget {
     height: size,
     decoration: const BoxDecoration(
       shape: BoxShape.circle,
-      color: Color(0x14FFFFFF),
+      // La surface posee sur l'aplat de violette, declaree une fois
+      // dans la palette plutot qu'ecrite a la main : trois ecrans
+      // portaient trois transparences differentes.
+      color: AppColors.onHeroSurface,
     ),
   );
 }

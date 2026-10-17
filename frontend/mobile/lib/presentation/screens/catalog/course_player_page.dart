@@ -149,7 +149,7 @@ class _CoursePlayerPageState extends ConsumerState<CoursePlayerPage> {
       setState(() => _lecteur = null);
       ScaffoldMessenger.of(context)
         ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text('Lecture impossible : $erreur')));
+        ..showSnackBar(SnackBar(content: Text('Lecture impossible : $erreur')));
     }
   }
 
@@ -332,8 +332,16 @@ class _Video extends StatelessWidget {
               child: VideoProgressIndicator(
                 lecteur,
                 allowScrubbing: true,
+                /*
+                 * Le surligneur, et c'est son emploi : « montrer les minutes
+                 * de presence, votre place, les mots a retenir ». La portion
+                 * vue d'une video est de la meme famille que la ligne du
+                 * temps d'une seance — ce qu'on a suivi.
+                 *
+                 * Un remplissage, pas du texte : la regle est respectee.
+                 */
                 colors: const VideoProgressColors(
-                  playedColor: AppColors.accent,
+                  playedColor: AppColors.surligneur,
                   bufferedColor: Colors.white24,
                   backgroundColor: Colors.white12,
                 ),
@@ -638,7 +646,7 @@ class _CommentairesState extends ConsumerState<_Commentaires> {
 
           if (commentaires.isEmpty)
             const Text(
-              'Aucune question sur cette vidéo. Posez la première : le '
+              'Aucune question sur cette vidéo. Posez la première : le '
               'professeur reçoit la notification.',
               style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
             ),
@@ -700,7 +708,7 @@ class _CommentairesState extends ConsumerState<_Commentaires> {
                 hintText: 'Posez votre question…',
                 suffixIcon: IconButton(
                   onPressed: _envoi ? null : _envoyer,
-                  tooltip: 'Envoyer',
+                  tooltip: 'Poser ma question',
                   icon: const Icon(Icons.send, size: 20),
                 ),
               ),

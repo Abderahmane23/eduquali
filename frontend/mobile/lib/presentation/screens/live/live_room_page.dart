@@ -480,7 +480,7 @@ class _LiveRoomPageState extends ConsumerState<LiveRoomPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Module ${_pointOuvert!.moduleIndex + 1} — est-ce passé ?',
+                    'Module ${_pointOuvert!.moduleIndex + 1} — est-ce passé ?',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const Gap(8),
@@ -496,9 +496,29 @@ class _LiveRoomPageState extends ConsumerState<LiveRoomPage> {
                     Row(
                       children: [
                         for (final (valeur, libelle) in const [
+                          /*
+                           * « Jamais "Non" ».
+                           *
+                           * La charte le dit en une ligne, et la raison est
+                           * dans la ligne suivante : « "Pas encore" n'est vu
+                           * que par le professeur. Le dire sous les boutons :
+                           * un eleve repond plus franchement. »
+                           *
+                           * Un eleve de quinze ans devant quinze camarades ne
+                           * dit pas « Non » : il dit « Oui » et decroche. Les
+                           * trois libelles sont donc aimables, et le dernier
+                           * ouvre sur la suite plutot que de clore.
+                           *
+                           * Les trois valeurs envoyees ne changent pas : le
+                           * serveur les agrege en « 9 ont compris, 4 pas
+                           * assez, 2 non », et le resume du professeur en
+                           * depend. La charte demande **deux** reponses ; ce
+                           * serait une modification du modele de donnees, et
+                           * elle est listee comme telle.
+                           */
                           ('YES', 'Oui'),
-                          ('PARTLY', 'Pas assez'),
-                          ('NO', 'Non'),
+                          ('PARTLY', 'Presque'),
+                          ('NO', 'Pas encore'),
                         ])
                           Expanded(
                             child: Padding(
@@ -605,7 +625,7 @@ class _LiveRoomPageState extends ConsumerState<LiveRoomPage> {
                     final confirme = await showDialog<bool>(
                       context: context,
                       builder: (c) => AlertDialog(
-                        title: const Text('Terminer la séance ?'),
+                        title: const Text('Terminer la séance ?'),
                         content: const Text(
                           'Tous les élèves seront déconnectés.',
                         ),
@@ -616,7 +636,7 @@ class _LiveRoomPageState extends ConsumerState<LiveRoomPage> {
                           ),
                           FilledButton(
                             onPressed: () => Navigator.pop(c, true),
-                            child: const Text('Terminer'),
+                            child: const Text('Terminer la séance'),
                           ),
                         ],
                       ),
@@ -679,7 +699,13 @@ class _Scene extends StatelessWidget {
         aspectRatio: MediaQuery.sizeOf(context).width >= 720 ? 1 : 9 / 16,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF0B0B10),
+            // `marqueEncre`, et non un noir choisi a l'oeil.
+            //
+            // La charte nomme cette couleur : « fond de la salle de cours en
+            // direct ». Elle est fixe dans les deux themes, parce qu'une
+            // salle n'a pas de raison de changer de fond selon le reglage du
+            // telephone — ce qu'on y regarde est la video.
+            color: AppColors.marqueEncre,
             borderRadius: BorderRadius.circular(12),
           ),
           alignment: Alignment.center,

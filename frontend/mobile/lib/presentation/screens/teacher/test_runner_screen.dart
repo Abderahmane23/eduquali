@@ -64,7 +64,7 @@ class TestRunnerScreen extends ConsumerWidget {
   Future<bool?> _confirmExit(BuildContext context) => showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('Quitter le test ?'),
+      title: const Text('Quitter le test ?'),
       content: const Text(
         'Votre progression est enregistree sur l’appareil. Vous pourrez '
         'reprendre le test la ou vous vous etes arrete.',
@@ -278,7 +278,7 @@ class _RunnerBody extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Terminer le test ?'),
+        title: const Text('Terminer le test ?'),
         content: Text(
           unanswered > 0
               ? 'Il reste $unanswered question(s) sans réponse. Elles seront '
@@ -294,7 +294,7 @@ class _RunnerBody extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Soumettre'),
+            child: const Text('Envoyer mes réponses'),
           ),
         ],
       ),

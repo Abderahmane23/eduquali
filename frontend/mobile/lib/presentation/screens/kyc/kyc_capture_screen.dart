@@ -79,7 +79,7 @@ class _KycCaptureScreenState extends ConsumerState<KycCaptureScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Capture impossible : $error')));
+      ).showSnackBar(SnackBar(content: Text('Capture impossible : $error')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

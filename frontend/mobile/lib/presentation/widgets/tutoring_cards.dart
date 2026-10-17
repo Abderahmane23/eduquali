@@ -198,7 +198,7 @@ class TutoringRequestCard extends StatelessWidget {
                 color: AppColors.primarySurface,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: Text('« ${item.message!} »', style: text.bodyMedium),
+              child: Text('« ${item.message!} »', style: text.bodyMedium),
             ),
           ],
           if (item.status == TutoringStatus.accepted && !forTeacher) ...[
@@ -219,7 +219,11 @@ class TutoringRequestCard extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: onDecline,
-                      child: const Text('Refuser'),
+                      // « Decliner » plutot que « Refuser » : les deux
+                  // reponses d'un ecran restent aimables, et une
+                  // famille qui lit le refus de son professeur n'a
+                  // pas besoin du mot le plus sec.
+                  child: const Text('Décliner'),
                     ),
                   ),
                 if (onDecline != null && onAccept != null)

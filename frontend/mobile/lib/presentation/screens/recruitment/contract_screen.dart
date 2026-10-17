@@ -279,14 +279,14 @@ class _ContractScreenState extends ConsumerState<ContractScreen> {
 
       if (result.type != ResultType.done) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('PDF enregistre : ${file.path}')),
+          SnackBar(content: Text('PDF enregistre : ${file.path}')),
         );
       }
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Export impossible : $error')));
+      ).showSnackBar(SnackBar(content: Text('Export impossible : $error')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -347,7 +347,7 @@ class _GeneratePrompt extends StatelessWidget {
           ),
           const Gap(AppSpacing.sm),
           Text(
-            'Le contrat sera etabli a partir du modèle de la plateforme et des '
+            'Le contrat sera etabli a partir du modèle d’EduQuali et des '
             'conditions acceptees par les deux parties.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,

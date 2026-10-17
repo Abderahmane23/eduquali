@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api'
 import { dossier, serveurDisponible, type Piece, type TypePiece } from '../api/server'
 import { useSession } from '../app/session'
@@ -106,7 +107,7 @@ export function Dossier() {
         <AppBar title="Mon dossier" onBack />
         <div className="screen">
           <Banner tone="warning">
-            Le dépôt de pièces passe par le serveur Eduquali, qui n’est pas
+            Le dépôt de pièces passe par le serveur EduQuali, qui n’est pas
             relié à ce site.
           </Banner>
         </div>
@@ -166,6 +167,42 @@ export function Dossier() {
         ) : fiche.loading ? (
           <Skeleton height={96} count={1} />
         ) : null}
+
+        {/*
+          Ce que j'enseigne, et pourquoi c'est en tête du dossier.
+
+          Une famille cherche par matière et par niveau. Sans cette
+          déclaration, le professeur n'apparaît dans aucune recherche — il a
+          beau avoir déposé son diplôme et passé le test, il est invisible.
+          C'est donc la pièce la plus importante, et elle manquait.
+        */}
+        <section className="stack stack--tight">
+          <h2 className="section-title">Ce que j’enseigne</h2>
+          {fiche.data && fiche.data.subjects.length > 0 ? (
+            <>
+              <div className="row" style={{ flexWrap: 'wrap' }}>
+                {fiche.data.subjects.map((matiere) => (
+                  <Chip key={matiere.id}>{matiere.name}</Chip>
+                ))}
+              </div>
+              <div className="row" style={{ flexWrap: 'wrap' }}>
+                {fiche.data.levels.map((niveau) => (
+                  <Chip key={niveau.id}>{niveau.name}</Chip>
+                ))}
+              </div>
+            </>
+          ) : (
+            <Banner tone="warning">
+              Vous n’apparaissez dans aucune recherche tant que vous n’avez
+              pas déclaré vos matières et vos niveaux.
+            </Banner>
+          )}
+          <Link className="btn btn--ghost btn--block" to="/profil/competences">
+            {fiche.data && fiche.data.subjects.length > 0
+              ? 'Modifier mes matières et niveaux'
+              : 'Déclarer mes matières et niveaux'}
+          </Link>
+        </section>
 
         {badges ? (
           <section className="stack stack--tight">

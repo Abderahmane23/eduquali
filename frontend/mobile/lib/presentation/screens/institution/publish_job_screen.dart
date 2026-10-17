@@ -127,7 +127,7 @@ class _PublishJobScreenState extends ConsumerState<PublishJobScreen> {
                       const InfoBanner(
                         message:
                             'L’offre privee n’apparait pas publiquement. Le '
-                            'recrutement reste gere sur la plateforme : '
+                            'recrutement reste gere sur EduQuali : '
                             'invitation, candidature, entretien, offre, '
                             'contrat.',
                         tone: StatusTone.info,
@@ -303,7 +303,7 @@ class _PublishJobScreenState extends ConsumerState<PublishJobScreen> {
                     const Gap(AppSpacing.md),
 
                     Text(
-                      'Expérience minimale : $_minExperience an(s)',
+                      'Expérience minimale : $_minExperience an(s)',
                       style: text.titleSmall,
                     ),
                     Slider(

@@ -54,13 +54,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     return Scaffold(
       backgroundColor: AppColors.heroStart,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.heroStart, AppColors.heroEnd],
-          ),
-        ),
+        // Un aplat, pas un degrade : la charte n en laisse aucun, et la
+        // violette de la marque se suffit.
+        decoration: const BoxDecoration(color: AppColors.marqueViolette),
         child: SafeArea(
           // La page occupe tout l'écran d'un seul bleu. Le bandeau gris du
           // bas coupait la page en deux à une hauteur qui ne correspondait à

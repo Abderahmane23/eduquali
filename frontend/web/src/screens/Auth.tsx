@@ -65,7 +65,7 @@ export function Landing() {
       <div className="hero-page">
         <div className="hero-page__inner">
           <div className="hero-page__top">
-            <span className="hero-page__brand">Eduquali</span>
+            <span className="hero-page__brand">EduQuali</span>
             {/*
               Une seule porte en haut, et c'est celle du professeur : la page
               entière parle à qui cherche un professeur, donc celui qui *est*
@@ -83,20 +83,22 @@ export function Landing() {
           <div className="hero-page__middle">
             <div className="stack">
               {/*
-                La signature de la marque, et la promesse du produit.
+                Le slogan, entier.
 
-                Le titre s'arrête sur « pour » : la phrase se termine dans la
-                boîte juste en dessous, où l'on choisit entre « Cours à
-                domicile » et « Embauche ». Le premier geste devient la fin de
-                la phrase.
+                Le titre s'arrêtait sur « pour », et la phrase devait se
+                terminer dans la boîte juste en dessous — « Cours à domicile »
+                ou « Embauche ». Le procédé est joli et il ne tient pas : sur
+                un téléphone, la boîte est à cent quarante points plus bas,
+                dans une carte blanche, et « pour » seul en fin de ligne se
+                lit comme une phrase coupée.
 
                 Un seul mot surligné, et c'est « professeur » : c'est lui que
-                le produit promet. « Le professeur est là. »
+                le produit promet.
               */}
               <Affiche
                 before="Trouvez le "
                 accented="professeur"
-                after=" qu’il vous faut pour"
+                after=" qu’il vous faut."
               />
               <p
                 className="small"

@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Le fond de l icone adaptative.
+
+  La violette de la marque, et non du blanc : le symbole du premier
+  plan est blanc, et un symbole blanc sur un fond blanc ne se voit
+  pas. Ecrit par tools/make_logos.py.
+-->
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="ic_launcher_background">#3A2FC9</color>
 </resources>

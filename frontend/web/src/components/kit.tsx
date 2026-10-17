@@ -135,6 +135,89 @@ export function Quinze({
 }
 
 /**
+ * La ligne du temps d'une séance.
+ *
+ * --- Ce qu'elle dit ------------------------------------------------------
+ *
+ * Une heure de cours, et dedans les minutes réellement suivies, au
+ * surligneur. Les traits verticaux sont les points de contrôle — toutes les
+ * quinze minutes, le professeur demande si tout le monde suit.
+ *
+ * Elle répond à la question qu'un pourcentage escamote : **quand** l'élève
+ * était là. « 87 % d'assiduité » et « arrivé à la vingtième minute » donnent
+ * le même taux et ne disent pas la même chose.
+ *
+ * --- Pourquoi elle ne commente pas --------------------------------------
+ *
+ * Pas de rouge sur les minutes manquées, pas de mention « en retard ». La
+ * charte l'écrit comme un interdit : la barre montre, l'écran à côté propose
+ * le rattrapage. Un parent sait lire une barre.
+ *
+ * Le surligneur sert ici à marquer une durée, jamais à indiquer un état :
+ * c'est le même geste que sur un cahier, passé sur ce qui compte.
+ */
+export function LigneDuTemps({
+  minutesSuivies,
+  minutesTotales,
+  debutMinute = 0,
+  controles = 15,
+}: {
+  minutesSuivies: number
+  minutesTotales: number
+  /** La minute d'arrivée, quand on la connaît. Zéro sinon. */
+  debutMinute?: number
+  /** L'intervalle entre deux points de contrôle, en minutes. */
+  controles?: number
+}) {
+  // Bornées : un serveur qui compterait 95 minutes sur une séance de 90
+  // ferait déborder la barre hors de son conteneur, et le défaut passerait
+  // pour un défaut de mise en page.
+  const total = Math.max(1, Math.round(minutesTotales))
+  const suivies = Math.max(0, Math.min(total, Math.round(minutesSuivies)))
+  const debut = Math.max(0, Math.min(total - suivies, Math.round(debutMinute)))
+
+  const pourcent = (minutes: number) => `${(minutes / total) * 100}%`
+
+  // Les repères : 15, 30, 45… Le dernier est exclu — un trait posé sur la
+  // fin de la barre se lit comme sa bordure.
+  const reperes: number[] = []
+  for (let m = controles; m < total; m += controles) reperes.push(m)
+
+  return (
+    <div
+      className="ligne-temps"
+      role="img"
+      aria-label={`${suivies} minutes suivies sur ${total}`}
+    >
+      <span className="ligne-temps__base" />
+      {suivies > 0 ? (
+        <span
+          className="ligne-temps__presence"
+          style={{ left: pourcent(debut), width: pourcent(suivies) }}
+        />
+      ) : null}
+      {reperes.map((m) => (
+        <span
+          key={m}
+          className="ligne-temps__controle"
+          style={{ left: pourcent(m) }}
+        />
+      ))}
+      {reperes.map((m) => (
+        <span
+          key={`l${m}`}
+          className="ligne-temps__libelle"
+          style={{ left: pourcent(m) }}
+          aria-hidden="true"
+        >
+          {m} min
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/**
  * Une pastille de statut : une couleur, une forme et **un mot**.
  *
  * La couleur seule ne suffit jamais. C'est la règle de la charte, et c'est

@@ -1,7 +1,7 @@
 import { ApiError } from './client'
 
 /**
- * Les appels au serveur Eduquali, pour ce que PostgREST ne peut pas faire.
+ * Les appels au serveur EduQuali, pour ce que PostgREST ne peut pas faire.
  *
  * --- Pourquoi un module à part, et non vingt méthodes dans `VeriprofApi` --
  *
@@ -72,7 +72,7 @@ async function appel<T>(
   const racine = base()
   if (!racine) {
     throw new ApiError(
-      'Cette page demande le serveur Eduquali, qui n’est pas relié à ce site.',
+      'Cette page demande le serveur EduQuali, qui n’est pas relié à ce site.',
       501,
     )
   }
@@ -129,6 +129,31 @@ export interface Piece {
   sizeBytes: number | null
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * Ce qu'un professeur déclare enseigner.
+ *
+ * --- Pourquoi c'est la pièce la plus importante du dossier --------------
+ *
+ * Une famille cherche par matière et par niveau. Un professeur qui n'a rien
+ * déclaré n'apparaît dans aucune recherche : il s'est inscrit, il a déposé
+ * son diplôme, et il est invisible. Le site n'avait aucun écran pour cela —
+ * la route existait, et personne ne l'appelait.
+ *
+ * --- Pourquoi l'appel remplace tout -------------------------------------
+ *
+ * `remplacer_competences` écrit la déclaration entière en une instruction.
+ * Ajouter et retirer ligne par ligne laisserait, le temps d'un réseau qui
+ * coupe, un professeur déclaré sur une matière et plus aucun niveau — donc
+ * introuvable, sans que rien ne l'ait signalé.
+ */
+export const competences = {
+  declarer: (subjects: { subjectId: string; levelIds: string[] }[]) =>
+    appel<{ subjects: number; levels: number }>('/teacher/competences', {
+      method: 'POST',
+      body: { subjects },
+    }),
 }
 
 export const dossier = {
@@ -580,12 +605,46 @@ export const assistant = {
     message: string
     feature: UsageAssistant
     conversationId?: string
+    /**
+     * Une image, encodée en base64 sans son préfixe `data:`.
+     *
+     * Le serveur ne l'enregistre pas : une photo de cahier porte souvent le
+     * prénom de l'enfant, parfois le nom de l'école. Le fil garde la mention
+     * qu'une pièce a été jointe, et cela suffit à relire l'échange.
+     */
+    attachment?: { mimeType: string; data: string; name?: string }
   }) => appel<{
     conversationId: string
     id: string | null
     body: string
     createdAt: string
   }>('/ai/chat', { method: 'POST', body: input }),
+}
+
+/** Les formats d'image que l'assistant accepte, et le poids maximal. */
+export const PIECE_FORMATS = ['image/jpeg', 'image/png', 'image/webp']
+
+/** Trois mégaoctets de fichier : une photo de cahier compressée tient dedans. */
+export const PIECE_POIDS_MAX = 3 * 1024 * 1024
+
+/**
+ * Lit un fichier en base64, sans son préfixe.
+ *
+ * `FileReader` rend `data:image/jpeg;base64,AAAA…` ; le serveur attend la
+ * partie après la virgule, et le type est envoyé à part. Découper ici plutôt
+ * que sur le serveur évite de faire voyager deux fois la même information.
+ */
+export function lireEnBase64(fichier: File): Promise<string> {
+  return new Promise((resoudre, rejeter) => {
+    const lecteur = new FileReader()
+    lecteur.onerror = () => rejeter(new ApiError('Fichier illisible.', 400))
+    lecteur.onload = () => {
+      const brut = String(lecteur.result ?? '')
+      const virgule = brut.indexOf(',')
+      resoudre(virgule >= 0 ? brut.slice(virgule + 1) : brut)
+    }
+    lecteur.readAsDataURL(fichier)
+  })
 }
 
 /* ===========================================================================
@@ -657,4 +716,260 @@ export const boutique = {
     }>('/shop/redemptions'),
 
   solde: () => appel<{ balance: number }>('/points/balance'),
+
+  /**
+   * D'où viennent les points, et où ils sont partis.
+   *
+   * --- Pourquoi l'écran en avait besoin ---------------------------------
+   *
+   * La boutique affichait un solde et rien d'autre. Un compteur sans
+   * historique ne se vérifie pas : il faut croire le chiffre. Et quand il
+   * baisse — un échange, un cadeau envoyé — rien ne disait pourquoi.
+   *
+   * Le serveur rend les cinquante derniers mouvements, le plus récent
+   * d'abord ; au-delà, personne ne remonte. Les colonnes gardent leur nom de
+   * table, comme le reste de cette façade : un seul vocabulaire, même
+   * imparfait.
+   */
+  mouvements: () =>
+    appel<{
+      entries: {
+        id: string
+        delta: number
+        reason: string
+        reference: string | null
+        created_at: string
+      }[]
+    }>('/points/ledger'),
+}
+
+/* ===========================================================================
+ * Les concours
+ * ===========================================================================*/
+
+/** Un concours hebdomadaire, tel que le serveur le rend. */
+export interface Concours {
+  id: string
+  test_id: string
+  title: string
+  opens_at: string
+  closes_at: string
+  points_prize: number
+  /** Calculé par le serveur à partir de l'heure, jamais stocké. */
+  state: 'UPCOMING' | 'OPEN' | 'CLOSED'
+}
+
+/** Une ligne de classement. */
+export interface Rang {
+  userId: string
+  score: number
+  rank: number
+  /** Durée de la copie, en secondes : elle départage à score égal. */
+  durationSeconds: number
+}
+
+/**
+ * Le classement d'un concours.
+ *
+ * --- Pourquoi `published` existe ----------------------------------------
+ *
+ * Le podium reste fermé tant que dix copies n'ont pas été rendues.
+ * Annoncer un classement national à quatre participants n'est pas une
+ * approximation, c'est une affirmation fausse sur le pays. Le rang
+ * personnel, lui, est toujours rendu : il est honnête quel que soit le
+ * nombre de participants, et c'est lui qu'un élève vient chercher.
+ */
+export interface Classement {
+  published: boolean
+  participants: number
+  podium: Rang[]
+  me: Rang | null
+  missing: number
+}
+
+export const concours = {
+  /** Les concours ouverts et ceux qui arrivent. Visible sans compte. */
+  liste: () => appel<{ contests: Concours[] }>('/contests', { public: true }),
+
+  /** S'inscrire. Revenir sur l'écran n'est pas une erreur. */
+  participer: (id: string) =>
+    appel<{ entryId: string; startedAt: string }>(
+      `/contests/${encodeURIComponent(id)}/enter`,
+      { method: 'POST' },
+    ),
+
+  classement: (id: string) =>
+    appel<Classement>(
+      `/contests/${encodeURIComponent(id)}/leaderboard`,
+    ),
+}
+
+/* ===========================================================================
+ * L'exploitation
+ * ===========================================================================
+ *
+ * Les deux files que personne ne pouvait traiter : les retraits des
+ * professeurs, et les lots de la boutique. On y répondait dans l'éditeur SQL
+ * de Supabase — à la main, sans trace, avec la clé de service ouverte dans
+ * un onglet.
+ *
+ * Tout passe par le serveur, et jamais par Supabase en direct : ces lectures
+ * traversent la file de tous les professeurs, ce qu'aucune politique de
+ * ligne ne doit ouvrir à un compte de navigateur.
+ */
+
+/**
+ * Une demande de retrait, vue de l'exploitation.
+ *
+ * `Retrait` plus haut est la même ligne vue par le professeur qui l'a faite.
+ * Celle-ci porte ce que l'opérateur doit savoir pour décider : le numéro où
+ * envoyer l'argent, et le revenu recalculé pour voir si la somme est due.
+ * Deux vues, deux noms — un seul type aurait fait fuiter le numéro vers
+ * l'écran du professeur.
+ */
+export interface RetraitARegler {
+  id: string
+  amount: number
+  method: 'ORANGE' | 'MTN' | 'CASH'
+  methodLast4: string | null
+  status: string
+  requestedAt: string
+  teacherId: string | null
+  teacherName: string
+  /** Le numéro complet : c'est là que l'argent doit partir. */
+  teacherPhone: string | null
+  /** Le revenu recalculé, pour voir si la somme est due. */
+  available: number | null
+}
+
+/** Un lot échangé, en attente de remise. */
+export interface Echange {
+  id: string
+  pointsSpent: number
+  requestedAt: string
+  itemName: string
+  studentName: string
+  studentPhone: string | null
+  city: string | null
+}
+
+/* ===========================================================================
+ * Le fil des mises en avant
+ * ===========================================================================
+ *
+ * --- Pourquoi par le serveur ---------------------------------------------
+ *
+ * Le site lisait `promotions` directement dans Supabase. Deux choses s'y
+ * perdaient, et ce sont les deux qui font qu'une école paie :
+ *
+ *   - **Qui voit la publicité.** « Payer, c'est ne plus en voir » est une
+ *     règle de formule, pas une règle de ligne : aucune politique RLS ne
+ *     peut la tenir. Une famille abonnée voyait donc les annonces qu'elle
+ *     avait payé pour ne plus voir.
+ *   - **Les affichages.** Rien ne les comptait. L'école achetait une
+ *     visibilité qu'elle ne pouvait pas mesurer, et la rotation « la moins
+ *     vue d'abord » ne tournait jamais.
+ */
+
+/** Une mise en avant telle que le fil la rend. */
+export interface MiseEnAvant {
+  id: string
+  title: string
+  message: string | null
+  mediaPaths: string
+  views: number
+  institutionName: string
+  institutionCity: string | null
+  institutionType: string | null
+}
+
+export const promotions = {
+  /**
+   * Les trois annonces à montrer, ou aucune.
+   *
+   * `reason: 'PAID_PLAN'` dit pourquoi la liste est vide : l'écran n'a pas à
+   * deviner entre « personne n'a rien publié » et « ce compte ne voit plus
+   * de publicité ».
+   */
+  fil: () =>
+    appel<{ promotions: MiseEnAvant[]; reason?: string }>(
+      '/promotions/feed',
+    ),
+
+  /**
+   * Compte un affichage.
+   *
+   * Le serveur n'en retient qu'un par personne et par jour — `counted:
+   * false` n'est donc pas une erreur, c'est le cas ordinaire d'une seconde
+   * visite. L'appel ne bloque rien : une annonce s'affiche même si le
+   * comptage échoue.
+   */
+  vue: (id: string) =>
+    appel<{ counted: boolean }>(
+      `/promotions/${encodeURIComponent(id)}/view`,
+      { method: 'POST' },
+    ),
+}
+
+/**
+ * L'adresse de lecture d'une vidéo achetée.
+ *
+ * Par le serveur, et seulement par lui : signer une adresse Cloudflare
+ * Stream demande un secret qui ne descend jamais dans un navigateur. Le
+ * serveur vérifie l'achat sous le jeton de l'appelant — c'est RLS qui
+ * décide, pas lui — puis signe pour quelques heures.
+ */
+export const video = {
+  adresse: (itemId: string) =>
+    appel<{
+      hls: string
+      iframe: string
+      signed: boolean
+      expiresAt: number
+      url: string
+    }>(`/videos/${encodeURIComponent(itemId)}/url`),
+}
+
+export const exploitation = {
+  retraits: () =>
+    appel<{ payouts: RetraitARegler[] }>('/operations/payouts'),
+
+  /**
+   * Régler un retrait.
+   *
+   * `amountConfirmed` est le montant retapé par l'opérateur. C'est la seule
+   * opération du produit qu'on ne peut pas annuler — l'argent part par
+   * Orange Money et ne revient pas — et retaper la somme est la seule garde
+   * qui attrape l'erreur de ligne.
+   */
+  reglerRetrait: (
+    id: string,
+    corps: {
+      decision: 'PAID' | 'REJECTED'
+      note?: string
+      amountConfirmed?: number
+    },
+  ) =>
+    appel<{ id: string; status: string; already?: boolean }>(
+      `/operations/payouts/${encodeURIComponent(id)}/decision`,
+      { method: 'POST', body: corps },
+    ),
+
+  echanges: () =>
+    appel<{ redemptions: Echange[] }>('/operations/redemptions'),
+
+  /** Remettre ou refuser un lot. Un refus rend les points et le stock. */
+  trancherEchange: (
+    id: string,
+    corps: { decision: 'DELIVERED' | 'REFUSED'; note?: string },
+  ) =>
+    appel<{
+      id: string
+      status: string
+      already?: boolean
+      pointsRendus?: number
+    }>(`/operations/redemptions/${encodeURIComponent(id)}/decision`, {
+      method: 'POST',
+      body: corps,
+    }),
 }

@@ -113,7 +113,7 @@ class _TeacherLevelsScreenState extends ConsumerState<TeacherLevelsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'A quels niveaux enseignez-vous cette matière ?',
+                    'A quels niveaux enseignez-vous cette matière ?',
                     style: text.bodyMedium,
                   ),
                 ],
@@ -142,7 +142,7 @@ class _TeacherLevelsScreenState extends ConsumerState<TeacherLevelsScreen> {
                         child: SelectableTile(
                           label: level.name,
                           subtitle: current.isCertified(level.id)
-                              ? 'Certifié ${current.certifiedScores[level.id]} %'
+                              ? 'Certifié ${current.certifiedScores[level.id]} %'
                               : null,
                           selected: selected.contains(level.id),
                           onTap: () => setState(() {

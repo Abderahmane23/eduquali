@@ -12,6 +12,7 @@ import '../../providers/core_providers.dart';
 import '../../router/app_router.dart';
 import '../../widgets/common.dart';
 import '../../widgets/kit.dart';
+import '../../widgets/marque.dart';
 
 /// Démarrer un cours : la classe, qui est là, et comment faire venir le reste.
 ///
@@ -192,14 +193,38 @@ class _TeacherLivePageState extends ConsumerState<TeacherLivePage> {
 
                   const Gap(AppSpacing.xl),
                   KitSectionTitle(
-                    title: 'Qui est attendu',
-                    actionLabel: (classe?.absents.isEmpty ?? true)
+                    // La seance passee, la question n'est plus « qui vient »
+                    // mais « qui est venu ». Meme liste, meme place : c'est
+                    // le titre qui dit a quel moment on la lit.
+                    title: _passee(seance, maintenant)
+                        ? 'Qui était là'
+                        : 'Qui est attendu',
+                    // On ne previent plus personne pour une seance finie :
+                    // le bouton partirait vers un cours qui n'existe plus.
+                    actionLabel:
+                        _passee(seance, maintenant) ||
+                            (classe?.absents.isEmpty ?? true)
                         ? null
                         : 'Prévenir tout le monde',
                     onAction: (classe?.absents.isEmpty ?? true)
                         ? null
                         : () => _prevenir(tous: true),
                   ),
+
+                  /*
+                   * Le recapitulatif, une fois la seance finie.
+                   *
+                   * Trois chiffres et une phrase : combien sont venus,
+                   * combien de minutes en moyenne, combien ne sont jamais
+                   * entres. C'est ce qu'un professeur regarde pour savoir
+                   * s'il doit rappeler quelqu'un — et c'est la meme
+                   * information que le parent voit de son cote, ce qui evite
+                   * deux versions d'une meme seance.
+                   */
+                  if (classe != null && _passee(seance, maintenant)) ...[
+                    _Recapitulatif(classe: classe, seance: seance),
+                    const Gap(AppSpacing.lg),
+                  ],
 
                   if (classe == null)
                     const KitEmpty(
@@ -217,31 +242,13 @@ class _TeacherLivePageState extends ConsumerState<TeacherLivePage> {
                     )
                   else ...[
                     for (final eleve in classe.entries)
-                      ListItemCard(
-                        leading: InitialsTile(
-                          name: eleve.name,
-                          tone: eleve.present
-                              ? StatusTone.success
-                              : StatusTone.neutral,
-                        ),
-                        title: eleve.name,
-                        subtitle: eleve.present
-                            ? 'En salle depuis ${eleve.minutes} min'
-                            : 'Pas encore entré',
-                        trailing: eleve.present
-                            ? const Icon(
-                                Icons.check_circle,
-                                color: AppColors.success,
-                                size: 20,
-                              )
-                            : TextButton(
-                                onPressed: _envoi
-                                    ? null
-                                    : () => _prevenir(
-                                        places: [eleve.enrolmentId],
-                                      ),
-                                child: const Text('Prévenir'),
-                              ),
+                      _LigneEleve(
+                        eleve: eleve,
+                        seance: seance,
+                        passee: _passee(seance, maintenant),
+                        envoiEnCours: _envoi,
+                        onPrevenir: () =>
+                            _prevenir(places: [eleve.enrolmentId]),
                       ),
                   ],
 
@@ -265,6 +272,18 @@ class _TeacherLivePageState extends ConsumerState<TeacherLivePage> {
       ),
     );
   }
+
+  /// La seance est-elle finie ?
+  ///
+  /// Trente minutes apres la fin, et non a la minute pile : un cours deborde,
+  /// et basculer la page en « qui etait la » pendant que le professeur parle
+  /// encore serait faux.
+  static bool _passee(TeacherSession seance, DateTime maintenant) => maintenant
+      .isAfter(
+        seance.startsAt
+            .add(Duration(minutes: seance.durationMinutes))
+            .add(const Duration(minutes: 30)),
+      );
 
   void _ouvrirRepertoire() {
     showModalBottomSheet<void>(
@@ -300,7 +319,10 @@ class _Entete extends StatelessWidget {
                 ),
               ),
               if (seance.status == 'LIVE')
-                const StatusPill(label: 'EN DIRECT', tone: StatusTone.danger),
+                // La pastille de la charte : `rouge` plein, et son
+                // point. Une pastille de statut ordinaire en ton « danger »
+                // disait la meme chose dans une forme differente.
+                const EnDirect(),
             ],
           ),
           const Gap(AppSpacing.xs),
@@ -412,7 +434,7 @@ class _Repertoire extends ConsumerWidget {
               ),
               const Gap(AppSpacing.xs),
               const MetaText(
-                'Les familles que vous connaissez déjà : séances suivies et '
+                'Les familles que vous connaissez déjà : séances suivies et '
                 'contrats en cours.',
               ),
               const Gap(AppSpacing.lg),
@@ -420,7 +442,7 @@ class _Repertoire extends ConsumerWidget {
                 const KitEmpty(
                   icon: Icons.contacts_outlined,
                   message:
-                      'Votre répertoire se remplit tout seul : une famille y '
+                      'Votre répertoire se remplit tout seul : une famille y '
                       'entre dès qu’elle suit une de vos séances ou signe un '
                       'contrat avec vous.',
                 )
@@ -449,3 +471,166 @@ class _Repertoire extends ConsumerWidget {
 final teacherContactsProvider = FutureProvider<List<TeacherContact>>(
   (ref) => ref.watch(liveApiProvider).teacherContacts(),
 );
+
+
+/// Le recapitulatif d'une seance finie.
+///
+/// Trois chiffres, et une phrase qui dit quoi en faire. Jamais un
+/// pourcentage : « 12 sur 15 » se verifie, « taux de presence 80 % » demande
+/// de croire un calcul.
+class _Recapitulatif extends StatelessWidget {
+  const _Recapitulatif({required this.classe, required this.seance});
+
+  final Roster classe;
+  final TeacherSession seance;
+
+  @override
+  Widget build(BuildContext context) {
+    final venus = classe.entries.where((e) => e.minutes > 0).toList();
+    final absents = classe.entries.where((e) => e.minutes == 0).toList();
+
+    // La moyenne sur ceux qui sont venus, pas sur la classe entiere : deux
+    // absents feraient tomber une moyenne de classe sans rien dire de ce que
+    // les presents ont suivi.
+    final moyenne = venus.isEmpty
+        ? 0
+        : (venus.fold<int>(0, (t, e) => t + e.minutes) / venus.length).round();
+
+    return KitCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _Compte(
+                  value: '${venus.length}',
+                  label: 'sur ${classe.entries.length} sont venus',
+                ),
+              ),
+              Expanded(
+                child: _Compte(
+                  value: '$moyenne',
+                  label: 'minutes en moyenne',
+                ),
+              ),
+            ],
+          ),
+          if (absents.isNotEmpty) ...[
+            const Gap(AppSpacing.espace3),
+            /*
+             * Les absents, nommes.
+             *
+             * « Ne jamais faire de reproche » vaut pour l'eleve, pas pour le
+             * professeur : lui a besoin de savoir a qui ecrire. La phrase
+             * reste neutre et propose la suite — l'enregistrement — plutot
+             * que de constater.
+             */
+            Text(
+              absents.length == 1
+                  ? '${absents.first.name} n’est pas venu. '
+                        'L’enregistrement reste disponible.'
+                  : '${absents.map((e) => e.name).join(', ')} '
+                        'ne sont pas venus. L’enregistrement reste '
+                        'disponible.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Un eleve dans la liste : avant, pendant, apres.
+class _LigneEleve extends StatelessWidget {
+  const _LigneEleve({
+    required this.eleve,
+    required this.seance,
+    required this.passee,
+    required this.envoiEnCours,
+    required this.onPrevenir,
+  });
+
+  final RosterEntry eleve;
+  final TeacherSession seance;
+  final bool passee;
+  final bool envoiEnCours;
+  final VoidCallback onPrevenir;
+
+  @override
+  Widget build(BuildContext context) {
+    // Apres la seance, la ligne du temps remplace le sous-titre : elle dit
+    // non seulement combien de minutes, mais **lesquelles** — entre a la
+    // vingtieme minute ou parti avant la fin ne se rattrapent pas pareil.
+    if (passee) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.espace3),
+        child: KitCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  InitialsTile(
+                    name: eleve.name,
+                    tone: eleve.minutes > 0
+                        ? StatusTone.success
+                        : StatusTone.neutral,
+                  ),
+                  const Gap(AppSpacing.espace3),
+                  Expanded(
+                    child: Text(
+                      eleve.name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (eleve.minutes > 0)
+                    Statut(
+                      '${eleve.minutes} min',
+                      ton: TonStatut.ok,
+                      icone: Icons.check_rounded,
+                    )
+                  else
+                    const Statut(
+                      'Absent',
+                      ton: TonStatut.ko,
+                      icone: Icons.close_rounded,
+                    ),
+                ],
+              ),
+              if (eleve.minutes > 0) ...[
+                const Gap(AppSpacing.espace2),
+                LigneDuTemps(
+                  minutesSuivies: eleve.minutes,
+                  minutesTotales: seance.durationMinutes,
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListItemCard(
+      leading: InitialsTile(
+        name: eleve.name,
+        tone: eleve.present ? StatusTone.success : StatusTone.neutral,
+      ),
+      title: eleve.name,
+      subtitle: eleve.present
+          ? 'En salle depuis ${eleve.minutes} min'
+          : 'Pas encore entré',
+      trailing: eleve.present
+          ? const Icon(
+              Icons.check_circle,
+              color: AppColors.vertFonce,
+              size: 20,
+            )
+          : TextButton(
+              onPressed: envoiEnCours ? null : onPrevenir,
+              child: const Text('Prévenir'),
+            ),
+    );
+  }
+}

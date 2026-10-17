@@ -72,7 +72,7 @@ export function MesCours() {
       <div className="screen stack stack--loose">
         <h1 className="page-title">Mes cours vidéo</h1>
         <Banner tone="warning">
-          Cette page passe par le serveur Eduquali, qui n’est pas relié à ce
+          Cette page passe par le serveur EduQuali, qui n’est pas relié à ce
           site.
         </Banner>
       </div>
@@ -170,7 +170,7 @@ export function NouveauCours() {
         <AppBar title="Créer un cours" onBack />
         <div className="screen">
           <Banner tone="warning">
-            La création d’un cours passe par le serveur Eduquali, qui relit le
+            La création d’un cours passe par le serveur EduQuali, qui relit le
             prix. Il n’est pas relié à ce site.
           </Banner>
         </div>
@@ -369,7 +369,7 @@ export function ContenuCours() {
         <AppBar title="Le contenu" onBack />
         <div className="screen">
           <Banner tone="warning">
-            Cette page passe par le serveur Eduquali, qui n’est pas relié à ce
+            Cette page passe par le serveur EduQuali, qui n’est pas relié à ce
             site.
           </Banner>
         </div>

@@ -77,7 +77,7 @@ class _SubjectsScreenState extends ConsumerState<SubjectsScreen> {
               ),
             ),
             BottomActionBar(
-              label: 'Continuer',
+              label: 'Choisir mes niveaux',
               enabled: _selection!.isNotEmpty && !_saving,
               busy: _saving,
               onPressed: _save,

@@ -323,7 +323,7 @@ class _MesFavoris extends ConsumerWidget {
               ? KitEmpty(
                   icon: Icons.favorite_border,
                   message:
-                      'Mettez un lot de côté dans la boutique : il apparaîtra '
+                      'Mettez un lot de côté dans la boutique : il apparaîtra '
                       'ici, avec ce qu’il vous reste à gagner.',
                   actionLabel: 'Voir les lots',
                   onAction: () => context.push(Routes.shop),

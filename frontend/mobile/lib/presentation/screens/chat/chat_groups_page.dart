@@ -74,7 +74,7 @@ class ChatGroupsPage extends ConsumerWidget {
                       ? const KitEmpty(
                           icon: Icons.groups_outlined,
                           message:
-                              'Vos groupes s’ouvrent tout seuls : un par cours '
+                              'Vos groupes s’ouvrent tout seuls : un par cours '
                               'en direct suivi. Il n’y a rien à créer ni à '
                               'rejoindre.',
                         )

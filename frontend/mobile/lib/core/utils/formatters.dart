@@ -8,7 +8,14 @@ abstract final class Fmt {
   static final DateFormat _date = DateFormat('d MMMM yyyy', 'fr');
   static final DateFormat _dateShort = DateFormat('dd/MM/yyyy', 'fr');
   static final DateFormat _dateTime = DateFormat('d MMM yyyy, HH:mm', 'fr');
-  static final DateFormat _time = DateFormat('HH:mm', 'fr');
+  /// « 17 h 08 ».
+  ///
+  /// Le francais ecrit l'heure avec un « h » entoure d'espaces, et c'est la
+  /// forme que porte la charte (« AUJOURD'HUI · 17 H 00 »). Le motif etait
+  /// `HH:mm` : le site affichait « 17 h 00 » et l'application « 17:00 » pour
+  /// la meme seance, et deux ecritures d'une meme heure se lisent comme deux
+  /// heures.
+  static final DateFormat _time = DateFormat("HH 'h' mm", 'fr');
 
   /// « 3 000 000 GNF »
   static String money(num value, {bool withCurrency = true}) {

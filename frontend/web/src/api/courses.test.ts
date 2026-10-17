@@ -46,16 +46,43 @@ const catalogue = JSON.parse(
 
 describe('le sommaire public', () => {
   it('se lit dans la vue, jamais dans la table', () => {
-    // `course_items` porte `local_path` et `remote_url`. La vue
-    // `course_item_titles` n'expose que le titre, le genre et la duree.
+    /*
+     * `course_items` porte `local_path` et `remote_url`. La vue
+     * `course_item_titles` n'expose que le titre, le genre et la duree.
+     *
+     * Le decoupage s'arrete a `courseProgramme` — le sommaire **public**.
+     * Il allait jusqu'aux enseignants, et il a attrape `courseLecture` le
+     * jour ou celle-ci est arrivee : le sommaire d'un cours **achete**, qui
+     * lit la table et doit la lire, puisque RLS la ferme a qui n'a pas paye.
+     * Un test trop large finit desactive ; celui-ci vise ce qu'il protege.
+     */
     const bloc = supabase.slice(
-      supabase.indexOf('async videoCourses'),
-      supabase.indexOf('// --- Enseignants'),
+      supabase.indexOf('async courseProgramme'),
+      supabase.indexOf('async courseLecture'),
     )
+    expect(bloc.length).toBeGreaterThan(400)
     expect(bloc).toContain('course_item_titles')
     expect(bloc).not.toMatch(/from\('course_items'\)/)
     expect(bloc).not.toMatch(/local_path/)
     expect(bloc).not.toMatch(/remote_url/)
+  })
+
+  it('le sommaire d’un cours acheté ne lit jamais le fichier', () => {
+    /*
+     * Celui-la lit bien `course_items`, et il le faut : c'est la table que
+     * RLS ouvre a l'acheteur. Mais il n'a aucune raison d'en tirer le
+     * chemin du fichier — l'adresse de lecture est signee par le serveur,
+     * qui seul detient le secret de Cloudflare Stream.
+     */
+    const bloc = supabase.slice(
+      supabase.indexOf('async courseLecture'),
+      supabase.indexOf('// --- Enseignants'),
+    )
+    expect(bloc.length).toBeGreaterThan(400)
+    expect(bloc).toMatch(/from\('course_items'\)/)
+    expect(bloc).not.toMatch(/local_path/)
+    expect(bloc).not.toMatch(/remote_url/)
+    expect(bloc).not.toMatch(/provider_video_id/)
   })
 
   it('la vue serveur ne rend pas le fichier', () => {

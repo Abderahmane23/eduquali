@@ -61,7 +61,7 @@ export function Revenue() {
       <div className="screen stack stack--loose">
         <h1 className="page-title">Mes revenus</h1>
         <Banner tone="warning">
-          Cette page calcule vos revenus sur le serveur Eduquali, qui n’est pas
+          Cette page calcule vos revenus sur le serveur EduQuali, qui n’est pas
           relié à ce site.
         </Banner>
       </div>

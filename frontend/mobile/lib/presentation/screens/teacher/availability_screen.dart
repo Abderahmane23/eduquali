@@ -77,7 +77,7 @@ class _AvailabilityScreenState extends ConsumerState<AvailabilityScreen> {
                 // Types d'établissements souhaites (§15).
                 Text('Types d’établissements', style: text.titleMedium),
                 const SizedBox(height: 4),
-                Text('Ou souhaitez-vous enseigner ?', style: text.bodySmall),
+                Text('Ou souhaitez-vous enseigner ?', style: text.bodySmall),
                 const Gap(AppSpacing.md),
                 Wrap(
                   spacing: 8,
@@ -116,7 +116,7 @@ class _AvailabilityScreenState extends ConsumerState<AvailabilityScreen> {
           ),
 
           BottomActionBar(
-            label: 'Enregistrer',
+            label: 'Enregistrer mes disponibilités',
             enabled: _availability != null && !_saving,
             busy: _saving,
             onPressed: () => _save(profile.teacherId),

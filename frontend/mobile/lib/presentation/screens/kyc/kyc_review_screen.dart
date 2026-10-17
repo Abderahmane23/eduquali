@@ -74,7 +74,7 @@ class KycReviewScreen extends ConsumerWidget {
           icon: Icons.cloud_off_outlined,
           title: 'Aucune transmission',
           message:
-              'La vérification n’est pas encore branchee : le bouton ci-dessous '
+              'La vérification n’est pas encore branchee : le bouton ci-dessous '
               'simule l’envoi. Les images restent sur cet appareil.',
         ),
         const Gap(AppSpacing.xl),

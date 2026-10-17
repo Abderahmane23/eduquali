@@ -166,7 +166,7 @@ class PaymentMethodsPage extends ConsumerWidget {
     final opened = await OpenFilex.open(file.path);
     if (opened.type == ResultType.done) return;
     messenger.showSnackBar(
-      SnackBar(content: Text('Facture enregistrée : ${file.path}')),
+      SnackBar(content: Text('Facture enregistrée : ${file.path}')),
     );
   }
 }
@@ -278,7 +278,7 @@ class _AddSheetState extends State<_AddSheet> {
                           ),
                         )
                       : null,
-                  child: const Text('Enregistrer'),
+                  child: const Text('Enregistrer ce numéro'),
                 ),
               ),
             ],

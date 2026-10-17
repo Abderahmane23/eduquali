@@ -12,6 +12,7 @@ import '../../providers/core_providers.dart';
 import '../../router/app_router.dart';
 import '../../widgets/common.dart';
 import '../../widgets/kit.dart';
+import '../../widgets/marque.dart';
 
 /// « En direct » — la bande en tête de tous les accueils.
 ///
@@ -204,11 +205,8 @@ class _CarteDirect extends StatelessWidget {
               aspectRatio: 16 / 9,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.heroStart, AppColors.heroEnd],
-                  ),
+                  // Un aplat, pas un degrade.
+          color: AppColors.marqueViolette,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Stack(
@@ -223,29 +221,18 @@ class _CarteDirect extends StatelessWidget {
                       Positioned(
                         top: AppSpacing.sm,
                         left: AppSpacing.sm,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.danger,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            const Text(
-                              'EN DIRECT',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
+                        /*
+                         * La pastille de la charte, et non une pastille
+                         * dessinee ici.
+                         *
+                         * Elle etait refaite a la main sur trois ecrans, avec
+                         * trois tailles de point et trois graisses de texte.
+                         * `rouge` plein n'a qu'un seul emploi autorise — « si
+                         * la pastille est a l'ecran, la camera tourne » — et
+                         * le tenir en un seul endroit est ce qui empeche le
+                         * rouge de devenir decoratif.
+                         */
+                        child: const EnDirect(),
                       ),
                   ],
                 ),

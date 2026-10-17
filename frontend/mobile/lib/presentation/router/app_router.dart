@@ -63,6 +63,7 @@ import '../screens/live/live_room_page.dart';
 import '../screens/chat/chat_groups_page.dart';
 import '../screens/chat/chat_room_page.dart';
 import '../screens/live/publish_course_page.dart';
+import '../screens/live/presence_proof_page.dart';
 import '../screens/live/session_replay_page.dart';
 import '../screens/live/teacher_live_page.dart';
 import '../screens/catalog/promotion_form_page.dart';
@@ -147,6 +148,14 @@ abstract final class Routes {
   /// — qui attend un *nom* de route, pas un chemin, et qu'aucune route d'ici
   /// ne porte. Le bouton « Voir la rediffusion » plantait donc à la fin de
   /// chaque séance.
+  /// La preuve de presence d'une seance passee.
+  ///
+  /// « Votre enfant etait la. Vous le voyez. » Reservee a la famille qui
+  /// detient la place et au professeur du cours : le serveur rend le meme
+  /// 404 a tout autre compte qu'a une seance inexistante.
+  static String presenceProof(String sessionId) =>
+      '/direct/$sessionId/presence';
+
   static String sessionReplay(String sessionId) =>
       '/direct/$sessionId/rediffusion';
 
@@ -486,6 +495,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             SessionReplayPage(sessionId: state.pathParameters['sessionId']!),
       ),
       GoRoute(
+        path: '/direct/:sessionId/presence',
+        builder: (_, state) =>
+            PresenceProofPage(sessionId: state.pathParameters['sessionId']!),
+      ),
+      GoRoute(
         path: Routes.passwordReset,
         builder: (_, _) => const PasswordResetScreen(),
       ),
@@ -771,7 +785,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
     errorBuilder: (context, state) => Scaffold(
       appBar: AppBar(title: const Text('Page introuvable')),
-      body: Center(child: Text('Aucun écran pour « ${state.uri} »')),
+      body: Center(child: Text('Aucun écran pour « ${state.uri} »')),
     ),
   );
 });

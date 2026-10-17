@@ -6,6 +6,11 @@ import { parseOrigins, resolveOrigin } from './_lib/cors'
 import { asService, asUser, bearer, isConfigured } from './_lib/db'
 import { isAuditable, writeEvent, type AuditRow } from './_lib/audit'
 import {
+  deciderLot,
+  deciderRetrait,
+  RETRAITS_OUVERTS,
+} from './_lib/operations'
+import {
   Djomy,
   DjomyError,
   canTransition,
@@ -1739,6 +1744,9 @@ app.get('/live/my-sessions', async (c) => {
         slotId: String(seance.slot_id ?? ''),
         startsAt: String(seance.starts_at),
         durationMinutes: Number(seance.duration_minutes ?? 90),
+        // Rempli plus bas, une fois toutes les places connues : « 52 » pour
+        // « 52 minutes sur 60 ». Zero avant la seance.
+        minutesAttended: 0,
         status: String(seance.status),
         // L'etat de l'enregistrement, pour que l'ecran sache s'il doit proposer
         // une rediffusion ou expliquer qu'il n'y en aura pas. **Pas
@@ -1759,6 +1767,52 @@ app.get('/live/my-sessions', async (c) => {
       },
     ]
   })
+
+  /*
+   * Les minutes suivies, par place.
+   *
+   * --- Pourquoi une seconde requete et non une jointure --------------
+   *
+   * `attendance_detail` porte une ligne **par entree en salle**, pas par
+   * place : un enfant qui perd le reseau et revient en a deux, et il faut
+   * les additionner. Une jointure rendrait la place en double et le reste de
+   * la fiche avec elle.
+   *
+   * Une requete pour toutes les places a la fois, et non une par seance :
+   * quinze seances feraient quinze allers-retours sur une connexion lente.
+   */
+  const places = lignes.map((l) => l.enrolmentId)
+  const minutesParPlace = new Map<string, number>()
+  if (places.length > 0) {
+    const { data: presences } = await service
+      .from('attendance_detail')
+      .select('enrolment_id, minutes')
+      .in('enrolment_id', places)
+
+    for (const ligne of presences ?? []) {
+      const place = String(ligne.enrolment_id)
+      minutesParPlace.set(
+        place,
+        (minutesParPlace.get(place) ?? 0) + Number(ligne.minutes ?? 0),
+      )
+    }
+  }
+
+  for (const ligne of lignes) {
+    /*
+     * Zero quand la seance n'a pas encore eu lieu, et c'est juste : il n'y a
+     * rien a montrer avant. L'ecran s'en sert pour n'afficher la preuve que
+     * sur les seances passees.
+     *
+     * Jamais plus que la duree : une ligne de presence qui reste ouverte
+     * apres la fin du cours donnerait « 94 minutes sur 90 », ce qui se lit
+     * comme une erreur de compte et ruine la confiance dans le chiffre.
+     */
+    ligne.minutesAttended = Math.min(
+      minutesParPlace.get(ligne.enrolmentId) ?? 0,
+      ligne.durationMinutes,
+    )
+  }
 
   // La plus proche d'abord parmi celles a venir, puis les passees de la plus
   // recente a la plus ancienne : c'est l'ordre dans lequel on les cherche.
@@ -3360,6 +3414,55 @@ const ENROLMENT_FIELDS = `
   child:children (id, first_name, level_id),
   institution:institutions (id, name, type, city, verification_status)
 `
+
+/*
+ * Les enfants du compte parent connecte.
+ *
+ * --- Pourquoi cette route existe ---------------------------------------
+ *
+ * `POST /live/enrol` accepte un `childId`, et le site ne l'envoyait jamais :
+ * faute de savoir qui etaient les enfants, toute place prise depuis le web
+ * partait avec `child_id = null`. Pour un parent de deux enfants, les deux
+ * reservations d'une meme seance se confondaient, et la preuve de presence
+ * disait « Vous etiez la » au lieu de nommer l'enfant.
+ *
+ * L'application lit ses enfants dans sa base locale, synchronisee par
+ * `/sync/pull` ; le web n'a pas de base locale. Cette route lui donne la
+ * meme liste.
+ *
+ * --- Pourquoi `asUser` et non `asService` ------------------------------
+ *
+ * La politique « enfants : geres par le parent » fait tout le travail :
+ * `parent_id = my_parent_id()`. Un autre compte lit une liste vide, et aucun
+ * filtre ecrit a la main ne peut l'oublier. Un role sans fiche parent — un
+ * enseignant, un etudiant majeur — recoit `[]` : c'est une absence
+ * d'enfants, pas une erreur.
+ */
+app.get('/children', async (c) => {
+  const { data, error } = await asUser(tokenOf(c))
+    .from('children')
+    .select('id, first_name, school_name, levels ( id, name )')
+    .order('first_name')
+  if (error) throw error
+
+  return c.json(
+    (data ?? []).map((ligne) => {
+      // PostgREST rend l'objet lie tantot seul, tantot dans un tableau selon
+      // la cardinalite qu'il deduit. On accepte les deux plutot que de parier.
+      const lie = ligne.levels as unknown
+      const niveau = (Array.isArray(lie) ? lie[0] : lie) as
+        | { id?: string; name?: string }
+        | null
+      return {
+        id: ligne.id as string,
+        firstName: ligne.first_name as string,
+        levelId: niveau?.id ?? undefined,
+        levelName: niveau?.name ?? undefined,
+        schoolName: (ligne.school_name as string | null) ?? undefined,
+      }
+    }),
+  )
+})
 
 app.get('/enrolments', async (c) => {
   const { data, error } = await asUser(tokenOf(c))
@@ -6612,11 +6715,49 @@ app.get('/ai/conversations/:id', async (c) => {
   })
 })
 
+/**
+ * Les formats d'image acceptes en piece jointe.
+ *
+ * Trois, et pas un de plus : ce sont ceux que produit l'appareil photo d'un
+ * telephone, et ceux que le modele lit nativement. Un PDF demanderait
+ * l'API de fichiers de Google — un televersement separe, un identifiant a
+ * garder, une duree de vie a gerer — pour un cas qui n'est pas celui d'une
+ * photo de cahier.
+ */
+const AI_IMAGES = ['image/jpeg', 'image/png', 'image/webp'] as const
+
+/**
+ * Le poids maximal d'une piece, apres encodage.
+ *
+ * Quatre megaoctets de base64, soit environ trois megaoctets de fichier :
+ * une photo de cahier prise au telephone et compressee tient largement
+ * dedans. Au-dela, c'est une photo non compressee — elle coute une seconde
+ * de televersement par megaoctet sur un reseau guineen, et le modele n'en
+ * lit pas davantage.
+ */
+const AI_PIECE_MAX = 4 * 1024 * 1024
+
 const aiSchema = z.object({
   message: z.string().min(1).max(4000),
   feature: z.enum(['HOMEWORK', 'COURSE', 'GENERAL']).default('GENERAL'),
   /** Absent au premier message : la route ouvre alors un fil. */
   conversationId: z.string().min(1).optional(),
+  /**
+   * Une image, encodee en base64, sans son prefixe `data:`.
+   *
+   * Une seule, et seulement sur la question courante : renvoyer les images
+   * de tout l'historique a chaque tour multiplierait la facture par le
+   * nombre d'echanges sans rien apporter — le modele a deja decrit l'image
+   * dans sa reponse, et c'est ce texte qui fait le contexte.
+   */
+  attachment: z
+    .object({
+      mimeType: z.enum(AI_IMAGES),
+      data: z.string().min(1).max(AI_PIECE_MAX),
+      /** Le nom du fichier, pour l'ecrire dans le fil. Jamais envoye au modele. */
+      name: z.string().max(200).optional(),
+    })
+    .optional(),
 })
 
 app.post('/ai/chat', async (c) => {
@@ -6638,7 +6779,7 @@ app.post('/ai/chat', async (c) => {
   if (!corps.success) {
     return c.json({ error: 'Message vide ou trop long (4 000 signes).' }, 400)
   }
-  const { message, feature } = corps.data
+  const { message, feature, attachment } = corps.data
 
   const service = asService()
 
@@ -6715,13 +6856,40 @@ app.post('/ai/chat', async (c) => {
     role: m.role as 'USER' | 'MODEL',
     body: m.body as string,
   }))
-  historique.push({ role: 'USER', body: message })
+  // L'image accompagne **le dernier tour seulement**. Les tours precedents
+  // viennent de la base, qui ne garde que leur texte.
+  historique.push({
+    role: 'USER',
+    body: message,
+    ...(attachment
+      ? {
+          attachment: {
+            mimeType: attachment.mimeType,
+            data: attachment.data,
+          },
+        }
+      : {}),
+  })
 
-  // La question est enregistree avant l'appel : si le modele echoue, elle
-  // reste dans le fil et la personne la retrouve au lieu de la retaper.
-  await service
-    .from('ai_messages')
-    .insert({ conversation_id: filId, role: 'USER', body: message })
+  /*
+   * La question est enregistree avant l'appel : si le modele echoue, elle
+   * reste dans le fil et la personne la retrouve au lieu de la retaper.
+   *
+   * **L'image n'est pas enregistree**, et c'est deliberé. Une photo de
+   * cahier porte souvent le nom de l'enfant, parfois celui de l'ecole ; la
+   * garder ferait de cette table un depot de donnees d'enfants que rien
+   * dans le produit ne reclame. Le fil garde la mention qu'une piece a ete
+   * jointe, et cela suffit a relire l'echange.
+   */
+  await service.from('ai_messages').insert({
+    conversation_id: filId,
+    role: 'USER',
+    body: attachment
+      ? `${message}
+
+[Image jointe : ${attachment.name ?? 'photo'}]`
+      : message,
+  })
 
   const depart = Date.now()
   try {
@@ -7301,12 +7469,492 @@ app.patch('/courses/:id', async (c) => {
 })
 
 /**
+ * La preuve de presence d'une seance, pour la famille.
+ *
+ * --- Ce que cette route sert -------------------------------------------
+ *
+ * « Votre enfant etait la. Vous le voyez. » C'est la promesse faite au
+ * parent, et la seule chose qu'il vient chercher apres une seance. Les
+ * minutes partaient deja avec `/live/my-sessions` ; ce qui manquait, ce sont
+ * les trois faits que la charte demande autour d'elles : l'heure d'arrivee,
+ * les points de controle auxquels l'eleve a repondu, et ce qui a ete
+ * travaille.
+ *
+ * --- Qui peut la lire ---------------------------------------------------
+ *
+ * La famille qui detient la place, et le professeur du cours. Personne
+ * d'autre : « les minutes de presence d'un eleve ne s'affichent qu'a son
+ * parent et a son professeur ».
+ *
+ * Lue sous la cle de service, et restreinte **a la main** : la presence est
+ * ecrite par les webhooks LiveKit, donc sous une identite qui n'est celle de
+ * personne, et les politiques de `session_attendance` ne sauraient pas
+ * decider ici. Le controle ci-dessous est donc le seul qui existe — c'est
+ * pourquoi il est le premier du corps, avant toute lecture.
+ */
+app.get('/live/sessions/:id/presence', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const sessionId = c.req.param('id')
+  const service = asService()
+
+  // --- Qui demande ? -----------------------------------------------------
+  const { data: parent } = await service
+    .from('parents')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const teacherId = await teacherIdOf(userId)
+
+  const { data: seance } = await service
+    .from('live_sessions')
+    .select(
+      'id, starts_at, duration_minutes, status, recording_status, '
+        + 'recording_video_id, '
+        + 'live_courses!inner ( id, title, teacher_id, subjects ( name ), '
+        + 'levels ( name ) )',
+    )
+    .eq('id', sessionId)
+    .maybeSingle()
+
+  if (!seance) return c.json({ error: 'Seance introuvable.' }, 404)
+
+  // La jointure `!inner` imbriquee depasse l'inference de supabase-js, qui
+  // rend alors un type d'erreur. Meme transtypage que partout ailleurs.
+  const lue = seance as unknown as Record<string, unknown>
+  const lie = lue.live_courses
+  const cours = (Array.isArray(lie) ? lie[0] : lie) as Record<
+    string,
+    unknown
+  > | null
+
+  // --- La place de cette famille sur cette seance -----------------------
+  //
+  // Une seule, celle qui est confirmee : une place annulee n'a pas de
+  // presence a montrer, et une place en attente non plus.
+  const { data: place } = parent
+    ? await service
+        .from('session_enrolments')
+        .select('id, child_id, children ( first_name )')
+        .eq('session_id', sessionId)
+        .eq('parent_id', parent.id)
+        .eq('status', 'CONFIRMED')
+        .maybeSingle()
+    : { data: null }
+
+  const estLeProfesseur = Boolean(teacherId) && cours?.teacher_id === teacherId
+  if (!place && !estLeProfesseur) {
+    // Indistinguable d'une seance inexistante, volontairement : dire « vous
+    // n'avez pas de place sur cette seance » confirmerait qu'elle existe et
+    // qui la suit.
+    return c.json({ error: 'Seance introuvable.' }, 404)
+  }
+
+  // --- La presence --------------------------------------------------------
+  //
+  // Une ligne par entree en salle : un enfant qui perd le reseau et revient
+  // en a deux. On additionne les minutes et on garde la **premiere** entree,
+  // qui est l'heure d'arrivee.
+  const { data: presences } = place
+    ? await service
+        .from('attendance_detail')
+        .select('joined_at, minutes')
+        .eq('enrolment_id', place.id)
+        .order('joined_at', { ascending: true })
+    : { data: [] }
+
+  const lignes = presences ?? []
+  const minutes = Math.min(
+    lignes.reduce((total, l) => total + Number(l.minutes ?? 0), 0),
+    Number(lue.duration_minutes ?? 90),
+  )
+  const arrivee = lignes.length > 0 ? String(lignes[0].joined_at) : null
+
+  // --- Les points de controle --------------------------------------------
+  const { data: controles } = await service
+    .from('session_checkpoints')
+    .select('id')
+    .eq('session_id', sessionId)
+
+  const idsControles = (controles ?? []).map((cp) => cp.id as string)
+  const { count: repondus } = place && idsControles.length > 0
+    ? await service
+        .from('checkpoint_answers')
+        .select('checkpoint_id', { count: 'exact', head: true })
+        .eq('enrolment_id', place.id)
+        .in('checkpoint_id', idsControles)
+    : { count: 0 }
+
+  const enfant = place
+    ? ((place.children as { first_name?: string } | null)?.first_name ?? null)
+    : null
+  const matiere = cours?.subjects as { name?: string } | null
+  const niveau = cours?.levels as { name?: string } | null
+
+  return c.json({
+    sessionId,
+    startsAt: lue.starts_at,
+    durationMinutes: lue.duration_minutes,
+    // Le prenom, et rien d'autre : la phrase se lit « Aissatou a suivi 52
+    // minutes sur 60 », pas « l'eleve de la place 7 ».
+    childName: enfant,
+    minutesAttended: minutes,
+    /*
+     * L'heure d'arrivee, et jamais un retard calcule.
+     *
+     * « Ne jamais faire de reproche. Un retard se dit avec l'heure
+     * d'arrivee. » Le serveur rend donc l'heure ; c'est l'ecran qui decide
+     * s'il la montre, et il ne la commente pas.
+     */
+    joinedAt: arrivee,
+    checkpointsAnswered: repondus ?? 0,
+    checkpointsTotal: idsControles.length,
+    // Ce qui a ete travaille : le titre du cours, qui est ce que le
+    // professeur a nomme en le publiant.
+    title: cours?.title ?? null,
+    subject: matiere?.name ?? null,
+    level: niveau?.name ?? null,
+    /*
+     * L'etat de l'enregistrement, pas son identifiant : il n'est pas lisible
+     * sans signature, et le donner inviterait a le faire fuir.
+     *
+     * C'est lui qui porte la phrase de rattrapage — « les minutes manquantes
+     * sont sur l'enregistrement » — et la charte en fait une regle : une
+     * absence se dit avec le moyen de rattraper.
+     */
+    replay: lue.recording_video_id
+      ? ((lue.recording_status as string | null) ?? 'TRANSFERRING')
+      : null,
+  })
+})
+
+/**
  * L'application elle-meme, sans adaptateur.
  *
  * Exportee pour que Cloudflare Workers la serve directement
  * (`worker.ts`) : Hono tourne nativement sur les deux plateformes, et un
  * second exemplaire du code de routage aurait diverge du premier.
  */
+/* ===========================================================================
+ * L'espace d'exploitation
+ * ===========================================================================
+ *
+ * --- Ce qui n'existait pas ------------------------------------------------
+ *
+ * Deux files se remplissaient sans que personne puisse y repondre : les
+ * demandes de retrait des professeurs, et les echanges de la boutique. On y
+ * repondait dans l'editeur SQL de Supabase — a la main, sans trace, avec la
+ * cle de service ouverte dans un onglet.
+ *
+ * Ce sont les deux operations qui font tourner l'entreprise. Payer les
+ * professeurs, c'est l'offre entiere ; livrer les lots, c'est la boucle de
+ * retour entiere.
+ *
+ * --- Qui a le droit -------------------------------------------------------
+ *
+ * Un compte dont `profiles.role` vaut `ADMIN`, verifie **a chaque appel** et
+ * sous la cle de service. Pas de RLS ici : ces routes lisent la file de tous
+ * les professeurs, ce qu'aucune politique de ligne ne doit ouvrir a un compte
+ * de navigateur.
+ *
+ * `ADMIN` est hors de portee d'un client : le schema d'inscription n'accepte
+ * que `TEACHER | INSTITUTION | PARENT | STUDENT`, et `/account` refuse de
+ * changer le role d'un compte deja cree. La valeur ne se pose donc qu'avec la
+ * cle de service ou dans l'editeur SQL.
+ *
+ * --- Ce qui est journalise ------------------------------------------------
+ *
+ * Tout. Le middleware d'audit couvre deja toute mutation ; `isAuditable`
+ * ajoute les lectures de `/operations`, parce que lire qui attend combien
+ * d'argent est une donnee personnelle.
+ */
+
+/** Le compte est-il de la maison ? Rend son identifiant, ou `null`. */
+async function operateurOf(userId: string | undefined): Promise<string | null> {
+  if (!userId) return null
+  const { data } = await asService()
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle()
+  return data?.role === 'ADMIN' ? userId : null
+}
+
+/**
+ * La file des retraits a regler.
+ *
+ * Chaque ligne porte **ce que l'operateur doit savoir pour decider** : qui,
+ * combien, par quel canal, depuis quand — et le revenu recalcule du
+ * professeur, pour qu'il puisse voir si la somme est due sans ouvrir un
+ * second ecran.
+ */
+app.get('/operations/payouts', async (c) => {
+  const operateur = await operateurOf(c.get('userId'))
+  if (!operateur) return c.json({ error: 'Reserve a l’exploitation.' }, 403)
+
+  const service = asService()
+  const { data, error } = await service
+    .from('payout_requests')
+    .select(
+      `id, amount, method, method_last4, status, requested_at,
+       teachers ( id, profiles ( first_name, last_name, phone ) )`,
+    )
+    .in('status', [...RETRAITS_OUVERTS])
+    .order('requested_at', { ascending: true })
+    .limit(100)
+
+  if (error) throw error
+
+  const lignes = (data ?? []) as unknown as Record<string, unknown>[]
+
+  // Le revenu de chaque professeur, recalcule. Une file de cent lignes fait
+  // cent appels au pire ; elle en fait rarement dix, et la justesse du
+  // montant vaut plus ici que le nombre d'allers-retours.
+  const sorties = []
+  for (const ligne of lignes) {
+    const lie = ligne.teachers as Record<string, unknown> | null
+    const prof = (Array.isArray(lie) ? lie[0] : lie) as
+      | Record<string, unknown>
+      | null
+    const fiche = prof?.profiles as Record<string, unknown> | null
+    const personne = (Array.isArray(fiche) ? fiche[0] : fiche) as
+      | Record<string, unknown>
+      | null
+
+    let disponible: number | null = null
+    if (prof?.id) {
+      const { data: revenu } = await service.rpc('revenus_enseignant', {
+        prof: prof.id as string,
+      })
+      const premier = Array.isArray(revenu) ? revenu[0] : revenu
+      const r = premier as Record<string, unknown> | null
+      disponible = r?.disponible == null ? null : Number(r.disponible)
+    }
+
+    sorties.push({
+      id: ligne.id as string,
+      amount: Number(ligne.amount ?? 0),
+      method: ligne.method as string,
+      methodLast4: (ligne.method_last4 as string | null) ?? null,
+      status: ligne.status as string,
+      requestedAt: ligne.requested_at as string,
+      teacherId: (prof?.id as string) ?? null,
+      teacherName: [personne?.first_name, personne?.last_name]
+        .filter(Boolean)
+        .join(' '),
+      // Le numero complet, parce que l'operateur doit envoyer l'argent
+      // quelque part. C'est la seule route du produit qui le rend, et elle
+      // est fermee a tout ce qui n'est pas `ADMIN`.
+      teacherPhone: (personne?.phone as string | null) ?? null,
+      available: disponible,
+    })
+  }
+
+  return c.json({ payouts: sorties })
+})
+
+const decisionRetrait = z.object({
+  decision: z.enum(['PAID', 'REJECTED']),
+  note: z.string().max(500).optional(),
+  /**
+   * Le montant, retape par l'operateur.
+   *
+   * C'est la seule operation du produit qu'on ne peut pas annuler : l'argent
+   * part par Orange Money et ne revient pas. Retaper la somme est la garde
+   * la plus simple contre la ligne d'a cote — celle qu'aucune verification
+   * de permission ne remplace.
+   */
+  amountConfirmed: z.number().int().positive().optional(),
+})
+
+app.post('/operations/payouts/:id/decision', async (c) => {
+  const operateur = await operateurOf(c.get('userId'))
+  if (!operateur) return c.json({ error: 'Reserve a l’exploitation.' }, 403)
+
+  const parsed = decisionRetrait.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) return c.json({ error: 'Decision non precisee.' }, 400)
+  const { decision, note, amountConfirmed } = parsed.data
+
+  const service = asService()
+  const { data: demande } = await service
+    .from('payout_requests')
+    .select('id, amount, status')
+    .eq('id', c.req.param('id'))
+    .maybeSingle()
+
+  if (!demande) return c.json({ error: 'Demande introuvable.' }, 404)
+
+  /*
+   * La decision vient du module pur, et pas d'ici.
+   *
+   * Les trois gardes — deja tranchee, refus sans motif, montant retape qui
+   * ne correspond pas — sont verifiees dans `_lib/operations.ts`, sans base
+   * et sans reseau. Une garde qu'on ne peut eprouver qu'en montant une
+   * infrastructure n'est jamais eprouvee, et c'est la seule operation du
+   * produit qu'on ne peut pas annuler.
+   */
+  const verdict = deciderRetrait(
+    {
+      id: demande.id as string,
+      amount: Number(demande.amount),
+      status: demande.status as string,
+    },
+    { decision, note, amountConfirmed },
+  )
+
+  if (!verdict.ok) {
+    if (verdict.deja) {
+      return c.json({ id: demande.id, status: verdict.status, already: true })
+    }
+    return c.json({ error: verdict.message }, verdict.code as 400 | 409)
+  }
+
+  // Mise a jour conditionnelle : deux operateurs qui tranchent en meme temps
+  // n'ecrivent qu'une fois, et le second lit `already`.
+  const { data: regle, error } = await service
+    .from('payout_requests')
+    .update({
+      status: verdict.status,
+      decision_note: verdict.note,
+      settled_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', demande.id as string)
+    .in('status', [...RETRAITS_OUVERTS])
+    .select('id, status')
+    .maybeSingle()
+
+  if (error) throw error
+  if (!regle) {
+    return c.json({ id: demande.id, status: demande.status, already: true })
+  }
+
+  return c.json({ id: regle.id, status: regle.status })
+})
+
+/** La file des lots a remettre. */
+app.get('/operations/redemptions', async (c) => {
+  const operateur = await operateurOf(c.get('userId'))
+  if (!operateur) return c.json({ error: 'Reserve a l’exploitation.' }, 403)
+
+  const { data, error } = await asService()
+    .from('redemptions')
+    .select(
+      `id, points_spent, status, requested_at,
+       shop_items ( id, name ),
+       profiles ( first_name, last_name, phone, city )`,
+    )
+    .eq('status', 'PENDING')
+    .order('requested_at', { ascending: true })
+    .limit(100)
+
+  if (error) throw error
+
+  const un = (valeur: unknown) => {
+    const lie = Array.isArray(valeur) ? valeur[0] : valeur
+    return (lie ?? null) as Record<string, unknown> | null
+  }
+
+  return c.json({
+    redemptions: (data ?? []).map((ligne) => {
+      const lot = un((ligne as Record<string, unknown>).shop_items)
+      const personne = un((ligne as Record<string, unknown>).profiles)
+      return {
+        id: ligne.id as string,
+        pointsSpent: Number(ligne.points_spent ?? 0),
+        requestedAt: ligne.requested_at as string,
+        itemName: (lot?.name as string) ?? 'Lot retire du catalogue',
+        studentName: [personne?.first_name, personne?.last_name]
+          .filter(Boolean)
+          .join(' '),
+        studentPhone: (personne?.phone as string | null) ?? null,
+        city: (personne?.city as string | null) ?? null,
+      }
+    }),
+  })
+})
+
+const decisionLot = z.object({
+  decision: z.enum(['DELIVERED', 'REFUSED']),
+  note: z.string().max(500).optional(),
+})
+
+app.post('/operations/redemptions/:id/decision', async (c) => {
+  const operateur = await operateurOf(c.get('userId'))
+  if (!operateur) return c.json({ error: 'Reserve a l’exploitation.' }, 403)
+
+  const parsed = decisionLot.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) return c.json({ error: 'Decision non precisee.' }, 400)
+  const { decision, note } = parsed.data
+
+  const service = asService()
+  const id = c.req.param('id')
+
+  if (decision === 'REFUSED') {
+    /*
+     * Par la fonction, et pas autrement.
+     *
+     * Un refus touche trois choses : le statut, le stock du lot, et les
+     * points de l'eleve. Trois ecritures separees laissent une fenetre ou
+     * l'eleve a perdu ses points sans que le lot soit revenu en stock.
+     */
+    const verdict = deciderLot({ decision, note })
+    if (!verdict.ok) return c.json({ error: verdict.message }, 400)
+
+    const { data, error } = await service.rpc('refuser_lot', {
+      demande: id,
+      motif: note,
+    })
+    if (error) throw error
+
+    const premier = Array.isArray(data) ? data[0] : data
+    const resultat = premier as Record<string, unknown> | null
+    const raison = (resultat?.raison as string | null) ?? null
+
+    if (raison === 'INCONNUE') {
+      return c.json({ error: 'Demande introuvable.' }, 404)
+    }
+    if (raison === 'DEJA_TRANCHEE') {
+      return c.json({ id, status: 'REFUSED', already: true })
+    }
+    if (raison) return c.json({ error: 'Refus impossible.' }, 409)
+
+    return c.json({
+      id,
+      status: 'REFUSED',
+      pointsRendus: Number(resultat?.rendu ?? 0),
+    })
+  }
+
+  // La remise, elle, ne touche qu'une ligne : la mise a jour conditionnelle
+  // suffit, et elle est idempotente par construction.
+  const { data: remis, error } = await service
+    .from('redemptions')
+    .update({
+      status: 'DELIVERED',
+      decided_at: new Date().toISOString(),
+      note: note ?? null,
+    })
+    .eq('id', id)
+    .eq('status', 'PENDING')
+    .select('id, status')
+    .maybeSingle()
+
+  if (error) throw error
+  if (!remis) {
+    const { data: deja } = await service
+      .from('redemptions')
+      .select('id, status')
+      .eq('id', id)
+      .maybeSingle()
+    if (!deja) return c.json({ error: 'Demande introuvable.' }, 404)
+    return c.json({ id: deja.id, status: deja.status, already: true })
+  }
+
+  return c.json({ id: remis.id, status: remis.status })
+})
+
 export { app }
 
 export const GET = handle(app)

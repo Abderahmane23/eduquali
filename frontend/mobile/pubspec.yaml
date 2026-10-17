@@ -96,6 +96,7 @@ dependencies:
   # ci-dessus). Avant toute mise a jour, relire
   # `android/build.gradle` dans le cache pub.
   livekit_client: 2.13.0
+  flutter_svg: ^2.3.0
 
 # path_provider_android 2.3.0 introduit une dependance sur `jni`, qui compile
 # du code natif via CMake et impose donc l'installation du NDK (~1 Go) alors
@@ -119,15 +120,46 @@ flutter:
   #
   # Deux graisses, 312 Ko au total sur un APK de 53 Mo. Licence OFL, texte
   # conserve a cote des fichiers.
+  # Les trois polices de la charte EduQuali, embarquees.
+  #
+  # Embarquees et non chargees en ligne : l'application se transmet d'un
+  # telephone a l'autre par Bluetooth et par Xender, et doit s'afficher sans
+  # reseau. 320 Ko en TTF pour les sept fichiers.
+  #
+  # Converties depuis les woff2 du systeme de design : le moteur Flutter ne
+  # lit que TTF, OTF et TTC sur Android. Un woff2 declare ici ne leve aucune
+  # erreur — il ne s'affiche simplement pas, et l'application retombe sur la
+  # police du systeme.
   fonts:
-    - family: Poppins
+    # Titres, chiffres et prix.
+    - family: Gabarito
       fonts:
-        - asset: assets/fonts/Poppins-SemiBold.ttf
+        - asset: assets/fonts/Gabarito-600.ttf
           weight: 600
-        - asset: assets/fonts/Poppins-ExtraBold.ttf
+        - asset: assets/fonts/Gabarito-700.ttf
+          weight: 700
+        - asset: assets/fonts/Gabarito-800.ttf
           weight: 800
+    # Tout le reste.
+    - family: Lexend
+      fonts:
+        - asset: assets/fonts/Lexend-400.ttf
+          weight: 400
+        - asset: assets/fonts/Lexend-500.ttf
+          weight: 500
+        - asset: assets/fonts/Lexend-600.ttf
+          weight: 600
+    # Un mot par ecran, comme une annotation dans la marge.
+    - family: Playwrite FR Moderne
+      fonts:
+        - asset: assets/fonts/PlaywriteFRModerne-400.ttf
+          weight: 400
 
   assets:
+    # Les six fichiers du logo, en traces vectoriels : aucune police n'est
+    # necessaire pour l'afficher, et il reste net a toute taille — de 18 px
+    # de haut, le plancher de la charte, a une couverture plein ecran.
+    - assets/logos/
     - assets/seed/
     - assets/onboarding/
     - assets/geography/

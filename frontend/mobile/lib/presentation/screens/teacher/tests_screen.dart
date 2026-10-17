@@ -36,7 +36,7 @@ class TestsScreen extends ConsumerWidget {
               icon: Icons.fact_check_outlined,
               title: 'Aucun test disponible',
               message:
-                  'Selectionnez vos matières et vos niveaux : un test vous '
+                  'Selectionnez vos matières et vos niveaux : un test vous '
                   'sera propose pour chaque combinaison.',
               actionLabel: 'Ajouter mes matières',
               onAction: () => context.push('/teacher/subjects'),
@@ -106,13 +106,13 @@ class _TestCard extends StatelessWidget {
                   children: [
                     Text(test.subject.name, style: text.titleMedium),
                     const SizedBox(height: 2),
-                    Text('Niveau : ${test.level.name}', style: text.bodySmall),
+                    Text('Niveau : ${test.level.name}', style: text.bodySmall),
                   ],
                 ),
               ),
               if (cert != null)
                 StatusPill(
-                  label: '${cert.score} %',
+                  label: '${cert.score} %',
                   tone: StatusTone.success,
                   icon: Icons.verified,
                 )

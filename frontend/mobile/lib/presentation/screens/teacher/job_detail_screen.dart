@@ -341,7 +341,7 @@ class _MatchBreakdown extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Compatibilite ${match.value} %',
+                      'Compatibilite ${match.value} %',
                       style: text.titleMedium,
                     ),
                     const SizedBox(height: 2),

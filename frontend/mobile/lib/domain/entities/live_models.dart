@@ -109,6 +109,7 @@ class MySession {
     required this.durationMinutes,
     required this.status,
     required this.price,
+    this.minutesAttended = 0,
     this.childName,
     this.replay,
     this.subject,
@@ -118,6 +119,17 @@ class MySession {
   });
 
   final String enrolmentId;
+
+  /// Combien de minutes l'eleve a suivies sur cette seance.
+  ///
+  /// Zero avant la seance, et c'est juste : il n'y a rien a montrer avant.
+  /// L'ecran s'en sert pour n'afficher la preuve de presence que sur les
+  /// seances passees.
+  ///
+  /// Compte par le serveur de visioconference, jamais declare par l'eleve :
+  /// « compte par EduQuali, pas declare par l'eleve ». C'est ce qui separe ce
+  /// chiffre d'une case a cocher.
+  final int minutesAttended;
 
   /// `PENDING` | `CONFIRMED` | `CANCELLED`.
   final String enrolmentStatus;
@@ -166,6 +178,7 @@ class MySession {
         DateTime.tryParse((json['startsAt'] ?? '').toString())?.toLocal() ??
         DateTime.now(),
     durationMinutes: _entier(json['durationMinutes'], 90),
+    minutesAttended: _entier(json['minutesAttended'], 0),
     status: (json['status'] ?? 'PLANNED').toString(),
     price: _entier(json['price'], 0),
     childName: _texte(json['childName']),
@@ -514,4 +527,87 @@ List<StudyLine> _lignes(Object? valeur, String cle) {
       )
       .where((ligne) => ligne.label.isNotEmpty)
       .toList(growable: false);
+}
+
+
+/// La preuve de presence d'une seance.
+///
+/// « Votre enfant etait la. Vous le voyez. » C'est la promesse faite au
+/// parent, et la seule chose qu'il vient chercher apres une seance.
+///
+/// Les trois faits que la charte demande autour des minutes : l'heure
+/// d'arrivee, les points de controle auxquels l'eleve a repondu, et ce qui a
+/// ete travaille. Pas un de plus — « l'ecran ne montre ni note, ni
+/// classement, ni comparaison avec les autres eleves ».
+class PresenceProof {
+  const PresenceProof({
+    required this.sessionId,
+    required this.startsAt,
+    required this.durationMinutes,
+    required this.minutesAttended,
+    required this.checkpointsAnswered,
+    required this.checkpointsTotal,
+    this.childName,
+    this.joinedAt,
+    this.title,
+    this.subject,
+    this.level,
+    this.replay,
+  });
+
+  factory PresenceProof.fromJson(Map<String, dynamic> json) => PresenceProof(
+    sessionId: (json['sessionId'] ?? '').toString(),
+    startsAt:
+        DateTime.tryParse((json['startsAt'] ?? '').toString())?.toLocal() ??
+        DateTime.now(),
+    durationMinutes: _entier(json['durationMinutes'], 90),
+    minutesAttended: _entier(json['minutesAttended'], 0),
+    checkpointsAnswered: _entier(json['checkpointsAnswered'], 0),
+    checkpointsTotal: _entier(json['checkpointsTotal'], 0),
+    childName: json['childName']?.toString(),
+    joinedAt: DateTime.tryParse((json['joinedAt'] ?? '').toString())?.toLocal(),
+    title: json['title']?.toString(),
+    subject: json['subject']?.toString(),
+    level: json['level']?.toString(),
+    replay: json['replay']?.toString(),
+  );
+
+  final String sessionId;
+  final DateTime startsAt;
+  final int durationMinutes;
+
+  /// Compte par le serveur de visioconference, jamais declare par l'eleve.
+  /// C'est ce qui separe ce chiffre d'une case a cocher.
+  final int minutesAttended;
+
+  final int checkpointsAnswered;
+  final int checkpointsTotal;
+
+  /// Le prenom de l'eleve. Nul pour un compte qui suit pour lui-meme.
+  final String? childName;
+
+  /// L'heure d'entree en salle. **Jamais un retard calcule** : « un retard se
+  /// dit avec l'heure d'arrivee », et l'ecran ne la commente pas.
+  final DateTime? joinedAt;
+
+  final String? title;
+  final String? subject;
+  final String? level;
+
+  /// `READY` | `TRANSFERRING` | `FAILED`, ou nul s'il n'y a pas
+  /// d'enregistrement. C'est lui qui porte la phrase de rattrapage.
+  final String? replay;
+
+  /// A-t-il suivi la seance ?
+  bool get etaitLa => minutesAttended > 0;
+
+  /// Les minutes manquees. Zero quand il etait la du debut a la fin.
+  int get minutesManquees =>
+      (durationMinutes - minutesAttended).clamp(0, durationMinutes);
+
+  /// Vaut-il la peine de proposer l'enregistrement ?
+  ///
+  /// Cinq minutes : en dessous, c'est une entree un peu tardive, et proposer
+  /// de rattraper trois minutes ferait d'un detail un probleme.
+  bool get aRattraper => minutesManquees >= 5;
 }

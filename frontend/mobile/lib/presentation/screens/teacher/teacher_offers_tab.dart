@@ -223,11 +223,8 @@ class _FeaturedOffer extends StatelessWidget {
         width: 268,
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.heroStart, AppColors.heroEnd],
-          ),
+          // Un aplat, pas un degrade.
+          color: AppColors.marqueViolette,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.raised,
         ),

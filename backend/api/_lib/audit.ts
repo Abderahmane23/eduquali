@@ -140,7 +140,15 @@ export function isAuditable(method: string, path: string): boolean {
   if (path === '/health') return false
   // Toute mutation, et les lectures de donnees personnelles.
   if (method !== 'GET' && method !== 'HEAD') return true
-  return path.startsWith('/teachers')
+  /*
+   * Les lectures qui portent des donnees personnelles.
+   *
+   * `/teachers` rend des fiches. `/operations` rend la file des retraits —
+   * qui attend combien d'argent, et sur quel numero l'envoyer. C'est la
+   * seule partie du produit qui rend un numero de telephone complet, et une
+   * consultation doit y laisser la meme trace qu'une decision.
+   */
+  return path.startsWith('/teachers') || path.startsWith('/operations')
 }
 
 type Insert = (row: AuditRow) => Promise<unknown>

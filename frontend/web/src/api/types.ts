@@ -350,6 +350,25 @@ export interface Promotion {
 }
 
 /**
+ * Une mise en avant, vue par l'établissement qui l'a payée.
+ *
+ * `Promotion` plus haut est la même ligne vue par une famille : un titre et
+ * un message. Celle-ci porte ce que l'école vient mesurer — l'état, les
+ * affichages comptés, et la date de fin. Deux vues, deux noms.
+ */
+export interface MaPromotion {
+  id: string
+  title: string
+  message?: string
+  status: 'DRAFT' | 'ACTIVE' | 'ENDED'
+  /** Affichages comptés par le serveur, une fois par personne et par jour. */
+  views: number
+  startsAt?: string
+  endsAt?: string
+  createdAt: string
+}
+
+/**
  * Une offre de cours a domicile.
  *
  * C'est ce qu'une famille vient chercher en premier, et c'est publiable : le
@@ -562,6 +581,72 @@ export interface MySession {
   price: number
   subject?: RefItem
   level?: RefItem
+  /**
+   * Les minutes suivies, comptées par le serveur de visioconférence.
+   *
+   * Absentes tant que la séance n'a pas eu lieu. Le serveur les renvoie
+   * depuis le 12/10 ; le web ne les lisait pas, et la liste des séances
+   * passées ne disait donc pas si l'enfant y était.
+   */
+  minutesAttended?: number
+}
+
+/**
+ * Un enfant inscrit par un compte parent.
+ *
+ * --- Pourquoi le web en avait besoin ------------------------------------
+ *
+ * `POST /live/enrol` accepte un `childId` optionnel, et le web ne l'envoyait
+ * jamais : toute place prise depuis le site était enregistrée avec
+ * `child_id = null`. Conséquences, pour un parent de deux enfants : les deux
+ * réservations se confondaient en une seule ligne par séance, et la preuve de
+ * présence disait « Vous étiez là » au lieu de nommer l'enfant.
+ *
+ * L'application mobile n'avait pas ce défaut — elle lit ses enfants dans sa
+ * base locale. Le web les lit directement dans `children` : la règle RLS
+ * « enfants : gérés par le parent » existe pour cela.
+ */
+export interface Child {
+  id: string
+  firstName: string
+  levelId?: string
+  levelName?: string
+  schoolName?: string
+}
+
+/**
+ * La preuve de présence : ce qu'un parent reçoit après chaque séance.
+ *
+ * --- Pourquoi ce type existe --------------------------------------------
+ *
+ * C'est le cœur de la promesse — il paie, et il sait. Le serveur sert
+ * `GET /live/sessions/:id/presence` depuis le 12/10 et l'application le lit ;
+ * sur le web, rien ne l'appelait. Une famille qui n'a pas de téléphone
+ * Android n'avait donc aucun moyen de vérifier ce qu'elle payait.
+ *
+ * Ce que ce type ne porte pas, et ne portera pas : ni note, ni classement,
+ * ni comparaison avec les autres élèves. EduQuali promet ce qu'il mesure.
+ */
+export interface PresenceProof {
+  sessionId: string
+  startsAt: string
+  durationMinutes: number
+  /** Comptées par le serveur, jamais déclarées par l'élève. */
+  minutesAttended: number
+  checkpointsAnswered: number
+  checkpointsTotal: number
+  /** Le prénom de l'élève. Absent pour un compte qui suit pour lui-même. */
+  childName?: string
+  /**
+   * L'heure d'entrée en salle. **Jamais un retard calculé** : un retard se
+   * dit avec l'heure d'arrivée, et l'écran ne la commente pas.
+   */
+  joinedAt?: string
+  title?: string
+  subject?: string
+  level?: string
+  /** L'état de l'enregistrement, ou absent s'il n'y en a pas. */
+  replay?: 'RECORDING' | 'TRANSFERRING' | 'READY' | 'FAILED'
 }
 
 /**

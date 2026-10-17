@@ -92,9 +92,9 @@ class DiplomasScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Supprimer ce diplôme ?'),
+        title: const Text('Supprimer ce diplôme ?'),
         content: Text(
-          '« ${diploma.diplomaType} — ${diploma.institutionName} » ainsi que '
+          '« ${diploma.diplomaType} — ${diploma.institutionName} » ainsi que '
           'son justificatif seront supprimes de votre appareil.',
         ),
         actions: [

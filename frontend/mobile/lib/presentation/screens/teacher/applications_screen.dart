@@ -35,7 +35,7 @@ class ApplicationsScreen extends ConsumerWidget {
               icon: Icons.description_outlined,
               title: 'Aucune candidature',
               message:
-                  'Parcourez les offres et candidatez en un geste : votre '
+                  'Parcourez les offres et candidatez en un geste : votre '
                   'profil vérifié est transmis automatiquement.',
               actionLabel: 'Voir les offres',
               onAction: () => context.go(Routes.teacherOffers),
@@ -133,7 +133,7 @@ class _ApplicationCard extends ConsumerWidget {
               const Spacer(),
               if (application.matchScore != null)
                 TagChip(
-                  label: 'Compatibilite ${application.matchScore} %',
+                  label: 'Compatibilite ${application.matchScore} %',
                   tone: StatusTone.neutral,
                 ),
             ],
@@ -161,9 +161,9 @@ class _ApplicationCard extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Retirer la candidature ?'),
+        title: const Text('Retirer la candidature ?'),
         content: Text(
-          'Votre candidature pour « ${application.job.title} » sera retiree. '
+          'Votre candidature pour « ${application.job.title} » sera retiree. '
           'Vous pourrez candidater a nouveau tant que l’offre est ouverte.',
         ),
         actions: [

@@ -583,7 +583,7 @@ class _OfferCard extends ConsumerWidget {
                       minimumSize: const Size.fromHeight(44),
                       foregroundColor: AppColors.danger,
                     ),
-                    child: const Text('Refuser'),
+                    child: const Text('Décliner'),
                   ),
                 ),
               ],
@@ -619,7 +619,7 @@ class _OfferCard extends ConsumerWidget {
           maxLines: 4,
           decoration: const InputDecoration(
             hintText:
-                'Precisez le point a revoir : rémunération, date de prise de '
+                'Precisez le point a revoir : rémunération, date de prise de '
                 'poste, horaires…',
           ),
         ),
@@ -630,7 +630,7 @@ class _OfferCard extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: const Text('Envoyer'),
+            child: const Text('Envoyer ma remarque'),
           ),
         ],
       ),
@@ -1186,7 +1186,7 @@ class _InternalNotesState extends ConsumerState<_InternalNotes> {
               const SnackBar(content: Text('Notes enregistrees.')),
             );
           },
-          child: const Text('Enregistrer'),
+          child: const Text('Enregistrer l’offre'),
         ),
       ],
     ),
@@ -1463,7 +1463,7 @@ class _OfferFormState extends State<_OfferForm> {
               const Gap(AppSpacing.sm),
               InfoBanner(
                 message:
-                    'Frais de recrutement en cas d’embauche : '
+                    'Frais de recrutement en cas d’embauche : '
                     '${Fmt.money(salary)} (un mois de salaire).',
                 tone: StatusTone.neutral,
                 icon: Icons.receipt_long_outlined,

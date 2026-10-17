@@ -12,8 +12,9 @@ import { isMockBackend } from './api'
 import { useSession } from './app/session'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { PresenceBanner } from './components/PresenceBanner'
-import { Icon, Skeleton } from './components/ui'
+import { Icon } from './components/ui'
 import { Landing, Login } from './screens/Auth'
+import type { Session } from './api/types'
 import type { Role } from './onboarding/spec'
 
 /*
@@ -110,6 +111,78 @@ const Assistant = lazy(() =>
 const Shop = lazy(() =>
   import('./screens/Shop').then((m) => ({ default: m.Shop })),
 )
+/*
+ * Les ecrans d'une famille, ouverts le 17/10.
+ *
+ * Un parent ou un eleve connecte arrivait sur `/professeurs` — l'annuaire que
+ * voit un visiteur. Ses seances existaient, au bas de `/direct`, sous une
+ * grille d'une semaine entiere ; et la preuve de presence, servie par
+ * `GET /live/sessions/:id/presence` depuis le 12/10, n'avait aucun ecran.
+ */
+const AccueilFamille = lazy(() =>
+  import('./screens/Famille').then((m) => ({ default: m.AccueilFamille })),
+)
+const MesSeances = lazy(() =>
+  import('./screens/Famille').then((m) => ({ default: m.MesSeances })),
+)
+const Presence = lazy(() =>
+  import('./screens/Presence').then((m) => ({ default: m.Presence })),
+)
+/*
+ * Les concours, ouverts le 17/10.
+ *
+ * Les quatre routes du serveur existent depuis la migration 0024 et
+ * l'application Android a son ecran. Le site n'en avait aucun : un eleve
+ * sans telephone Android voyait une boutique ou depenser des points, sans
+ * la moitie des moyens d'en gagner.
+ */
+const Concours = lazy(() =>
+  import('./screens/Concours').then((m) => ({ default: m.Concours })),
+)
+/*
+ * L'exploitation, ouverte le 17/10.
+ *
+ * Deux files se remplissaient sans que personne puisse y repondre : les
+ * retraits des professeurs et les lots de la boutique. On y repondait dans
+ * l'editeur SQL de Supabase — a la main, sans trace, avec la cle de service
+ * ouverte dans un onglet.
+ */
+const Exploitation = lazy(() =>
+  import('./screens/Exploitation').then((m) => ({ default: m.Exploitation })),
+)
+/*
+ * Lire un cours video achete, ouvert le 17/10.
+ *
+ * `/videos/:itemId/url` etait servie depuis le premier jour et le site ne
+ * l'appelait jamais : un eleve pouvait **acheter** un cours sur le web et
+ * n'avait aucun moyen de le regarder.
+ */
+const CoursePlayer = lazy(() =>
+  import('./screens/CoursePlayer').then((m) => ({ default: m.CoursePlayer })),
+)
+/*
+ * Les mises en avant d'un etablissement, ouvertes le 17/10.
+ *
+ * La table existe depuis la migration 0006 et l'application Android a son
+ * onglet. Le site n'avait rien : une ecole inscrite depuis un navigateur ne
+ * pouvait ni publier une annonce ni savoir combien de familles l'avaient
+ * vue — c'est-a-dire ni acheter de la visibilite, ni la mesurer.
+ */
+const Promotions = lazy(() =>
+  import('./screens/Promotions').then((m) => ({ default: m.Promotions })),
+)
+/*
+ * Ce qu'un professeur declare enseigner, ouvert le 17/10.
+ *
+ * `/teacher/competences` existait depuis le premier jour et le site ne
+ * l'appelait jamais : un professeur inscrit depuis un navigateur deposait
+ * son diplome, passait le test — et n'apparaissait dans aucune recherche,
+ * puisqu'une famille cherche par matiere et par niveau.
+ */
+const Competences = lazy(() =>
+  import('./screens/Competences').then((m) => ({ default: m.Competences })),
+)
+
 const MesCours = lazy(() =>
   import('./screens/CourseStudio').then((m) => ({ default: m.MesCours })),
 )
@@ -175,14 +248,11 @@ export default function App() {
                 path="/"
                 element={
                   session ? (
-                    // Un professeur arrivait sur `/offres` — un tableau
-                    // d'offres d'emploi. Son tableau de bord existe depuis le
-                    // 11/10 ; les autres roles gardent leur premiere liste
-                    // utile, parce qu'ils n'en ont pas.
-                    <Navigate
-                      to={session.role === 'TEACHER' ? '/tableau' : '/professeurs'}
-                      replace
-                    />
+                    // Chaque role sur son propre ecran. Un professeur
+                    // arrivait sur `/offres` (corrige le 11/10), une famille
+                    // sur `/professeurs` — l'annuaire d'un visiteur, pour
+                    // quelqu'un qui a deja paye.
+                    <Navigate to={accueilDe(session.role)} replace />
                   ) : (
                     <Landing />
                   )
@@ -255,6 +325,13 @@ export default function App() {
 
               <Route path="/cours" element={<Courses />} />
               <Route path="/cours/:id" element={<CourseDetail />} />
+              {/* Gardee : le sommaire d'un cours achete ne se lit qu'avec
+                  une session, et RLS rend une liste vide a qui n'a pas
+                  paye. */}
+              <Route
+                path="/cours/:id/lecture"
+                element={<Guard><CoursePlayer /></Guard>}
+              />
 
               {/* Ce qui appartient a un compte le reste : candidatures,
                   tests notes, profil. */}
@@ -278,6 +355,16 @@ export default function App() {
               <Route path="/domicile" element={<Tutoring />} />
 
               <Route path="/tableau" element={<Guard><Dashboard /></Guard>} />
+              {/*
+                Deux chemins plutot qu'un ecran qui se dedouble selon le role :
+                un professeur et une famille n'ont ni la meme question ni le
+                meme code, et `/tableau` ferait telecharger le tableau du
+                professeur a une famille pour ne jamais l'afficher.
+              */}
+              <Route
+                path="/accueil"
+                element={<Guard><AccueilFamille /></Guard>}
+              />
               <Route path="/messages" element={<Guard><Messages /></Guard>} />
               <Route path="/messages/:id" element={<Guard><Messages /></Guard>} />
               <Route
@@ -288,9 +375,46 @@ export default function App() {
                 path="/profil/dossier"
                 element={<Guard><Dossier /></Guard>}
               />
+              <Route
+                path="/profil/competences"
+                element={<Guard><Competences /></Guard>}
+              />
               <Route path="/revenus" element={<Guard><Revenue /></Guard>} />
+
+              {/*
+                Les ecrans d'une famille. Gardes : ils ne montrent que ce qui
+                appartient au compte, et le serveur rend le meme 404 a qui
+                demande la preuve d'une seance qu'il ne suit pas qu'a une
+                seance inexistante.
+              */}
+              <Route path="/seances" element={<Guard><MesSeances /></Guard>} />
+              <Route
+                path="/seances/:id"
+                element={<Guard><Presence /></Guard>}
+              />
               <Route path="/assistant" element={<Guard><Assistant /></Guard>} />
               <Route path="/boutique" element={<Guard><Shop /></Guard>} />
+              {/* Gardee : on ne participe pas a un concours sans compte, et
+                  le serveur refuserait l'inscription. */}
+              <Route path="/concours" element={<Guard><Concours /></Guard>} />
+              {/*
+                Gardee deux fois, et il le faut.
+                `Guard` demande une session ; le serveur verifie a chaque
+                appel que `profiles.role` vaut `ADMIN`. La garde du
+                navigateur evite d'afficher un ecran qui echouerait — elle
+                ne protege rien par elle-meme, et c'est le serveur qui tient
+                la porte.
+              */}
+              <Route
+                path="/exploitation"
+                element={<Guard><Exploitation /></Guard>}
+              />
+              {/* Gardee : RLS ne rend les promotions qu'a l'ecole qui les a
+                  creees, et l'ecran le redit a tout autre role. */}
+              <Route
+                path="/mises-en-avant"
+                element={<Guard><Promotions /></Guard>}
+              />
 
               {/*
                 `/cours/nouveau` coexiste avec `/cours/:id` sans ordre a
@@ -322,14 +446,42 @@ export default function App() {
   )
 }
 
+/**
+ * Ou atterrit chaque role en ouvrant le site.
+ *
+ * Ecrite une fois, et lue par la redirection comme par le test de
+ * navigation : deux listes de roles finiraient par diverger, et c'est la
+ * page qu'on voit en se connectant.
+ */
+export function accueilDe(role: Session['role']): string {
+  if (role === 'TEACHER') return '/tableau'
+  if (role === 'PARENT' || role === 'STUDENT') return '/accueil'
+  if (role === 'INSTITUTION') return '/offres'
+  // Un compte d'exploitation ouvre le site pour traiter les deux files.
+  if (role === 'ADMIN') return '/exploitation'
+  return '/profil'
+}
+
 /** Squelette plutot que roue : l'attente garde la forme de la page. */
 function ScreenFallback() {
+  /*
+   * La marque, et un coup de surligneur.
+   *
+   * C'etaient quatre blocs gris. Ils gardent la forme d'une page quand on
+   * sait laquelle arrive — c'est leur role a l'interieur d'un ecran, ou ils
+   * restent. Entre deux ecrans, on ne sait pas encore quelle forme prendra
+   * la page : quatre blocs au hasard annoncent une mise en page qui ne
+   * viendra pas.
+   *
+   * `aria-busy` et le `role="status"` disent l'attente a qui ne voit pas
+   * l'animation. Le `alt` est vide : l'icone ne porte aucune information que
+   * le texte ne porte deja.
+   */
   return (
-    <div className="screen">
-      <span className="sr-only" role="status">
-        Chargement en cours
-      </span>
-      <Skeleton height={72} count={4} />
+    <div className="chargement" role="status" aria-busy="true">
+      <img className="chargement__marque" src="/favicon.svg" alt="" />
+      <span className="chargement__trait" aria-hidden="true" />
+      <span className="chargement__mot">Un instant…</span>
     </div>
   )
 }
@@ -444,15 +596,10 @@ function SignupRoute({ presetRole }: { presetRole?: Role }) {
           role,
         })
 
-        // Chaque profil arrive sur ce qui lui sert : un enseignant sur les
-        // offres, une famille sur les etablissements et les repetiteurs. Un
-        // etudiant majeur cherche la meme chose qu'une famille.
-        navigate(
-          role === 'PARENT' || role === 'STUDENT'
-            ? '/etablissements'
-            : '/offres',
-          { replace: true },
-        )
+        // Chaque profil arrive sur ce qui lui sert, et par la meme fonction
+        // que la redirection d'accueil : une famille envoyee sur
+        // `/etablissements` devait deviner ou se trouvaient les cours.
+        navigate(accueilDe(role), { replace: true })
       }}
     />
   )
@@ -483,17 +630,29 @@ const TABS_BY_ROLE = {
     { to: '/offres', label: 'Offres', icon: 'briefcase' as const },
     { to: '/revenus', label: 'Revenus', icon: 'wallet' as const },
   ],
+  /*
+   * Les quatre onglets etaient tous partages avec d'autres roles : une ecole
+   * n'avait pas un seul ecran a elle. « Mises en avant » est le premier, et
+   * il passe en tete — c'est la seule chose qu'elle achete.
+   */
   INSTITUTION: [
+    { to: '/mises-en-avant', label: 'Mises en avant', icon: 'gift' as const },
     { to: '/offres', label: 'Offres', icon: 'briefcase' as const },
     { to: '/professeurs', label: 'Professeurs', icon: 'user' as const },
     { to: '/candidatures', label: 'Candidatures', icon: 'clipboard' as const },
     { to: '/messages', label: 'Messages', icon: 'chat' as const },
   ],
+  /*
+   * L'ordre suit la journee d'une famille : ce qui se passe aujourd'hui,
+   * ce qu'elle a paye, puis ce qu'elle peut chercher. « Professeurs » etait
+   * en tete — l'annuaire d'abord, pour quelqu'un qui a deja reserve.
+   */
   PARENT: [
+    { to: '/accueil', label: 'Accueil', icon: 'home' as const },
+    { to: '/seances', label: 'Mes séances', icon: 'clock' as const },
+    { to: '/direct', label: 'Direct', icon: 'play' as const },
     { to: '/professeurs', label: 'Professeurs', icon: 'user' as const },
     { to: '/domicile', label: 'À domicile', icon: 'pin' as const },
-    { to: '/direct', label: 'Direct', icon: 'clock' as const },
-    { to: '/cours', label: 'Cours', icon: 'play' as const },
     { to: '/messages', label: 'Messages', icon: 'chat' as const },
     { to: '/boutique', label: 'Boutique', icon: 'gift' as const },
   ],
@@ -501,14 +660,25 @@ const TABS_BY_ROLE = {
   // besoin, et c'est deja le choix fait cote mobile. Des onglets a lui
   // couteraient un second jeu d'ecrans a tenir sans rien ajouter.
   STUDENT: [
+    { to: '/accueil', label: 'Accueil', icon: 'home' as const },
+    { to: '/seances', label: 'Mes séances', icon: 'clock' as const },
+    { to: '/direct', label: 'Direct', icon: 'play' as const },
     { to: '/professeurs', label: 'Professeurs', icon: 'user' as const },
-    { to: '/domicile', label: 'À domicile', icon: 'pin' as const },
-    { to: '/direct', label: 'Direct', icon: 'clock' as const },
-    { to: '/cours', label: 'Cours', icon: 'play' as const },
     { to: '/assistant', label: 'Assistant', icon: 'sparkle' as const },
+    { to: '/cours', label: 'Cours', icon: 'file' as const },
+    // Les concours precedent la boutique : on gagne avant de depenser, et
+    // c'est l'ordre dans lequel un eleve les decouvre.
+    { to: '/concours', label: 'Concours', icon: 'check' as const },
     { to: '/boutique', label: 'Boutique', icon: 'gift' as const },
   ],
-  ADMIN: [{ to: '/profil', label: 'Profil', icon: 'user' as const }],
+  /*
+   * L'exploitation d'abord : c'est la seule raison pour laquelle ce compte
+   * ouvre le site. Le profil reste, parce qu'il faut pouvoir se deconnecter.
+   */
+  ADMIN: [
+    { to: '/exploitation', label: 'Exploitation', icon: 'wallet' as const },
+    { to: '/profil', label: 'Profil', icon: 'user' as const },
+  ],
 }
 
 /**
@@ -554,7 +724,15 @@ function TopBar() {
     <header className="topbar">
       <div className="topbar__inner">
         <Link to="/" className="topbar__brand">
-          Eduquali
+          {/*
+            L'icone de la charte, servie telle quelle.
+
+            L'enseigne n'etait que le mot. Le Q a la queue surlignee est l'un
+            des cinq signes de la marque, et c'est le premier element de
+            chaque page : s'en passer la, c'est s'en passer partout.
+          */}
+          <img className="topbar__marque" src="/favicon.svg" alt="" />
+          EduQuali
         </Link>
 
         <nav className="navlinks" aria-label="Navigation principale">

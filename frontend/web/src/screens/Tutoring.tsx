@@ -88,7 +88,7 @@ function CoteFamille() {
       <div className="screen stack stack--loose">
         <h1 className="page-title">Cours à domicile</h1>
         <Banner tone="warning">
-          Le catalogue passe par le serveur Eduquali, qui n’est pas relié à ce
+          Le catalogue passe par le serveur EduQuali, qui n’est pas relié à ce
           site.
         </Banner>
       </div>
@@ -241,7 +241,7 @@ function CoteProfesseur() {
       <div className="screen stack stack--loose">
         <h1 className="page-title">Cours à domicile</h1>
         <Banner tone="warning">
-          Cette page passe par le serveur Eduquali, qui n’est pas relié à ce
+          Cette page passe par le serveur EduQuali, qui n’est pas relié à ce
           site.
         </Banner>
       </div>

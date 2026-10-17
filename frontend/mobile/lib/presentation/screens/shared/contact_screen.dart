@@ -37,7 +37,7 @@ class ContactScreen extends StatelessWidget {
         ),
         children: [
           const Text(
-            'Une question sur votre compte, un paiement, une fiche ? '
+            'Une question sur votre compte, un paiement, une fiche ? '
             'Écrivez-nous, nous répondons du lundi au samedi, de 8 h à 20 h.',
             style: TextStyle(
               fontSize: 15,
@@ -94,7 +94,7 @@ class ContactScreen extends StatelessWidget {
           const InfoBanner(
             title: 'Avant d’écrire',
             message:
-                'Donnez le numéro de téléphone de votre compte : c’est lui '
+                'Donnez le numéro de téléphone de votre compte : c’est lui '
                 'qui nous permet de retrouver votre dossier.',
             tone: StatusTone.info,
             icon: Icons.lightbulb_outline,

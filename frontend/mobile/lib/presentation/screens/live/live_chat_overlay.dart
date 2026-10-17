@@ -232,7 +232,7 @@ class _SaisieState extends State<_Saisie> {
           IconButton.filled(
             onPressed: _envoyer,
             icon: const Icon(Icons.send_rounded, size: 20),
-            tooltip: 'Envoyer',
+            tooltip: 'Envoyer à la classe',
           ),
         ],
       ),

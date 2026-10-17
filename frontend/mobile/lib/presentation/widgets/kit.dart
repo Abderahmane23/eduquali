@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'common.dart';
 import 'interactions.dart';
+import 'marque.dart';
 
 /// Les pieces du dessin du 23/09, communes aux trois roles.
 ///
@@ -339,9 +340,22 @@ class MetaText extends StatelessWidget {
         Icon(icon, size: 14, color: AppColors.textTertiary),
         const SizedBox(width: AppSpacing.xs),
       ],
-      Text(
-        label,
-        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+      /*
+       * `Flexible`, et une coupure propre.
+       *
+       * Le texte etait pose nu dans la rangee : une precision un peu longue
+       * — « soir · 10e annee · M. Camara » sur un telephone de 390 points —
+       * la faisait deborder. Flutter rogne alors le texte et peint des
+       * hachures jaunes, visibles en debogage seulement : dans l'APK, la
+       * precision se coupait en silence au milieu d'un mot.
+       */
+      Flexible(
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        ),
       ),
     ],
   );
@@ -371,9 +385,23 @@ class MoneyText extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
       text: TextSpan(
         children: [
+          /*
+           * Les deux familles sont nommees, et il le faut.
+           *
+           * `RichText` ne descend pas du `DefaultTextStyle` : il construit
+           * son arbre de styles a partir de rien. Un `TextSpan` sans
+           * `fontFamily` tombe donc sur la police du systeme, quoi que dise
+           * le theme — et **tous les prix de l'application** etaient en
+           * Roboto, la seule police que la charte ne contient pas.
+           *
+           * Le defaut ne se voyait nulle part : Roboto et Gabarito sont
+           * toutes deux des lineales, et la difference ne saute aux yeux que
+           * posees cote a cote.
+           */
           TextSpan(
             text: amount,
             style: TextStyle(
+              fontFamily: AppTheme.fontTitre,
               fontSize: 17,
               fontWeight: FontWeight.w800,
               color: ink,
@@ -383,6 +411,7 @@ class MoneyText extends StatelessWidget {
             TextSpan(
               text: suffix,
               style: const TextStyle(
+                fontFamily: AppTheme.fontTexte,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textTertiary,
@@ -682,11 +711,8 @@ class PromoCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [AppColors.heroStart, AppColors.heroEnd],
-          ),
+          // Un aplat, pas un degrade.
+          color: AppColors.marqueViolette,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Row(
@@ -1489,11 +1515,28 @@ class TwoToneTitle extends StatelessWidget {
       TextSpan(
         children: [
           TextSpan(text: before, style: base),
-          TextSpan(
-            text: accented,
-            style: base.copyWith(
-              color: onDark ? AppColors.accent : AppColors.primary,
-            ),
+          /*
+           * --- Ce qui a change avec la charte EduQuali ----------------
+           *
+           * Le mot accentue etait pose en couleur de texte : violette sur
+           * fond clair, surligneur sur fond sombre. La charte l'interdit —
+           * « le surligneur : jamais un bouton, jamais du texte » — et pour
+           * une raison lisible : du vert clair en corps de texte ne passe
+           * aucun plancher de contraste, alors que du texte sombre sur un
+           * aplat de surligneur atteint 11:1.
+           *
+           * C'est donc le surlignage lui-meme, avec son biseau, et c'est le
+           * quatrieme signe de la marque : « dans un cahier, on surligne ce
+           * qu'il faut retenir ».
+           *
+           * Un `WidgetSpan` et non deux `Text` cote a cote : la phrase doit
+           * pouvoir se couper n'importe ou, y compris au milieu du passage
+           * surligne, et seul un `RichText` sait le faire.
+           */
+          WidgetSpan(
+            alignment: PlaceholderAlignment.baseline,
+            baseline: TextBaseline.alphabetic,
+            child: Surlignage(accented, style: base),
           ),
           TextSpan(text: after, style: base),
         ],
@@ -1553,10 +1596,23 @@ class Band extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
+    /*
+     * --- Ce qui a change avec la charte EduQuali -------------------------
+     *
+     * `soft` tirait sur `bandSoft`, un bleu tres pale. La charte n'a pas de
+     * couleur de bande : elle a `papier`, le fond des ecrans, et `feuille`,
+     * la surface des cartes posees dessus. L'ecart entre les deux — 1,08:1 —
+     * est exactement ce qu'il faut pour decouper une page longue sans tracer
+     * une seule ligne de separation.
+     *
+     * `violette-pale` n'etait pas le bon choix : elle a un role, « fond de ce
+     * qui est choisi ou en attente », et une bande de section n'est ni l'un
+     * ni l'autre. Elle s'y serait lue comme un bloc selectionne.
+     */
     color: switch (tone) {
-      BandTone.plain => AppColors.background,
-      BandTone.soft => AppColors.bandSoft,
-      BandTone.dark => AppColors.surfaceDark,
+      BandTone.plain => AppColors.feuille,
+      BandTone.soft => AppColors.papier,
+      BandTone.dark => AppColors.marqueEncre,
     },
     padding: const EdgeInsets.fromLTRB(
       AppSpacing.lg,
@@ -1593,9 +1649,13 @@ class Band extends StatelessWidget {
                 TextButton(
                   onPressed: onTrailing,
                   style: TextButton.styleFrom(
+                    // Sur une bande sombre, la violette du theme Tableau :
+                    // c'est la meme couleur de marque, eclaircie pour tenir
+                    // sur du marine. Le surligneur y etait employe comme
+                    // couleur de texte, ce que la charte interdit.
                     foregroundColor: _sombre
-                        ? AppColors.accent
-                        : AppColors.primary,
+                        ? AppColors.tableauViolette
+                        : AppColors.violette,
                   ),
                   child: Text(trailingLabel!),
                 ),

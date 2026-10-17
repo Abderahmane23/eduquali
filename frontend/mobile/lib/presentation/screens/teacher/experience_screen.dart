@@ -46,7 +46,7 @@ class ExperienceScreen extends ConsumerWidget {
               icon: Icons.work_history_outlined,
               title: 'Aucune experience',
               message:
-                  'Renseignez vos postes precedents : ils construisent votre '
+                  'Renseignez vos postes precedents : ils construisent votre '
                   'reputation professionnelle.',
               actionLabel: 'Ajouter une experience',
               onAction: () => _openForm(context, ref),
@@ -69,7 +69,7 @@ class ExperienceScreen extends ConsumerWidget {
                     const SizedBox(width: 11),
                     Expanded(
                       child: Text(
-                        'Total : ${Fmt.experience(profile.yearsExperience)}',
+                        'Total : ${Fmt.experience(profile.yearsExperience)}',
                         style: text.titleSmall,
                       ),
                     ),

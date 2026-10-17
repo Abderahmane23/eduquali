@@ -49,7 +49,10 @@ class OnboardingIllustrationView extends StatelessWidget {
         height: box,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: const Color(0xFFF2F6FD),
+          // `papier`, le fond des ecrans de la charte. C'etait un bleu
+          // pale ecrit a la main, hors palette : la seule teinte de fond que
+          // la charte connaisse est celle-la.
+          color: AppColors.papier,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         clipBehavior: Clip.antiAlias,
@@ -934,7 +937,7 @@ Future<void> _choisir(
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(
-        SnackBar(content: Text('Lecture du fichier impossible : $erreur')),
+        SnackBar(content: Text('Lecture du fichier impossible : $erreur')),
       );
   }
 }

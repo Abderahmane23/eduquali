@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { api } from '../api'
+import { promotions } from '../api/server'
 import { AppGate } from '../components/AppGate'
 import {
   AppBar,
@@ -70,7 +71,7 @@ export function Schools() {
 
         {/* Les mises en avant d'abord : c'est ce que l'etablissement a paye,
             et ce qu'une famille lit avant de parcourir la liste. */}
-        <Promotions city={city} />
+        <Promotions />
 
         {schools.loading ? (
           <Skeleton height={112} />
@@ -240,12 +241,31 @@ export function SchoolDetail() {
  * n'apparait pas : ce sont des annonces d'ecoles, et les presenter comme de la
  * publicite les ferait ignorer.
  */
-function Promotions({ city }: { city: string }) {
-  const state = useAsync(
-    () => api.promotions({ city: city || undefined }),
-    [city],
-  )
-  const promos = state.data ?? []
+function Promotions() {
+  /*
+   * Le fil vient du serveur, et non de Supabase en direct.
+   *
+   * Deux choses s'y perdaient, et ce sont les deux qui font qu'une école
+   * paie : qui voit la publicité — « payer, c'est ne plus en voir » est une
+   * règle de formule, qu'aucune politique de ligne ne peut tenir — et le
+   * comptage des affichages, qui n'existait pas. L'école achetait une
+   * visibilité qu'elle ne pouvait pas mesurer.
+   */
+  const state = useAsync(() => promotions.fil(), [])
+  const promos = state.data?.promotions ?? []
+
+  /*
+   * Un affichage compté, une seule fois par montage.
+   *
+   * Le serveur n'en retient qu'un par personne et par jour ; l'appel est
+   * donc sans danger, et son échec ne doit rien empêcher — une annonce
+   * s'affiche même si le comptage tombe.
+   */
+  useEffect(() => {
+    for (const promo of promos) {
+      void promotions.vue(promo.id).catch(() => {})
+    }
+  }, [promos])
 
   if (state.loading || promos.length === 0) return null
 
@@ -254,24 +274,18 @@ function Promotions({ city }: { city: string }) {
       <h2 className="section-title">À la une</h2>
       <div className="stack grid-cards">
         {promos.map((promo) => (
-        <Link
-          key={promo.id}
-          to={`/etablissements/${promo.institutionId}`}
-          className="card-link"
-        >
-          <Card>
-            <div className="stack stack--tight">
-              <strong className="small">{promo.title}</strong>
-              <div className="muted small">
-                {promo.institutionName}
-                {promo.city ? ` · ${promo.city}` : ''}
-              </div>
-              {promo.message ? (
-                <p className="muted small">{promo.message}</p>
-              ) : null}
+        <Card key={promo.id}>
+          <div className="stack stack--tight">
+            <strong className="small">{promo.title}</strong>
+            <div className="muted small">
+              {promo.institutionName}
+              {promo.institutionCity ? ` · ${promo.institutionCity}` : ''}
             </div>
-          </Card>
-          </Link>
+            {promo.message ? (
+              <p className="muted small">{promo.message}</p>
+            ) : null}
+          </div>
+        </Card>
         ))}
       </div>
     </section>

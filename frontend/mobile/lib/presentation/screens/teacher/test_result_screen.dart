@@ -112,7 +112,7 @@ class _ResultBody extends StatelessWidget {
                 message: result.passed
                     ? 'Votre certification a ete ajoutee a votre profil et sera '
                           'visible par les établissements après synchronisation.'
-                    : 'Le score minimum requis est de ${result.passingScore} %. '
+                    : 'Le score minimum requis est de ${result.passingScore} %. '
                           'Vous pouvez repasser ce test ulterieurement.',
                 tone: result.passed ? StatusTone.success : StatusTone.warning,
                 icon: result.passed
@@ -215,7 +215,7 @@ class _DomainRow extends StatelessWidget {
               ),
             ),
             Text(
-              '${score.percentage} %',
+              '${score.percentage} %',
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(color: color),

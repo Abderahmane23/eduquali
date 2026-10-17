@@ -258,7 +258,7 @@ class _DashboardBody extends ConsumerWidget {
                         Text(step.label, style: text.titleSmall),
                         const SizedBox(height: 2),
                         Text(
-                          '+${step.weight} % de completion',
+                          '+${step.weight} % de completion',
                           style: text.bodySmall,
                         ),
                       ],
@@ -623,7 +623,7 @@ class _ProfileBody extends StatelessWidget {
                           ),
                         ),
                         StatusPill(
-                          label: '${cert.score} %',
+                          label: '${cert.score} %',
                           tone: StatusTone.success,
                         ),
                       ],
@@ -705,7 +705,7 @@ class _ProfileBody extends StatelessWidget {
               ),
               const Divider(height: 20),
               InfoRow(
-                label: 'Recrutements via la plateforme',
+                label: 'Recrutements par EduQuali',
                 value: '${profile.reputation.platformRecruitments}',
               ),
               const Divider(height: 20),
@@ -713,7 +713,7 @@ class _ProfileBody extends StatelessWidget {
                 label: 'Satisfaction',
                 value: profile.reputation.satisfaction == null
                     ? 'Aucune évaluation'
-                    : '${profile.reputation.satisfaction!.round()} %',
+                    : '${profile.reputation.satisfaction!.round()} %',
               ),
             ],
           ),

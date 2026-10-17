@@ -28,7 +28,10 @@ import type {
   LiveCourseInput,
   LivePresence,
   LiveSession,
+  Child,
+  MaPromotion,
   MySession,
+  PresenceProof,
   Promotion,
   PurchaseRequest,
   PurchaseState,
@@ -74,7 +77,7 @@ export class SupabaseApi implements VeriprofApi {
   constructor(private readonly db: SupabaseClient) {}
 
   /**
-   * Le jeton de la session en cours, pour les appels au serveur Eduquali.
+   * Le jeton de la session en cours, pour les appels au serveur EduQuali.
    *
    * Exposé parce que `api/server.ts` en a besoin et que seul ce client-ci le
    * détient. Il le relit à chaque appel : `getSession` rend un jeton
@@ -669,7 +672,7 @@ export class SupabaseApi implements VeriprofApi {
     const base = import.meta.env.VITE_API_BASE_URL?.trim()
     if (!base) {
       throw new ApiError(
-        'Cette fonction demande le serveur Eduquali, qui n’est pas encore relié à ce site.',
+        'Cette fonction demande le serveur EduQuali, qui n’est pas encore relié à ce site.',
         501,
       )
     }
@@ -891,7 +894,88 @@ export class SupabaseApi implements VeriprofApi {
       price: Number(ligne.price ?? 0),
       subject: ref(ligne.subject),
       level: ref(ligne.level),
+      // Le serveur les renvoie depuis le 12/10 ; cette correspondance les
+      // laissait tomber, et la liste des seances passees ne disait donc pas
+      // si l'enfant y etait.
+      minutesAttended:
+        ligne.minutesAttended == null
+          ? undefined
+          : Number(ligne.minutesAttended),
     }))
+  }
+
+  /**
+   * Les enfants du compte parent.
+   *
+   * Lus directement : la politique « enfants : geres par le parent » dit
+   * `parent_id = my_parent_id()`, et elle fait tout le travail. Un compte sans
+   * fiche parent — enseignant, etudiant majeur — lit une liste vide, ce qui
+   * est la bonne reponse et non une erreur.
+   *
+   * Sans cette liste, le site prenait toutes les places avec
+   * `child_id = null` : les reservations de deux enfants se confondaient, et
+   * la preuve de presence disait « Vous etiez la ».
+   */
+  async children(): Promise<Child[]> {
+    const rows = await this.rows(() =>
+      this.db
+        .from('children')
+        .select('id, first_name, school_name, levels ( id, name )')
+        .order('first_name'),
+    )
+
+    return rows.map((ligne) => {
+      const lie = ligne.levels as unknown
+      const niveau = (Array.isArray(lie) ? lie[0] : lie) as
+        | { id?: string; name?: string }
+        | null
+      return {
+        id: String(ligne.id ?? ''),
+        firstName: String(ligne.first_name ?? ''),
+        levelId: niveau?.id ? String(niveau.id) : undefined,
+        levelName: niveau?.name ? String(niveau.name) : undefined,
+        schoolName:
+          typeof ligne.school_name === 'string' && ligne.school_name !== ''
+            ? ligne.school_name
+            : undefined,
+      }
+    })
+  }
+
+  /**
+   * La preuve de presence.
+   *
+   * Par le serveur, et seulement par lui : il additionne `attendance_detail`,
+   * compte les reponses aux points de controle et **verifie a la main** que le
+   * compte est bien la famille inscrite ou le professeur du cours. RLS ne
+   * suffirait pas ici — la requete traverse quatre tables avec la cle de
+   * service.
+   */
+  async presenceProof(sessionId: string): Promise<PresenceProof> {
+    const corps = (await this.callApi(
+      `/live/sessions/${sessionId}/presence`,
+    )) as Record<string, unknown>
+
+    const texte = (valeur: unknown) =>
+      typeof valeur === 'string' && valeur !== '' ? valeur : undefined
+    const etats = ['RECORDING', 'TRANSFERRING', 'READY', 'FAILED']
+
+    return {
+      sessionId: String(corps.sessionId ?? sessionId),
+      startsAt: String(corps.startsAt ?? ''),
+      durationMinutes: Number(corps.durationMinutes ?? 90),
+      minutesAttended: Number(corps.minutesAttended ?? 0),
+      checkpointsAnswered: Number(corps.checkpointsAnswered ?? 0),
+      checkpointsTotal: Number(corps.checkpointsTotal ?? 0),
+      childName: texte(corps.childName),
+      joinedAt: texte(corps.joinedAt),
+      title: texte(corps.title),
+      subject: texte(corps.subject),
+      level: texte(corps.level),
+      replay: etats.includes(String(corps.replay))
+        ? (String(corps.replay) as PresenceProof['replay'])
+        : undefined,
+    }
   }
 
   /**
@@ -1224,6 +1308,90 @@ export class SupabaseApi implements VeriprofApi {
    * l'etablissement qui a paye, et le lire ici permettrait a un concurrent de
    * mesurer son audience.
    */
+  /**
+   * Les mises en avant de l'etablissement connecte.
+   *
+   * --- Pourquoi aucune route serveur --------------------------------------
+   *
+   * La politique « promotion : son etablissement la gere » dit
+   * `institution_id = my_institution_id()`, en lecture comme en ecriture.
+   * Une route qui refiltrerait sous la cle de service referait ce que la
+   * base fait deja — et c'est la qu'on se trompe.
+   *
+   * Le fil des familles, lui, reste au serveur : c'est lui qui decide qui
+   * voit de la publicite, et cette regle-la n'est pas une regle de ligne.
+   */
+  async mesPromotions(): Promise<MaPromotion[]> {
+    const rows = await this.rows(() =>
+      this.db
+        .from('promotions')
+        .select('id, title, message, status, views, starts_at, ends_at, created_at')
+        .order('created_at', { ascending: false }),
+    )
+
+    const etats = ['DRAFT', 'ACTIVE', 'ENDED']
+    return rows.map((row) => ({
+      id: text(row, 'id'),
+      title: text(row, 'title'),
+      message: maybeText(row, 'message'),
+      status: etats.includes(String(row.status))
+        ? (String(row.status) as MaPromotion['status'])
+        : 'DRAFT',
+      views: typeof row.views === 'number' ? row.views : 0,
+      startsAt: maybeText(row, 'starts_at'),
+      endsAt: maybeText(row, 'ends_at'),
+      createdAt: text(row, 'created_at'),
+    }))
+  }
+
+  async creerPromotion(entree: {
+    title: string
+    message?: string
+    endsAt?: string
+  }): Promise<MaPromotion> {
+    const session = await this.currentSession()
+    if (!session?.institutionId) {
+      throw new ApiError('Reserve a un compte etablissement.', 403)
+    }
+
+    const { data, error } = await this.db
+      .from('promotions')
+      .insert({
+        institution_id: session.institutionId,
+        title: entree.title,
+        message: entree.message ?? null,
+        // En ligne tout de suite : une ecole qui ecrit une annonce veut
+        // qu'elle paraisse.
+        status: 'ACTIVE',
+        starts_at: new Date().toISOString(),
+        ends_at: entree.endsAt ?? null,
+      })
+      .select('id, title, message, status, views, starts_at, ends_at, created_at')
+      .single()
+
+    if (error) throw new ApiError(error.message, 400)
+
+    const ligne = data as Record<string, unknown>
+    return {
+      id: text(ligne, 'id'),
+      title: text(ligne, 'title'),
+      message: maybeText(ligne, 'message'),
+      status: 'ACTIVE',
+      views: 0,
+      startsAt: maybeText(ligne, 'starts_at'),
+      endsAt: maybeText(ligne, 'ends_at'),
+      createdAt: text(ligne, 'created_at'),
+    }
+  }
+
+  async terminerPromotion(id: string): Promise<void> {
+    const { error } = await this.db
+      .from('promotions')
+      .update({ status: 'ENDED', updated_at: new Date().toISOString() })
+      .eq('id', id)
+    if (error) throw new ApiError(error.message, 400)
+  }
+
   async promotions(query: { city?: string } = {}): Promise<Promotion[]> {
     const rows = await this.rows(() =>
       this.db
@@ -1472,6 +1640,78 @@ export class SupabaseApi implements VeriprofApi {
       position: typeof c.position === 'number' ? c.position : 0,
       items: parChapitre.get(text(c, 'id')) ?? [],
     }))
+  }
+
+  /**
+   * Le contenu d'un cours acheté.
+   *
+   * --- Pourquoi aucune route serveur --------------------------------------
+   *
+   * `course_items` est fermée par RLS depuis la migration 0010 : seuls
+   * l'auteur et ceux qui ont payé y accèdent. Une route serveur qui
+   * revérifierait l'achat referait, sous la clé de service, ce que la base
+   * fait déjà — et c'est à ce moment-là qu'on se trompe.
+   *
+   * Une liste vide veut donc dire « pas acheté ». C'est la base qui le dit,
+   * pas un drapeau posé par le client, et c'est la seule réponse qui ne peut
+   * pas se contourner depuis un navigateur.
+   *
+   * `/videos/:itemId/url` reste au serveur : signer une adresse de lecture
+   * demande le secret de Cloudflare Stream, qui ne descend jamais ici.
+   */
+  async courseLecture(courseId: string): Promise<CourseChapterPreview[]> {
+    const chapitres = await this.rows(() =>
+      this.db
+        .from('course_chapters')
+        .select('id, title, description, position')
+        .eq('course_id', courseId)
+        .order('position', { ascending: true }),
+    )
+    if (chapitres.length === 0) return []
+
+    const elements = await this.rows(() =>
+      this.db
+        .from('course_items')
+        .select('id, chapter_id, kind, title, duration_seconds, position')
+        .in(
+          'chapter_id',
+          chapitres.map((c) => text(c, 'id')),
+        )
+        .order('position', { ascending: true }),
+    )
+
+    // Aucun élément lisible : le cours n'est pas acheté. On rend une liste
+    // vide plutôt que des chapitres sans contenu — un sommaire qu'on ne peut
+    // pas ouvrir se lit comme une panne.
+    if (elements.length === 0) return []
+
+    const parChapitre = new Map<string, CourseItemPreview[]>()
+    for (const e of elements) {
+      const liste = parChapitre.get(text(e, 'chapter_id')) ?? []
+      liste.push({
+        id: text(e, 'id'),
+        kind:
+          e.kind === 'DOCUMENT' || e.kind === 'LINK'
+            ? e.kind
+            : ('VIDEO' as const),
+        title: text(e, 'title'),
+        durationSeconds:
+          typeof e.duration_seconds === 'number'
+            ? e.duration_seconds
+            : undefined,
+      })
+      parChapitre.set(text(e, 'chapter_id'), liste)
+    }
+
+    return chapitres
+      .map((c) => ({
+        id: text(c, 'id'),
+        title: text(c, 'title'),
+        description: maybeText(c, 'description'),
+        position: typeof c.position === 'number' ? c.position : 0,
+        items: parChapitre.get(text(c, 'id')) ?? [],
+      }))
+      .filter((c) => c.items.length > 0)
   }
 
   // --- Enseignants --------------------------------------------------------

@@ -225,7 +225,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
       setState(() => _saving = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Signature impossible : $error')));
+      ).showSnackBar(SnackBar(content: Text('Signature impossible : $error')));
     }
   }
 

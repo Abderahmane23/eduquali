@@ -266,7 +266,7 @@ class _SetupState extends ConsumerState<TutoringSetupScreen> {
         ),
         const Gap(AppSpacing.lg),
         Text(
-          'Où se passe le cours ?',
+          'Où se passe le cours ?',
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const Gap(AppSpacing.sm),

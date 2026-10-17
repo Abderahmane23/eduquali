@@ -50,7 +50,7 @@ export function Messages() {
       <div className="screen stack stack--loose">
         <h1 className="page-title">Messages</h1>
         <Banner tone="warning">
-          La messagerie passe par le serveur Eduquali, qui n’est pas relié à ce
+          La messagerie passe par le serveur EduQuali, qui n’est pas relié à ce
           site.
         </Banner>
       </div>

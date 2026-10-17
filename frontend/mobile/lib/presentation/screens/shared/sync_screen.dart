@@ -22,7 +22,7 @@ class SyncScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Synchronisation'),
+        title: const Text('Mes données'),
         leading: const BackButton(),
       ),
       body: ListView(

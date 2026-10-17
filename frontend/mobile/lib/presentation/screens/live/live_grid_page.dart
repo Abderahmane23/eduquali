@@ -13,6 +13,7 @@ import '../../../core/utils/formatters.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/kit.dart';
+import '../../widgets/marque.dart';
 
 /// Les cours en direct, sur le téléphone (02/10).
 ///
@@ -197,11 +198,21 @@ class _LiveGridPageState extends ConsumerState<LiveGridPage> {
     };
   }
 
+  /// « samedi 17 octobre ».
+  ///
+  /// La date etait ecrite « Samedi 17/10 ». Un quantieme en chiffres separes
+  /// par une barre se lit a l'anglaise une fois sur deux — et la charte
+  /// ecrit les dates en toutes lettres partout ailleurs.
   String _titreDeJour(DateTime jour) {
     final grille = _grille;
     final nom = grille == null ? '' : grille.dayLabel(grille.dayOf(jour));
-    return '$nom ${jour.day}/${jour.month}';
+    return '$nom ${jour.day} ${_mois[jour.month - 1]}';
   }
+
+  static const _mois = [
+    'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
+  ];
 }
 
 /// Une séance de la grille publique.
@@ -242,6 +253,29 @@ class _SeanceCard extends StatelessWidget {
             const Gap(8),
             Row(
               children: [
+                /*
+                 * La classe de quinze, le cinquieme signe de la marque.
+                 *
+                 * Quinze places, trois rangs de cinq. Le nombre etait ecrit
+                 * — « 2 places » — et c'etait deja mieux que « disponible »,
+                 * qui laisse remettre a demain. Le dessin dit en plus
+                 * **combien il en reste sur combien**, ce qu'un nombre seul
+                 * ne dit pas : deux places sur quinze et deux sur trois ne
+                 * se decident pas de la meme facon.
+                 *
+                 * La phrase reste a cote : la charte l'exige, et un carre de
+                 * couleur seul ne dit pas combien.
+                 */
+                Quinze(
+                  prises: seance.seats - seance.seatsLeft,
+                  libelle: complet
+                      ? 'Complet : 15 places prises sur 15'
+                      : '${seance.seatsLeft} place'
+                            '${seance.seatsLeft > 1 ? 's' : ''} libre'
+                            '${seance.seatsLeft > 1 ? 's' : ''} sur ${seance.seats}',
+                  mini: true,
+                ),
+                const Gap(AppSpacing.espace3),
                 StatusPill(
                   label: complet
                       ? 'Complet'
@@ -250,20 +284,36 @@ class _SeanceCard extends StatelessWidget {
                       : '${seance.seatsLeft} place${seance.seatsLeft > 1 ? 's' : ''}',
                   tone: complet ? StatusTone.neutral : StatusTone.success,
                 ),
-                const Spacer(),
-                // L'inscription et le paiement vivent sur le site : porter le
-                // choix du portefeuille, la redirection Djomy et le retour de
-                // webhook dans l'application doublerait un parcours qui marche,
-                // pour une fonction qu'on utilise une fois par semaine.
-                if (!complet)
-                  Text(
-                    'Réservation sur le site',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
               ],
             ),
+
+            /*
+             * La mention passe sous la rangee, et non a sa droite.
+             *
+             * Elle y etait, poussee par un `Spacer`. Sur un telephone de 390
+             * points — la largeur la plus repandue — « 11 places » et
+             * « Reservation sur le site » ne tiennent pas sur la meme ligne :
+             * la rangee debordait de deux a huit points selon le nombre.
+             *
+             * Un debordement de Flutter ne casse rien en production : il
+             * rogne le texte et peint des hachures jaunes en mode debogage,
+             * invisibles dans l'APK. Il a fallu rendre l'ecran hors
+             * telephone pour le voir.
+             *
+             * L'inscription et le paiement vivent sur le site : porter le
+             * choix du portefeuille, la redirection Djomy et le retour de
+             * webhook dans l'application doublerait un parcours qui marche,
+             * pour une fonction qu'on utilise une fois par semaine.
+             */
+            if (!complet) ...[
+              const Gap(AppSpacing.espace2),
+              Text(
+                'Réservation sur le site',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -329,6 +379,82 @@ class _MaSeanceCard extends StatelessWidget {
                 tone: StatusTone.warning,
               ),
             ] else if (passee && seance.isPaid) ...[
+              /*
+               * La preuve de presence.
+               *
+               * --- Ce qu'elle remplace ----------------------------------
+               *
+               * Rien. Le total de la semaine existait — « 90 minutes cette
+               * semaine » — mais un total ne repond pas a « etait-il la
+               * mardi ». C'est pourtant la seule question qu'un parent se
+               * pose, et la promesse du produit : « Votre enfant etait la.
+               * Vous le voyez. »
+               *
+               * --- Pourquoi un chiffre et non un pourcentage ------------
+               *
+               * « 52 minutes sur 60 » se verifie ; « taux d'assiduite 87 % »
+               * demande de croire un calcul. Et le premier se raconte a
+               * l'enfant le soir.
+               *
+               * Le surligneur montre les minutes suivies ; les traits sont
+               * les points de controle, un par quart d'heure. On n'affiche
+               * rien quand la seance n'a pas ete suivie du tout : une ligne
+               * vide se lirait comme un reproche, et le message juste
+               * en dessous dit deja quoi faire.
+               */
+              /*
+                La preuve de presence, resumee ici et entiere la-bas.
+                
+                La ligne du temps etait posee en entier sur cette carte. Elle
+                y tenait, mais la carte d'une seance sert a retrouver un
+                cours — l'heure, la matiere, la rediffusion — et la preuve
+                merite un ecran a elle : « c'est le coeur de la promesse, il
+                paie et il sait ».
+                
+                Ce qui reste ici est la phrase et le chiffre, qui suffisent a
+                savoir. Le reste — l'heure d'arrivee, les points de controle,
+                ce qui a ete travaille, le bouton pour reserver la suivante —
+                vit sur `/direct/<id>/presence`.
+              */
+              if (seance.minutesAttended > 0) ...[
+                const Gap(AppSpacing.espace3),
+                KitCard(
+                  onTap: () => context.push(
+                    Routes.presenceProof(seance.sessionId),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              seance.childName == null
+                                  ? 'Vous avez suivi '
+                                        '${seance.minutesAttended} minutes '
+                                        'sur ${seance.durationMinutes}.'
+                                  : '${seance.childName} a suivi '
+                                        '${seance.minutesAttended} minutes '
+                                        'sur ${seance.durationMinutes}.',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const Gap(AppSpacing.espace1),
+                            Text(
+                              'Voir la preuve de presence',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.violette),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.crayon,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const Gap(8),
               if (seance.replay == 'FAILED')
                 Text(

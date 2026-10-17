@@ -35,6 +35,15 @@ import { formatDate, money } from '../lib/format'
 export function Shop() {
   const catalogue = useAsync(() => boutique.lots(), [])
   const echanges = useAsync(() => boutique.echanges(), [])
+  /*
+   * D'ou viennent les points.
+   *
+   * L'ecran annonçait « un point toutes les cinq minutes de presence » et
+   * montrait un solde ; entre les deux, rien. Un compteur sans historique ne
+   * se verifie pas — il faut croire le chiffre — et c'est precisement ce que
+   * le reste du produit refuse de demander.
+   */
+  const mouvements = useAsync(() => boutique.mouvements(), [])
   const [occupe, setOccupe] = useState<string>()
   const [souci, setSouci] = useState<string>()
   const [fait, setFait] = useState<string>()
@@ -44,7 +53,7 @@ export function Shop() {
       <div className="screen stack stack--loose">
         <h1 className="page-title">Boutique</h1>
         <Banner tone="warning">
-          La boutique passe par le serveur Eduquali, qui n’est pas relié à ce
+          La boutique passe par le serveur EduQuali, qui n’est pas relié à ce
           site.
         </Banner>
       </div>
@@ -275,6 +284,41 @@ export function Shop() {
               </span>
             </div>
           ))}
+        </section>
+      ) : null}
+
+      {mouvements.data && mouvements.data.entries.length > 0 ? (
+        <section className="stack stack--tight">
+          <h2 className="section-title">Mes points, mouvement par mouvement</h2>
+          <ul className="stack stack--tight liste-nue">
+            {mouvements.data.entries.map((ligne) => (
+              <li className="row row--between" key={ligne.id}>
+                <span className="stack stack--tight">
+                  <span>{ligne.reason}</span>
+                  <span className="faint micro">
+                    {formatDate(ligne.created_at)}
+                  </span>
+                </span>
+                {/*
+                  Le signe est ecrit, et la couleur ne le porte pas seule :
+                  un gain et une depense se distinguent en noir et blanc, au
+                  soleil, et pour qui ne voit pas le vert.
+                */}
+                <strong
+                  style={{
+                    color:
+                      ligne.delta < 0 ? 'var(--crayon)' : 'var(--violette)',
+                  }}
+                >
+                  {ligne.delta > 0 ? '+' : ''}
+                  {ligne.delta} pts
+                </strong>
+              </li>
+            ))}
+          </ul>
+          <p className="faint micro">
+            Les cinquante derniers mouvements.
+          </p>
         </section>
       ) : null}
     </div>

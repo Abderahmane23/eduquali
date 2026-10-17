@@ -290,7 +290,7 @@ class _Identity extends StatelessWidget {
         items: [
           (value: '${profile.experiences.length}', label: 'Expériences'),
           (value: '${profile.diplomas.length}', label: 'Diplômes'),
-          (value: '${profile.completion.rate} %', label: 'Complété'),
+          (value: '${profile.completion.rate} %', label: 'Complété'),
         ],
       ),
     ],

@@ -229,7 +229,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Enregistrer'),
+                    : const Text('Enregistrer mon profil'),
               ),
             ),
           ),

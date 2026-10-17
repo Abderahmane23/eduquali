@@ -41,7 +41,7 @@ export function AppGate({
 
       {session ? (
         <p className="faint micro">
-          Votre compte Eduquali fonctionne sur les deux : connectez-vous dans
+          Votre compte EduQuali fonctionne sur les deux : connectez-vous dans
           l’application avec le même numéro.
         </p>
       ) : (

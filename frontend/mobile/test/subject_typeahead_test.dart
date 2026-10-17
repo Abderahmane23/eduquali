@@ -234,7 +234,20 @@ void main() {
       );
       await tester.enterText(find.byType(TextField), 'Arabe');
       await tester.pump();
-      await tester.tap(find.text('Ajouter « Arabe »'));
+      /*
+       * Les espaces insecables des guillemets francais.
+       *
+       * La charte EduQuali les impose — « espace insecable avant `:` `;` `!`
+       * `?` `%` et dans les guillemets » — et le libelle les porte depuis la
+       * passe de typographie. Sans elles, un retour a la ligne peut poser le
+       * guillemet fermant seul en debut de ligne, ce qui arrive sur un ecran
+       * de 360 px.
+       *
+       * Ecrites ` ` plutot que collees telles quelles : une insecable
+       * est invisible dans un fichier source, et la prochaine personne qui
+       * relit cette ligne ne saurait pas pourquoi l'espace y est bizarre.
+       */
+      await tester.tap(find.text('Ajouter « Arabe »'));
       await tester.pump();
 
       expect(ajoutes, ['Arabe']);

@@ -245,7 +245,7 @@ class _Suggestions extends StatelessWidget {
           if (libre != null)
             _Row(
               icon: Icons.add,
-              label: 'Ajouter « $libre »',
+              label: 'Ajouter « $libre »',
               highlight: true,
               onTap: () => onCustom(libre!),
             ),

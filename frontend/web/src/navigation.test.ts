@@ -89,17 +89,51 @@ describe('les sept écrans ouverts le 11/10 sont atteignables', () => {
   })
 })
 
-describe('un professeur connecté arrive sur son tableau de bord', () => {
-  it('et non sur un tableau d’offres d’emploi', () => {
+describe('chaque rôle arrive sur son propre écran', () => {
+  it('la racine délègue à `accueilDe`, et ne décide pas elle-même', () => {
     /*
      * C'était le défaut d'origine : `session ? <Navigate to="/offres" />`. Un
      * professeur qui se connectait atterrissait sur les annonces d'écoles,
      * sans aucun chemin vers ses propres cours — et `myLiveCourses`, qui
      * existait dans les deux backends, n'était appelée par aucun écran.
+     *
+     * La correction du 11/10 écrivait le rôle en ternaire dans la route ; une
+     * seconde liste de rôles vivait dans la redirection d'après inscription,
+     * et les deux divergeaient déjà le 17/10. Une seule fonction, désormais,
+     * et ce test vérifie qu'on y passe.
      */
-    const racine = app.slice(app.indexOf('path="/"'), app.indexOf('path="/recherche"'))
-    expect(racine).toContain("session.role === 'TEACHER'")
-    expect(racine).toContain("'/tableau'")
+    const racine = app.slice(
+      app.indexOf('path="/"'),
+      app.indexOf('path="/recherche"'),
+    )
+    expect(racine).toContain('accueilDe(session.role)')
+    expect(racine).not.toContain("role === 'TEACHER' ?")
+  })
+
+  it('et `accueilDe` envoie chaque rôle sur une route déclarée', () => {
+    /*
+     * Le corps de la fonction, lu dans le fichier : une famille envoyée sur
+     * `/accueil` alors que la route s'appellerait `/famille` verrait « cette
+     * page n'existe pas » à chaque connexion — et c'est le genre de défaut
+     * qu'on ne découvre qu'en se connectant avec le bon rôle.
+     */
+    const corps = app.slice(
+      app.indexOf('export function accueilDe'),
+      app.indexOf('/** Squelette plutot que roue'),
+    )
+    const destinations = [...corps.matchAll(/return '([^']+)'/g)].map(
+      (m) => m[1],
+    )
+    expect(destinations.length).toBeGreaterThanOrEqual(4)
+    for (const destination of destinations) {
+      expect(
+        routes.has(destination),
+        `accueilDe renvoie ${destination}, qui n’est pas une route`,
+      ).toBe(true)
+    }
+    // Les deux qui comptent, nommément : ce sont les deux rôles qui paient.
+    expect(corps).toContain("'/tableau'")
+    expect(corps).toContain("'/accueil'")
   })
 
   it('le tableau de bord mène à la salle de sa propre séance', () => {

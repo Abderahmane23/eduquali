@@ -174,7 +174,7 @@ class _ApplicantCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${candidate.match.value} %',
+                    '${candidate.match.value} %',
                     style: text.titleMedium?.copyWith(
                       color: candidate.match.value >= 75
                           ? AppColors.success

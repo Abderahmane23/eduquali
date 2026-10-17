@@ -215,7 +215,7 @@ class _WeeklyStudyCardState extends ConsumerState<WeeklyStudyCard> {
                   ),
                   size: 62,
                   child: Text(
-                    '${((_resume.totalMinutes / objectifHebdoMinutes) * 100).clamp(0, 100).round()} %',
+                    '${((_resume.totalMinutes / objectifHebdoMinutes) * 100).clamp(0, 100).round()} %',
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
