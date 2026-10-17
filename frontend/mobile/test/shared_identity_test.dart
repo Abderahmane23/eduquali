@@ -14,32 +14,69 @@ import 'package:veriprof/data/remote/supabase_auth_api.dart';
 /// personne, et le defaut ne se verrait que le jour du changement d'appareil.
 void main() {
   group('L’identifiant deduit d’un numero', () {
+    // --- Ce que ces deux epreuves attendaient, et pourquoi cela a change ---
+    //
+    // Elles exigeaient que `+224 620 00 01 01` donne
+    // `224620000101@telephone.eduquali.gn`. Les deux cotes etaient bien
+    // d'accord — et tous les deux se trompaient de la meme facon.
+    //
+    // La formule ne gardait que les chiffres. Le MEME numero, tape avec son
+    // indicatif ou sans, donnait donc deux adresses, donc deux comptes :
+    //
+    //     620000101      ->  620000101@telephone.eduquali.gn
+    //     +224620000101  ->  224620000101@telephone.eduquali.gn
+    //     0620000101     ->  0620000101@telephone.eduquali.gn
+    //
+    // Signale le 17/10 : « quand j'essaie de me connecter », 400 sur
+    // /auth/v1/token. C'est exactement ce que rend Supabase quand on demande
+    // un compte qui n'existe pas — et il n'existait pas, parce qu'il avait
+    // ete cree sous une autre forme du meme numero.
+    //
+    // La forme retenue est **neuf chiffres, sans indicatif ni zero de tete** :
+    // celle qu'un Guineen dicte, celle que le champ demande, et celle que le
+    // prefixe « +224 » non modifiable rend non ambigue. L'histoire complete
+    // est dans l'en-tete de `frontend/web/src/api/numero.ts`.
+    //
+    // Cette epreuve garde son role : verifier que les deux clients n'ont pas
+    // diverge. Les formes elles-memes sont enumerees dans
+    // `shared/identite/numeros.json`, que lisent les deux epreuves jumelles
+    // (`test/numero_test.dart` ici, `src/api/numero.test.ts` sur le site).
+
     test('est le meme que celui du site', () {
-      // La formule du client web, lue dans son source : si l'un des deux
-      // change, ce test echoue au lieu de laisser deux comptes se creer.
+      // On lit le source du site pour verifier qu'il passe par le module
+      // partage. Avant, on y cherchait la formule elle-meme (« les chiffres
+      // seulement ») : cela liait l'epreuve a une ligne de code plutot qu'a
+      // une regle, et c'est ce qui a permis aux deux clients de se tromper
+      // ensemble sans que rien ne proteste.
       final web = File('../web/src/api/supabase.ts').readAsStringSync();
-      expect(web, contains('@telephone.eduquali.gn'));
-      expect(web, contains("phone.replace(/\\D/g, '')"));
+      expect(web, contains("from './numero'"));
+      expect(web, contains('adresseDuCompte(phone)'));
+
+      final module = File('../web/src/api/numero.ts').readAsStringSync();
+      expect(module, contains('@telephone.eduquali.gn'));
 
       // Et le meme resultat, concretement.
       expect(
         SupabaseAuthApi.emailFor('+224 620 00 01 01'),
-        '224620000101@telephone.eduquali.gn',
+        '620000101@telephone.eduquali.gn',
       );
       expect(
-        SupabaseAuthApi.emailFor('224620000101'),
-        '224620000101@telephone.eduquali.gn',
+        SupabaseAuthApi.emailFor('620000101'),
+        '620000101@telephone.eduquali.gn',
       );
     });
 
     test('ignore la mise en forme du numero', () {
-      // Le meme numero tape de quatre facons doit ouvrir le meme compte.
-      const attendu = '224620000101@telephone.eduquali.gn';
+      // Le meme numero tape de six facons doit ouvrir le meme compte —
+      // indicatif compris, puisque c'est la qu'etait le defaut.
+      const attendu = '620000101@telephone.eduquali.gn';
       for (final saisi in [
+        '620000101',
+        '620 00 01 01',
         '+224620000101',
         '+224 620 00 01 01',
         '224-620-000-101',
-        '224 620 000 101',
+        '0620000101',
       ]) {
         expect(SupabaseAuthApi.emailFor(saisi), attendu, reason: saisi);
       }

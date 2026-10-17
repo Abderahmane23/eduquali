@@ -1,0 +1,27 @@
+{
+  "_lire": "Les formes sous lesquelles un numero guineen se tape, et les neuf chiffres qui identifient le compte. Les DEUX clients lisent ce fichier dans leurs epreuves : frontend/web/src/api/numero.test.ts et frontend/mobile/test/numero_test.dart. C'est la seule facon de garantir que les deux formules disent la meme chose. Deux formules qui divergent feraient deux comptes pour une personne, et ce serait invisible jusqu'au jour ou elle change d'appareil.",
+  "_defaut": "Avant le 17/10, les deux clients ne gardaient que les chiffres. 620000101, +224620000101 et 0620000101 donnaient donc trois comptes differents. A l'inscription, l'ecran disait « compte cree » et les cours, paiements et enfants de l'autre compte etaient ailleurs. A la connexion, Supabase repondait 400 sur /auth/v1/token pour un numero dont la personne etait sure.",
+  "_domaine": "telephone.eduquali.gn",
+  "meme_personne": {
+    "national": "620000101",
+    "saisies": [
+      "620000101",
+      "620 00 01 01",
+      "620-00-01-01",
+      "+224620000101",
+      "+224 620 00 01 01",
+      "224620000101",
+      "00224620000101",
+      "0620000101",
+      "  620000101  ",
+      "(+224) 620.00.01.01"
+    ]
+  },
+  "intouchables": {
+    "_lire": "Neuf chiffres commencent parfois par 224 ou par 0. Les peler ferait perdre son compte a l'abonne : chaque retrait exige qu'il reste PLUS de neuf chiffres.",
+    "cas": [
+      { "saisi": "224000101", "national": "224000101" },
+      { "saisi": "022400010", "national": "022400010" }
+    ]
+  }
+}

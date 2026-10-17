@@ -86,8 +86,36 @@ class SupabaseAuthApi {
   /// pour la meme personne, et ce serait invisible jusqu'au jour ou elle
   /// changerait d'appareil.
   static String emailFor(String phone) {
-    final chiffres = phone.replaceAll(RegExp(r'\D'), '');
-    return '$chiffres@telephone.eduquali.gn';
+    return '${numeroNational(phone)}@telephone.eduquali.gn';
+  }
+
+  /// Les neuf chiffres d'un numero guineen, quelle que soit la facon de le
+  /// taper.
+  ///
+  /// **Jumelle de `numeroNational` du client web** (`src/api/numero.ts`), ou
+  /// l'histoire du defaut est racontee en entier. En resume : on ne gardait
+  /// que les chiffres, si bien que `620000101`, `+224620000101` et
+  /// `0620000101` donnaient trois comptes pour une seule personne. A
+  /// l'inscription, l'ecran disait « compte cree » et les cours, paiements et
+  /// enfants de l'autre compte etaient ailleurs ; a la connexion, Supabase
+  /// repondait 400 sur un numero dont la personne etait sure.
+  ///
+  /// On pele de l'exterieur vers l'interieur : code de sortie international,
+  /// puis indicatif du pays, puis zero de tete. Chaque retrait exige qu'il
+  /// reste **plus** de neuf chiffres, pour qu'un abonne dont les neuf
+  /// chiffres commencent par 224 ou par 0 garde les siens.
+  static String numeroNational(String saisi) {
+    var chiffres = saisi.replaceAll(RegExp(r'\D'), '');
+    if (chiffres.startsWith('00') && chiffres.length > 9) {
+      chiffres = chiffres.substring(2);
+    }
+    if (chiffres.startsWith('224') && chiffres.length > 9) {
+      chiffres = chiffres.substring(3);
+    }
+    if (chiffres.startsWith('0') && chiffres.length > 9) {
+      chiffres = chiffres.substring(1);
+    }
+    return chiffres;
   }
 
   /// Cree le compte et rend son identifiant.

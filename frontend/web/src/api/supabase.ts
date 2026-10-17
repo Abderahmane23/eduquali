@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { messageConnexion, messageInscription } from './auth-erreurs'
 import { ApiError, type RegisterInput, type VeriprofApi } from './client'
 import { scoreMatch } from './matching'
+import { adresseDuCompte } from './numero'
 import {
   maybeText,
   nested,
@@ -270,8 +271,15 @@ export class SupabaseApi implements VeriprofApi {
    * c'est lui que voient les ecrans.
    */
   private static emailFor(phone: string): string {
-    const chiffres = phone.replace(/\D/g, '')
-    return `${chiffres}@telephone.eduquali.gn`
+    /*
+     * La normalisation vit dans `numero.ts`, et pas ici.
+     *
+     * Elle ne gardait que les chiffres : le meme numero colle avec son
+     * indicatif donnait un second compte, et la connexion rendait un 400
+     * pour un numero dont la personne etait pourtant sure. Le detail est
+     * dans l'en-tete de `numero.ts`, avec les trois formes qui divergeaient.
+     */
+    return adresseDuCompte(phone)
   }
 
   /**
