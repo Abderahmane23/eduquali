@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { api } from '../api'
 import {
   Button,
+  Banner,
   Field,
   Icon,
   Progress,
@@ -63,6 +64,19 @@ export function OnboardingFlow({
     setAnswers((prev) => ({ ...prev, [key]: value }))
   }, [])
 
+  /*
+   * Ces deux etats sont declares **avant** les retours anticipes.
+   *
+   * Poses plus bas, ils n'existaient pas pendant le rendu de chargement :
+   * React comptait alors deux hooks de moins, et levait « Rendered more
+   * hooks than during the previous render » des que la specification
+   * arrivait. L'ecran entier partait dans la barriere d'erreur.
+   *
+   * La regle n'a pas d'exception : tous les hooks, avant tout `return`.
+   */
+  const [envoi, setEnvoi] = useState(false)
+  const [erreur, setErreur] = useState<string>()
+
   if (flow.loading) {
     return (
       <div className="screen">
@@ -80,9 +94,42 @@ export function OnboardingFlow({
   const isLast = position === steps.length - 1
   const ready = canContinue(step, answers)
 
-  const advance = () => {
-    if (isLast) onDone(answers)
-    else setIndex(position + 1)
+  /*
+   * La derniere etape attend sa reponse.
+   *
+   * `onDone` cree le compte : c'est un appel reseau qui peut echouer. Il
+   * etait lance sans `await` et sans `catch`, si bien qu'un refus du
+   * serveur devenait une promesse non rattrapee — l'ecran ne bougeait pas,
+   * et la personne ne savait ni que cela avait echoue, ni pourquoi.
+   *
+   * Sans etat d'attente non plus : rien n'indiquant qu'il se passait
+   * quelque chose, on reappuie. Chaque appui relancait une inscription, et
+   * le serveur a fini par limiter le debit — c'est ainsi qu'on obtient un
+   * 429 sur un parcours ou l'on n'a rien fait de mal.
+   *
+   * Les reponses restent en place apres un echec : sept etapes retapees
+   * sont sept occasions d'abandonner.
+   */
+  const advance = async () => {
+    if (!isLast) {
+      setIndex(position + 1)
+      return
+    }
+    if (envoi) return
+
+    setEnvoi(true)
+    setErreur(undefined)
+    try {
+      await onDone(answers)
+    } catch (cause) {
+      setErreur(
+        cause instanceof Error
+          ? cause.message
+          : 'La création du compte n’a pas abouti. Réessayez.',
+      )
+    } finally {
+      setEnvoi(false)
+    }
   }
 
   return (
@@ -123,6 +170,19 @@ export function OnboardingFlow({
         />
       </div>
 
+      {/*
+        Le refus du serveur, a cote du bouton qui l'a provoque.
+
+        Il est pose dans le pied et non en haut de l'ecran : sur un
+        telephone, la derniere etape est longue, et un message hors de vue
+        ne se lit pas.
+      */}
+      {erreur ? (
+        <div className="flow__erreur">
+          <Banner tone="warning">{erreur}</Banner>
+        </div>
+      ) : null}
+
       {/* L'action principale reste toujours en bas a droite. */}
       <div className="flow__foot">
         {step.type === 'plan_select' ? (
@@ -141,8 +201,10 @@ export function OnboardingFlow({
           </Button>
         ) : null}
 
-        <Button onClick={advance} disabled={!ready}>
-          {step.cta ?? (isLast ? 'Terminer' : 'Continuer')}
+        <Button onClick={advance} disabled={!ready || envoi}>
+          {envoi
+            ? 'Création du compte…'
+            : (step.cta ?? (isLast ? 'Terminer' : 'Continuer'))}
           <Icon name="check" size={16} />
         </Button>
       </div>

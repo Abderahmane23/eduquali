@@ -845,6 +845,15 @@
   background: var(--violette-pale);
 }
 
+/* Le refus du serveur, juste au-dessus du bouton qui l'a provoqué.
+ *
+ * Sur un téléphone, la dernière étape du parcours est longue : un message
+ * posé en haut de l'écran ne se lit pas. Il reste donc dans le pied, collé
+ * à l'action. */
+.flow__erreur {
+  padding: 0 var(--gutter) var(--espace-3);
+}
+
 /* --- L'attente d'un écran ----------------------------------------------
  *
  * --- Ce qu'elle remplace ------------------------------------------------
