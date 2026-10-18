@@ -41,12 +41,12 @@ vrai thème.
 
 ## 2. Les comptes et le parcours d'inscription
 
-- [ ] **Fusionner parent, élève et universitaire en un seul compte**, nommé
+- [x] **Fusionner parent, élève et universitaire en un seul compte**, nommé
       « Élève ou étudiant ». La première page du parcours demande
       « Êtes-vous parent ? oui / non ».
       - oui → le nom des enfants, comme le parcours parent actuel ;
       - non → inscription en tant qu'élève.
-- [ ] Supprimer les **trois premiers écrans** du parcours (« des profils
+- [x] Supprimer les **trois premiers écrans** du parcours (« des profils
       vérifiés », etc.) — pour les quatre profils.
 - [ ] *(Demande incomplète : « rename » — à préciser.)*
 
@@ -63,9 +63,9 @@ vrai thème.
 
 ## 4. Le direct
 
-- [ ] Retirer la carte « Les mêmes heures chaque semaine » (Lundi 18 h – 19 h 30
+- [x] Retirer la carte « Les mêmes heures chaque semaine » (Lundi 18 h – 19 h 30
       · 20 h – 21 h 30, Mardi…).
-- [ ] Ne garder que « Pour réserver une place, ouvrez l'application » ;
+- [x] Ne garder que « Pour réserver une place, ouvrez l'application » ;
       retirer le sous-texte et « La séance se suit dans… ».
 - [ ] **Publier un cours** : après la matière et le prix, deux boutons —
       1. *Démarrer le direct* → ouvre une vraie session LiveKit, propose
@@ -134,7 +134,7 @@ suit en est une **refonte** : des quotas par période, et une période d'essai.
 
 Mesuré par `node scripts/verifier-production.mjs`.
 
-- [ ] **Le Worker déployé est plus vieux que le dépôt** : `/schools/names`
+- [x] **Le Worker déployé est plus vieux que le dépôt** : `/schools/names`
       rend 404, et le correctif de l'annuaire n'est pas en ligne.
       `wrangler deploy` dans `backend/`.
 - [ ] **`payments` non configuré** → aucune famille ne peut régler quoi que
