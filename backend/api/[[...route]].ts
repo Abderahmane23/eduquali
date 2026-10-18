@@ -20,6 +20,13 @@ import {
 import { Gemini, GeminiError, MODELS, coutUsd } from './_lib/gemini'
 import { LiveKit, sessionFromRoom, type LiveKitEvent } from './_lib/livekit'
 import { R2 } from './_lib/r2'
+import {
+  debutDePeriode,
+  formuleEffective,
+  joursDEssaiRestants,
+  verdict,
+  type Ressource,
+} from './_lib/formules'
 import { CloudflareStream } from './_lib/stream'
 import {
   closingEntries,
@@ -6876,6 +6883,98 @@ const CONSIGNES: Record<string, string> = {
 }
 
 /** Ou en est ce compte de sa limite du jour. */
+/**
+ * Ce que ce compte a le droit de faire, maintenant.
+ *
+ * --- Pourquoi le serveur repond, et pas le client ------------------------
+ *
+ * Les quotas sont ce qui est vendu. Les laisser decider au telephone, c'est
+ * les laisser decider a qui peut modifier le telephone — et l'APK circule
+ * par Bluetooth, decompile en quelques minutes. Le client affiche ce que
+ * cette route lui dit ; il ne le calcule pas.
+ *
+ * Les regles elles-memes vivent dans `_lib/formules.ts`, qui ne touche ni
+ * la base ni le reseau : c'est ce qui permet de les eprouver entierement
+ * hors ligne, y compris l'essai de sept jours, qu'on ne pourrait pas
+ * attendre autrement.
+ */
+app.get('/entitlements', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const service = asService()
+  const { data: profil } = await service
+    .from('profiles')
+    .select('plan, plan_renews_at, created_at')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const maintenant = new Date()
+  const creeLe = profil?.created_at
+    ? new Date(profil.created_at as string)
+    : maintenant
+
+  const formule = formuleEffective({
+    plan: profil?.plan as string | null,
+    renouvelleLe: profil?.plan_renews_at
+      ? new Date(profil.plan_renews_at as string)
+      : null,
+    creeLe,
+    maintenant,
+  })
+
+  /*
+   * L'assistant garde son propre compteur.
+   *
+   * Il existait avant les quotas (`ai_messages_du_jour`), il lit la table
+   * des messages, et il est deja juste. Le recompter ici donnerait deux
+   * verites pour un meme chiffre — et c'est toujours la mauvaise qui
+   * s'affiche.
+   */
+  const { data: messages } = await service.rpc('ai_messages_du_jour', {
+    qui: userId,
+  })
+
+  const ressources: Ressource[] = ['assistant', 'direct', 'cours']
+  const droits: Record<string, unknown> = {}
+
+  for (const ressource of ressources) {
+    let consomme = 0
+    if (ressource === 'assistant') {
+      consomme = Number(messages ?? 0)
+    } else {
+      const debut = debutDePeriode(
+        formule.quotas[ressource].periode,
+        maintenant,
+      )
+      if (debut) {
+        const { data } = await service.rpc('usage_compte', {
+          qui: userId,
+          quoi: ressource,
+          depuis: debut.toISOString(),
+        })
+        consomme = Number(data ?? 0)
+      }
+    }
+    droits[ressource] = verdict(formule, ressource, consomme)
+  }
+
+  return c.json({
+    formule: {
+      code: formule.code,
+      nom: formule.nom,
+      prixGnf: formule.prixGnf,
+    },
+    essai: {
+      enCours: formule.nom === 'Essai',
+      joursRestants: joursDEssaiRestants(creeLe, maintenant),
+    },
+    questionsEnDirect: formule.questionsEnDirect,
+    exercicesCorriges: formule.exercicesCorriges,
+    droits,
+  })
+})
+
 app.get('/ai/quota', async (c) => {
   const userId = c.get('userId')
   if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
