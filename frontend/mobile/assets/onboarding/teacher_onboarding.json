@@ -243,26 +243,27 @@
         {
           "id": "subscription",
           "type": "plan_select",
-          "title": "Commencer fort !",
+          "title": "Après vos sept jours d’essai",
           "fieldId": "subscription",
           "plans": [
             {
               "value": "PRO",
-              "name": "Pro",
-              "price": 100000,
-              "highlight": "Votre profil dans les 10 premiers pendant un mois entier, et l’assistant IA entraîné sur le programme guinéen pour créer vos cours et corriger les exercices de vos élèves.",
+              "name": "Découverte",
+              "price": 50000,
+              "highlight": "Vos cours enregistrés en vente, et l’assistant qui bâtit vos séances et corrige les exercices de vos élèves.",
               "recommended": true
             },
             {
               "value": "MASTER",
-              "name": "Master",
+              "name": "Illimité",
               "price": 200000,
-              "highlight": "Tout Pro, plus la messagerie directe avec les élèves, les parents et les établissements."
+              "highlight": "Tout Découverte, plus votre fiche mise en avant dans les recherches et la messagerie directe avec les familles."
             }
           ],
-          "declineLabel": "Commencer sans abonnement",
+          "declineLabel": "Rester au gratuit",
           "declineValue": "FREE",
-          "cta": "Souscrire"
+          "cta": "Souscrire",
+          "body": "Les sept premiers jours sont ouverts : directs, cours, et trois questions par jour à l’assistant. Ensuite, vous choisissez — ou vous restez au gratuit."
         }
       ]
     }

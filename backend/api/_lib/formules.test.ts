@@ -23,6 +23,66 @@ import {
  * paye.
  */
 
+import { readFileSync } from 'node:fs'
+
+/*
+ * Les valeurs vendues viennent du fichier partage, pas de ce fichier.
+ *
+ * `shared/formules/formules.json` est lu ici et par l'epreuve jumelle du
+ * mobile. Un prix change d'un seul cote ferait echouer l'autre : un ecran
+ * qui annonce 100 000 GNF pendant que le serveur en demande 50 000 est
+ * pire qu'un ecran sans prix.
+ */
+const PARTAGE = JSON.parse(
+  readFileSync('../shared/formules/formules.json', 'utf-8'),
+) as {
+  joursEssai: number
+  assistantParJour: number
+  formules: {
+    code: 'FREE' | 'PRO' | 'MASTER'
+    nom: string
+    prixGnf: number
+    quotas: Record<string, { max: number | null; periode: string }>
+    questionsEnDirect: boolean
+    exercicesCorriges: boolean
+  }[]
+}
+
+describe('Le fichier partage et le code disent la meme chose', () => {
+  it('les sept jours d’essai, et les trois questions par jour', () => {
+    assert.equal(JOURS_ESSAI, PARTAGE.joursEssai)
+    assert.equal(ESSAI.quotas.assistant.max, PARTAGE.assistantParJour)
+  })
+
+  it('chaque formule porte le meme prix et les memes quotas', () => {
+    for (const attendue of PARTAGE.formules) {
+      const reelle = FORMULES[attendue.code]
+      assert.ok(reelle, `formule ${attendue.code} absente du code`)
+      assert.equal(reelle.nom, attendue.nom, attendue.code)
+      assert.equal(reelle.prixGnf, attendue.prixGnf, attendue.code)
+      assert.equal(
+        reelle.questionsEnDirect,
+        attendue.questionsEnDirect,
+        attendue.code,
+      )
+      assert.equal(
+        reelle.exercicesCorriges,
+        attendue.exercicesCorriges,
+        attendue.code,
+      )
+      for (const [ressource, quota] of Object.entries(attendue.quotas)) {
+        const vrai = reelle.quotas[ressource as 'assistant']
+        assert.equal(vrai.max, quota.max, `${attendue.code}.${ressource}.max`)
+        assert.equal(
+          vrai.periode,
+          quota.periode,
+          `${attendue.code}.${ressource}.periode`,
+        )
+      }
+    }
+  })
+})
+
 const LE = (iso: string) => new Date(iso)
 
 describe('L’essai de sept jours', () => {

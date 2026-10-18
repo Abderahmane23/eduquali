@@ -44,29 +44,34 @@ void main() {
       expect(textes.values.toSet(), hasLength(textes.length));
     });
 
-    test('la valeur est montrée avant qu’on pose des questions', () {
-      // Renversé le 24/09. Les écrans de valeur passaient APRÈS la création
-      // du compte : on demandait onze réponses à quelqu'un qui n'avait
-      // encore rien vu du produit.
+    test('le parcours commence par une question, pas par une promesse', () {
+      /*
+       * Renversé deux fois, et l'histoire vaut d'être gardée.
+       *
+       * Le 24/09, les écrans de valeur sont passés AVANT la création du
+       * compte : on demandait onze réponses à quelqu'un qui n'avait encore
+       * rien vu du produit. C'était juste.
+       *
+       * Le 18/10, ils ont été retirés. Huit écrans vantaient le produit —
+       * « Des profils vérifiés, pas des promesses », « Partout en Guinée,
+       * même sans réseau » — à quelqu'un qui venait d'ouvrir le parcours
+       * d'inscription, donc qui avait déjà décidé d'essayer. L'argument a
+       * sa place avant, sur la page d'accueil, où il s'adresse à qui n'a
+       * pas encore choisi.
+       *
+       * Ce que ce contrôle garde maintenant : qu'ils ne reviennent pas par
+       * une resynchronisation du fichier partagé.
+       */
       final spec = load('intro');
-      final apresLeRole = spec.steps
-          .skipWhile((s) => s.type != StepType.roleSelect)
-          .skip(1)
-          .toList();
-
-      final valeur = apresLeRole
+      final promesses = spec.steps
           .where((s) => s.type == StepType.statement)
+          .map((s) => s.id)
           .toList();
       expect(
-        valeur.length,
-        greaterThanOrEqualTo(3),
-        reason: 'trois écrans de valeur au moins, avant les questions',
+        promesses,
+        isEmpty,
+        reason: 'écrans de promesse revenus : ${promesses.join(', ')}',
       );
-
-      // Et ils ne demandent rien : ce sont des écrans qui expliquent.
-      for (final s in valeur) {
-        expect(s.fieldId, isNull, reason: '${s.id} demande une réponse');
-      }
     });
 
     test('l’offre arrive en dernier, dans chaque parcours', () {
@@ -162,20 +167,37 @@ void main() {
       );
     });
 
-    test('les quatre profils annoncés mènent chacun à un parcours', () {
+    test('chaque carte annoncée mène à un parcours', () {
       final spec = load('intro');
       final options = roleStepOf(spec).options;
 
+      /*
+       * Trois cartes depuis le 18/10, pour quatre profils.
+       *
+       * « Parent d'élève » et « Universitaire » étaient deux portes pour une
+       * même famille : le parent d'un lycéen hésitait, et l'élève de
+       * terminale qui s'inscrit seul ne se reconnaissait dans aucune. Elles
+       * ont fusionné en « Élève ou étudiant », suivie de la question
+       * « Êtes-vous parent ? ».
+       *
+       * `FAMILY` n'est donc pas un rôle : c'est une carte. Elle se traduit
+       * en `PARENT` ou `STUDENT` avant que le parcours ne commence, et les
+       * deux rôles restent distincts dans la base — ils le sont aussi dans
+       * les politiques RLS, où un parent voit les séances de ses enfants.
+       */
       expect(options.map((o) => o.value), [
         'TEACHER',
         'INSTITUTION',
-        'PARENT',
-        // Ajouté le 21/09 : un majeur s'inscrit pour lui-même.
-        'STUDENT',
+        'FAMILY',
       ]);
       for (final option in options) {
         expect(
-          OnboardingAudience.forRole(option.value),
+          OnboardingAudience.forRole(
+            OnboardingAudience.roleReel({
+              'role': option.value,
+              'is_parent': 'no',
+            }),
+          ),
           isNotNull,
           reason: '${option.value} sans parcours',
         );
@@ -196,10 +218,21 @@ void main() {
       final options = roleStepOf(spec).options;
       expect(options, isNotEmpty);
       for (final option in options) {
+        /*
+         * On compare le rôle RÉEL, pas la carte.
+         *
+         * `FAMILY` est une carte et n'existe pas dans `UserRole` : il n'est
+         * écrit ni dans `profiles.role` ni dans les politiques RLS. Il ne
+         * vit que le temps du choix.
+         */
+        final reel = OnboardingAudience.roleReel({
+          'role': option.value,
+          'is_parent': 'no',
+        });
         expect(
           UserRole.values.map((r) => r.code),
-          contains(option.value),
-          reason: '${option.value} inconnu de UserRole',
+          contains(reel),
+          reason: '${option.value} donne « $reel », inconnu de UserRole',
         );
       }
     });

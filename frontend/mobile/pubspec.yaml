@@ -56,6 +56,10 @@ dependencies:
 
   # Notifications (§53)
   flutter_local_notifications: ^18.0.1
+  # Exigee par `zonedSchedule` : un rappel se programme sur une heure
+  # locale, et Conakry est a UTC+0 sans heure d'ete — ce qui ne doit pas
+  # empecher l'application de fonctionner ailleurs.
+  timezone: ^0.9.4
 
   # Divers
   intl: ^0.20.2

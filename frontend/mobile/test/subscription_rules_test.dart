@@ -10,7 +10,11 @@ void main() {
   group('Les trois formules', () {
     test('les prix sont ceux annoncés, en francs guinéens', () {
       expect(SubscriptionPlan.free.monthlyPriceGnf, 0);
-      expect(SubscriptionPlan.pro.monthlyPriceGnf, 100000);
+      // 100 000 GNF jusqu'au 18/10. Le prix et le nom viennent desormais
+      // de `shared/formules/formules.json`, que lisent aussi le serveur et
+      // ses epreuves : un ecran qui annonce un prix pendant que le serveur
+      // en demande un autre est pire qu'un ecran sans prix.
+      expect(SubscriptionPlan.pro.monthlyPriceGnf, 50000);
       expect(SubscriptionPlan.master.monthlyPriceGnf, 200000);
     });
 

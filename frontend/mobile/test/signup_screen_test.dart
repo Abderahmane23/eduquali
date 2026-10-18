@@ -81,19 +81,30 @@ void main() {
       findsNothing,
       reason: 'le choix du profil est toujours à l’écran',
     );
-    // Et il mène à *son* écran. Depuis le 26/09 les écrans de valeur sont
-    // propres à chaque rôle : un professeur qui lit « des profils vérifiés,
-    // pas des promesses » reçoit l'argument destiné aux familles, sur la
-    // page censée lui donner envie de remplir onze réponses.
+    /*
+     * Et il mène quelque part.
+     *
+     * Ce contrôle attendait l'écran de valeur du professeur — « Votre
+     * profil, vu par ceux qui cherchent ». Ces écrans ont été retirés le
+     * 18/10 : ils vantaient le produit à quelqu'un qui venait d'ouvrir le
+     * parcours d'inscription, donc qui avait déjà décidé d'essayer.
+     *
+     * La destination a changé, pas la règle. Ce qui doit tenir, c'est que
+     * le choix du profil ouvre bien le parcours suivant — sinon le bouton
+     * ne fait rien, et c'est exactement la panne que la carte `FAMILY` a
+     * provoquée côté mobile le jour de sa création : `forRole` rendait
+     * `null`, l'écran retournait en silence.
+     */
     expect(
-      find.text('Votre profil, vu par ceux qui cherchent'),
+      find.text('Comment vous appelez-vous ?'),
       findsOneWidget,
       reason: 'le choix du profil ne mène nulle part',
     );
+    // Et aucun écran de promesse ne s'est glissé entre les deux.
     expect(
       find.text('Des profils vérifiés, pas des promesses'),
       findsNothing,
-      reason: 'c’est l’argument des familles, pas celui d’un professeur',
+      reason: 'un écran de promesse est revenu dans le parcours',
     );
   });
 

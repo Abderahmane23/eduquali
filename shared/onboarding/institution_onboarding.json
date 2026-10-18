@@ -291,26 +291,27 @@
         {
           "id": "subscription",
           "type": "plan_select",
-          "title": "Commencer fort !",
+          "title": "Après vos sept jours d’essai",
           "fieldId": "subscription",
           "plans": [
             {
               "value": "PRO",
-              "name": "Pro",
-              "price": 100000,
-              "highlight": "Votre établissement dans les 10 premiers pendant un mois entier, et l’assistant IA pour préparer vos contenus.",
+              "name": "Découverte",
+              "price": 50000,
+              "highlight": "Vos offres publiées, et les candidatures classées par compétence vérifiée plutôt que par date.",
               "recommended": true
             },
             {
               "value": "MASTER",
-              "name": "Master",
+              "name": "Illimité",
               "price": 200000,
-              "highlight": "Tout Pro, plus la messagerie directe avec tous les professeurs."
+              "highlight": "Tout Découverte, plus votre établissement mis en avant auprès des familles et des professeurs de votre région."
             }
           ],
-          "declineLabel": "Commencer sans abonnement",
+          "declineLabel": "Rester au gratuit",
           "declineValue": "FREE",
-          "cta": "Souscrire"
+          "cta": "Souscrire",
+          "body": "Les sept premiers jours sont ouverts : directs, cours, et trois questions par jour à l’assistant. Ensuite, vous choisissez — ou vous restez au gratuit."
         }
       ]
     }

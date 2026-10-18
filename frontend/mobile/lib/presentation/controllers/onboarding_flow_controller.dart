@@ -35,6 +35,24 @@ enum OnboardingAudience {
     'STUDENT' => OnboardingAudience.student,
     _ => null,
   };
+
+  /// Le profil reel, derriere la carte choisie.
+  ///
+  /// « Parent d'eleve » et « Universitaire » ont fusionne en une seule
+  /// carte, `FAMILY`, suivie de la question « Etes-vous parent ? ». Ce code
+  /// ne vit que le temps du choix : il n'est ecrit ni dans `profiles.role`
+  /// ni nulle part ailleurs, parce que `PARENT` et `STUDENT` restent deux
+  /// roles distincts dans les politiques RLS — un parent voit les seances
+  /// de ses enfants, un etudiant majeur voit les siennes.
+  ///
+  /// **Jumelle de `roleReel` du client web** (`src/onboarding/Signup.tsx`).
+  /// Sans elle, `forRole('FAMILY')` rendait `null`, l'ecran retournait en
+  /// silence, et le bouton « Continuer » ne faisait rien.
+  static String roleReel(Map<String, dynamic> reponses) {
+    final choisi = reponses['role'];
+    if (choisi != 'FAMILY') return choisi as String;
+    return reponses['is_parent'] == 'yes' ? 'PARENT' : 'STUDENT';
+  }
 }
 
 /// Decoupage administratif, charge une seule fois.

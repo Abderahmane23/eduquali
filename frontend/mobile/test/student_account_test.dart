@@ -19,14 +19,22 @@ void main() {
   );
 
   group('Le profil existe', () {
-    test('quatre profils se proposent à l’inscription', () {
-      // `single` ne tient plus : trois ecrans de valeur et l'offre Pro
-      // suivent le choix du profil depuis le 24/09.
+    test('trois cartes se proposent, pour quatre profils', () {
+      /*
+       * « Parent d'eleve » et « Universitaire » ont fusionne le 18/10 en
+       * une seule carte, « Eleve ou etudiant » : deux portes pour une meme
+       * famille faisaient hesiter le parent d'un lyceen, et l'eleve de
+       * terminale qui s'inscrit seul ne se reconnaissait dans aucune.
+       *
+       * Les deux ROLES restent distincts — ils le sont dans la base et dans
+       * les politiques RLS, ou un parent voit les seances de ses enfants.
+       * C'est la question « Etes-vous parent ? » qui les departage.
+       */
       final roles = load('intro').steps
           .firstWhere((s) => s.id == 'role_select')
           .options
           .map((o) => o.value);
-      expect(roles, ['TEACHER', 'INSTITUTION', 'PARENT', 'STUDENT']);
+      expect(roles, ['TEACHER', 'INSTITUTION', 'FAMILY']);
     });
 
     test('le rôle porte son code et son âge minimum', () {
@@ -58,14 +66,23 @@ void main() {
       // moment de choisir son profil, avant d'avoir rempli quoi que ce soit.
       expect(spec.steps.map((s) => s.id), isNot(contains('age_check')));
 
-      final choix = load(
+      /*
+       * La condition d'age a suivi la carte.
+       *
+       * Elle vivait sous « Universitaire », qui n'existe plus depuis la
+       * fusion du 18/10. Elle est maintenant sous la reponse « Non, c'est
+       * pour moi » de la question « Etes-vous parent ? » — c'est-a-dire
+       * exactement la ou quelqu'un decide de s'inscrire seul, et donc la
+       * ou elle decide de quelque chose.
+       */
+      final question = load(
         'intro',
-      ).steps.firstWhere((s) => s.id == 'role_select');
-      final etudiant = choix.options.firstWhere((o) => o.value == 'STUDENT');
+      ).steps.firstWhere((s) => s.id == 'is_parent');
+      final pourMoi = question.options.firstWhere((o) => o.value == 'no');
       expect(
-        '${etudiant.description}',
+        '${pourMoi.description}',
         contains('${UserRole.studentMinAge} ans'),
-        reason: 'la condition d’âge a disparu du choix de profil',
+        reason: 'la condition d’âge a disparu du choix',
       );
     });
 

@@ -22,11 +22,11 @@ python voir.py 6 7 17  # rend ces pages en PNG, pour les regarder
 ## Les captures
 
 Elles viennent de `design/captures/`, alimenté par
-`frontend/mobile/test/captures_test.dart` :
+`frontend/mobile/tool/captures/captures_test.dart` :
 
 ```sh
 cd ../frontend/mobile
-flutter test test/captures_test.dart --tags captures
+flutter test tool/captures/captures_test.dart --tags captures
 cp test/captures/*.png ../../design/captures/
 ```
 

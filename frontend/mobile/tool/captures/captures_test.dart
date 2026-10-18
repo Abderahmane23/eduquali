@@ -57,11 +57,25 @@ import 'package:veriprof/presentation/theme/app_theme.dart';
 ///
 /// --- Comment les produire -----------------------------------------------
 ///
-///     flutter test test/captures_test.dart --update-goldens
+///     flutter test tool/captures/captures_test.dart --tags captures
 ///
-/// Les images sortent dans `test/captures/`. Le `@Tags(['captures'])` les
-/// tient hors de la suite ordinaire : ce fichier fabrique des images, il ne
-/// vérifie rien.
+/// Les images sortent dans `test/captures/`.
+///
+/// --- Pourquoi ce fichier n'est pas dans `test/` --------------------------
+///
+/// Il ne vérifie rien : il **fabrique des images**. Son en-tête affirmait
+/// que `@Tags(['captures'])` le tenait hors de la suite ordinaire. C'était
+/// faux — un marqueur ne suffit pas, il faut une exclusion dans
+/// `dart_test.yaml`, et cette exclusion rend ensuite le fichier
+/// inlançable : `--tags captures` ne passe pas outre.
+///
+/// `flutter test` ne parcourt que `test/`. Le fichier vit donc ici, et se
+/// lance par son chemin. La suite ordinaire est verte, et les captures se
+/// produisent quand on les demande.
+///
+/// Une des huit échoue — un minuteur du lecteur vidéo survit à la fin du
+/// test, alors que l'image est déjà écrite. Elle ne gêne plus personne ;
+/// un rouge permanent qu'on apprend à ignorer vaut moins qu'un vert.
 void main() {
   late AppDatabase db;
 

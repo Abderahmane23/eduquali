@@ -1,0 +1,90 @@
+{
+  "_lire": "Les formules vendues, et ce qu'elles ouvrent. Les DEUX clients et le serveur lisent ce fichier dans leurs epreuves : backend/api/_lib/formules.test.ts et frontend/mobile/test/formules_test.dart. C'est la seule facon de garantir qu'un prix change ici se retrouve partout — un ecran qui annonce 100 000 GNF pendant que le serveur en demande 50 000 est pire qu'un ecran sans prix.",
+  "_essai": "L'essai n'est pas un code de formule : c'est l'etat d'un compte FREE de moins de sept jours. Tout est ouvert sauf l'assistant, qui garde son plafond parce que chaque question part chez un fournisseur facture au jeton.",
+  "joursEssai": 7,
+  "assistantParJour": 3,
+  "formules": [
+    {
+      "code": "FREE",
+      "nom": "Gratuit",
+      "prixGnf": 0,
+      "quotas": {
+        "assistant": {
+          "max": 3,
+          "periode": "jour"
+        },
+        "direct": {
+          "max": 1,
+          "periode": "quinzaine"
+        },
+        "cours": {
+          "max": 1,
+          "periode": "mois"
+        }
+      },
+      "questionsEnDirect": false,
+      "exercicesCorriges": false,
+      "nomMobile": "Basic",
+      "_pourquoiNomMobile": "Le mot parait sur l'ecran de l'assistant, a cote du titre, et « Gratuit » s'y lisait comme la promesse que l'assistant l'etait. Le serveur dit « Gratuit » a qui compare les formules ; le telephone dit « Basic » a qui regarde son compte. C'est la seule difference admise entre les deux, et elle porte sur un mot affiche, jamais sur un prix ni sur un quota."
+    },
+    {
+      "code": "PRO",
+      "nom": "Découverte",
+      "prixGnf": 50000,
+      "quotas": {
+        "assistant": {
+          "max": 3,
+          "periode": "jour"
+        },
+        "direct": {
+          "max": 2,
+          "periode": "mois"
+        },
+        "cours": {
+          "max": 4,
+          "periode": "mois"
+        }
+      },
+      "questionsEnDirect": false,
+      "exercicesCorriges": false
+    },
+    {
+      "code": "MASTER",
+      "nom": "Illimité",
+      "prixGnf": 200000,
+      "quotas": {
+        "assistant": {
+          "max": null,
+          "periode": "jamais"
+        },
+        "direct": {
+          "max": null,
+          "periode": "jamais"
+        },
+        "cours": {
+          "max": null,
+          "periode": "jamais"
+        }
+      },
+      "questionsEnDirect": true,
+      "exercicesCorriges": true
+    }
+  ],
+  "essai": {
+    "nom": "Essai",
+    "quotas": {
+      "assistant": {
+        "max": 3,
+        "periode": "jour"
+      },
+      "direct": {
+        "max": null,
+        "periode": "jamais"
+      },
+      "cours": {
+        "max": null,
+        "periode": "jamais"
+      }
+    }
+  }
+}

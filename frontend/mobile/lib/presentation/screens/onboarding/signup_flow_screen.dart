@@ -61,13 +61,17 @@ class _SignupFlowScreenState extends State<SignupFlowScreen> {
       return OnboardingFlowScreen(
         audience: OnboardingAudience.intro,
         onCompleted: (answers) {
-          final role = answers['role'];
+          // `FAMILY` est la carte « Eleve ou etudiant » : elle se traduit
+          // en PARENT ou STUDENT selon la reponse a « Etes-vous parent ? ».
+          final role = OnboardingAudience.roleReel(
+            Map<String, dynamic>.from(answers),
+          );
           final next = OnboardingAudience.forRole(role);
           // Sans profil reconnu on ne peut pas continuer : `role_select` est
           // obligatoire, donc ce cas ne devrait pas se presenter.
           if (next == null) return;
           setState(() {
-            _role = role as String;
+            _role = role;
             _introAnswers = Map<String, dynamic>.from(answers);
             _audience = next;
           });
