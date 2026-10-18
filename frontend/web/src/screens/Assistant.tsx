@@ -14,7 +14,6 @@ import {
   type MessageIA,
   type UsageAssistant,
 } from '../api/server'
-import { SegmentedToggle } from '../components/kit'
 import {
   Banner,
   Button,
@@ -104,7 +103,17 @@ const SUGGESTIONS: Record<UsageAssistant, string[]> = {
 }
 
 export function Assistant() {
-  const [usage, setUsage] = useState(0)
+  /*
+   * Un seul usage, et il n'est plus choisi a la main.
+   *
+   * La bascule « Devoirs / Cours / Autre » occupait la premiere tranche de
+   * l'ecran pour un reglage qu'on ne touche presque jamais : on vient poser
+   * une question. Le tableau `USAGES` reste — il porte l'invite du champ,
+   * les suggestions et le `feature` envoye au serveur — mais l'ecran se
+   * tient desormais sur le premier, l'aide aux devoirs, qui est la raison
+   * pour laquelle un eleve ouvre cette page.
+   */
+  const usage = 0
   const [messages, setMessages] = useState<MessageIA[]>([])
   const [filId, setFilId] = useState<string>()
   const [texte, setTexte] = useState('')
@@ -312,21 +321,6 @@ export function Assistant() {
       la premiere question.
     */
     <div className="screen screen--narrow assistant">
-      <SegmentedToggle
-        label="Ce que vous cherchez"
-        labels={USAGES.map((u) => u.label)}
-        selected={usage}
-        onSelect={(index) => {
-          setUsage(index)
-          // Changer d'usage change les consignes système : poursuivre le même
-          // fil ferait répondre un répétiteur avec les consignes d'un
-          // préparateur de cours. On repart d'un fil neuf.
-          setFilId(undefined)
-          setMessages([])
-          setPiece(undefined)
-        }}
-      />
-
       {indispo ? (
         <Banner tone="warning">
           L’assistant est en pause jusqu’au mois prochain : le budget mensuel
@@ -336,19 +330,16 @@ export function Assistant() {
 
       <section className="chat__room">
         {/*
-          L'en-tete du fil : ce qu'on fait, et ou l'on en est de sa journee.
-          Le compteur etait un bloc a lui seul au-dessus ; c'est une
-          precision, pas une annonce, et sa place est a cote de ce qu'il
-          precise.
+          Plus d'en-tete.
+
+          Il portait le titre de l'usage et le compteur du jour
+          (« 1 / 100 aujourd'hui »). Le titre repetait ce que le fil montre
+          deja, et le compteur annoncait une limite que personne n'atteint :
+          c'est une precision utile le jour ou elle tombe, et ce jour-la le
+          bandeau et le champ ferme le disent bien mieux. Le quota continue
+          d'etre lu — `indispo` et `epuise` en viennent — il n'est plus
+          affiche.
         */}
-        <header className="chat__head">
-          <strong>{choisi.titre}</strong>
-          {quota.data && !indispo ? (
-            <span className="faint small" style={{ marginLeft: 'auto' }}>
-              {quota.data.used} / {quota.data.limit} aujourd’hui
-            </span>
-          ) : null}
-        </header>
         <div className="chat__thread" ref={fil}>
           {/*
             Le fil ne dépend pas du compteur.
@@ -382,6 +373,19 @@ export function Assistant() {
                       : 'Les tests, la scolarité en Guinée, le fonctionnement d’EduQuali.'
                 }
               />
+              {/*
+                La phrase sur les donnees personnelles se lit ici, et non
+                sous la boite de saisie ou elle prenait de la hauteur a
+                chaque tour. C'est avant la premiere question qu'elle sert.
+
+                La photo d'un cahier porte souvent le prenom de l'enfant. Le
+                serveur ne garde pas l'image — seulement la mention qu'il y
+                en avait une — et c'est ce qui permet de le dire sans detour.
+              */}
+              <p className="faint small centered">
+                Ne collez ni numéro, ni adresse, ni nom d’élève. Les images
+                ne sont pas conservées.
+              </p>
               <div className="suggests">
                 {SUGGESTIONS[choisi.value].map((idee) => (
                   <button
@@ -568,21 +572,6 @@ export function Assistant() {
         </form>
       </section>
 
-      {/*
-        Une ligne, pas quatre. Elle dit la seule chose qui engage le lecteur —
-        ne pas coller de donnees personnelles — et la raison en trois mots.
-        Le detail de ce qui part chez le fournisseur appartient a la page de
-        confidentialite, pas au bas d'un ecran de saisie.
-      */}
-      <p className="faint small centered">
-        {/*
-          La photo d'un cahier porte souvent le prénom de l'enfant. Le
-          serveur ne garde pas l'image — seulement la mention qu'il y en
-          avait une — et c'est ce qui permet de le dire sans détour.
-        */}
-        Ne collez ni numéro, ni adresse, ni nom d’élève. Les images ne sont
-        pas conservées.
-      </p>
     </div>
   )
 }

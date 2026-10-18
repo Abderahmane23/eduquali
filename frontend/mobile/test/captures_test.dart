@@ -641,6 +641,18 @@ Future<void> _enregistrer(WidgetTester tester, String nom) async {
   File('${dossier.path}/$nom').writeAsBytesSync(
     octets!.buffer.asUint8List(),
   );
+
+  /*
+   * L'ecran est demonte avant la fin de l'epreuve.
+   *
+   * Plusieurs ecrans arment un minuteur — un anti-rebond de recherche, un
+   * rafraichissement. Laisses en place, ils font echouer l'epreuve sur
+   * « A Timer is still pending even after the widget tree was disposed »,
+   * alors que l'image, elle, est deja ecrite. Le demontage appelle les
+   * `dispose` qui les annulent.
+   */
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump(const Duration(milliseconds: 50));
 }
 
 /// Un `LiveApi` qui ne parle à personne.

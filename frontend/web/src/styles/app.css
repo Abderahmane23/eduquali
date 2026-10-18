@@ -2847,12 +2847,26 @@ h2,
  * `.chat`, et pour la meme raison — un fil qui deborde la page fait defiler
  * la page entiere, et l'on perd le champ ou l'on ecrit.
  */
+/*
+ * L'assistant occupe tout ce que la barre du haut lui laisse.
+ *
+ * La regle retirait 60 points de barre **et** deux fois 24 points de marge
+ * verticale — dont celle de `.screen`, qui n'etait pas annulee ici. Avec la
+ * bascule, l'en-tete du fil et la ligne de confidentialite, cela faisait
+ * pres de deux cents points pris a la conversation sur un telephone.
+ *
+ * La marge verticale passe a zero pour cet ecran seul, et seule la barre du
+ * haut est deduite. La hauteur reste exprimee en `dvh` : sur un telephone,
+ * `vh` ignore la barre d'adresse qui se retracte, et la boite de saisie se
+ * retrouvait sous le bord de l'ecran.
+ */
 .assistant {
   display: flex;
   flex-direction: column;
   gap: var(--espace-3);
-  padding-bottom: var(--espace-5);
-  height: calc(100dvh - 60px - var(--espace-5) - var(--espace-5));
+  padding-top: 0;
+  padding-bottom: 0;
+  height: calc(100dvh - 60px);
   min-height: 420px;
 }
 
