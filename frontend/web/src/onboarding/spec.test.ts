@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
+import { roleReel } from './Signup'
 import {
   AUDIENCE_BY_ROLE,
   RENDERED_STEP_TYPES,
@@ -107,11 +108,38 @@ describe('les quatre profils', () => {
 
     expect(choix.length).toBeGreaterThan(0)
     for (const valeur of choix) {
+      /*
+       * Une carte peut ne pas etre un role.
+       *
+       * « Elève ou étudiant » vaut `FAMILY`, qui n'existe ni dans la base
+       * ni dans les politiques RLS : c'est la question « Êtes-vous
+       * parent ? », posée juste après, qui le traduit en `PARENT` ou
+       * `STUDENT`. On passe donc par `roleReel`, exactement comme l'écran.
+       *
+       * Ce que ce contrôle garde est intact : aucune carte ne mène nulle
+       * part. Si `FAMILY` cessait d'être traduit, `roleReel` le rendrait
+       * tel quel et `AUDIENCE_BY_ROLE` n'en saurait rien — l'épreuve
+       * tomberait, comme elle est tombée le jour où `STUDENT` était
+       * proposé sans parcours.
+       */
+      const reel = roleReel({ role: valeur, is_parent: 'no' })
       expect(
-        AUDIENCE_BY_ROLE[valeur as Role],
+        AUDIENCE_BY_ROLE[reel],
         `« ${valeur} » est proposé mais n’a pas de parcours`,
       ).toBeDefined()
     }
+
+    // Les deux reponses de la question doivent mener quelque part, elles
+    // aussi : une seule des deux verifiee laisserait l'autre se casser.
+    for (const reponse of ['yes', 'no']) {
+      const reel = roleReel({ role: 'FAMILY', is_parent: reponse })
+      expect(
+        AUDIENCE_BY_ROLE[reel],
+        `« ${reponse} » ne mène à aucun parcours`,
+      ).toBeDefined()
+    }
+    expect(roleReel({ role: 'FAMILY', is_parent: 'yes' })).toBe('PARENT')
+    expect(roleReel({ role: 'FAMILY', is_parent: 'no' })).toBe('STUDENT')
   })
 })
 

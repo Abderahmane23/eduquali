@@ -28,14 +28,36 @@
               "description": "Publiez une offre et recevez des candidatures"
             },
             {
-              "value": "PARENT",
-              "label": "Parent d’élève",
-              "description": "Inscrivez votre enfant ou trouvez un répétiteur"
+              "value": "FAMILY",
+              "label": "Élève ou étudiant",
+              "description": "Pour votre enfant, ou pour vous"
+            }
+          ],
+          "cta": "Continuer"
+        },
+        {
+          "id": "is_parent",
+          "type": "single_choice",
+          "showIf": {
+            "field": "role",
+            "equals": [
+              "FAMILY"
+            ]
+          },
+          "title": "Êtes-vous parent ?",
+          "body": "Un parent inscrit son enfant et suit ses séances. Un élève majeur s'inscrit pour lui-même.",
+          "fieldId": "is_parent",
+          "required": true,
+          "options": [
+            {
+              "value": "yes",
+              "label": "Oui, pour mon enfant",
+              "description": "Vous donnerez son nom et sa classe"
             },
             {
-              "value": "STUDENT",
-              "label": "Universitaire",
-              "description": "Vous avez 18 ans ou plus et vous cherchez pour vous — université, lycée ou remise à niveau"
+              "value": "no",
+              "label": "Non, c’est pour moi",
+              "description": "Vous avez 18 ans ou plus"
             }
           ],
           "cta": "Continuer"

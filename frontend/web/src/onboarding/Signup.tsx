@@ -47,7 +47,7 @@ export function Signup({
         flow="intro"
         onDone={(answers) => {
           setIntroAnswers(answers)
-          setRole(answers.role as Role)
+          setRole(roleReel(answers))
         }}
       />
     )
@@ -67,4 +67,33 @@ export function Signup({
       onDone={(answers) => onDone(role, answers)}
     />
   )
+}
+
+/**
+ * Le profil reel, derriere la carte choisie.
+ *
+ * --- Pourquoi une carte de moins que de profils ------------------------
+ *
+ * Le choix proposait « Parent d'eleve » et « Universitaire » cote a cote.
+ * Deux cartes pour une meme famille : le parent d'un lyceen hesitait, et
+ * l'eleve de terminale qui s'inscrit seul ne se reconnaissait dans aucune
+ * des deux. Il n'y a plus qu'une carte, « Eleve ou etudiant », suivie
+ * d'une question simple : « Etes-vous parent ? ».
+ *
+ * --- Pourquoi les roles de la base ne bougent pas ----------------------
+ *
+ * `PARENT` et `STUDENT` restent deux roles distincts dans Postgres. Ils
+ * sont ecrits dans `profiles.role`, et surtout dans les politiques RLS :
+ * un parent voit les seances de ses enfants, un etudiant majeur voit les
+ * siennes. Les fondre en un seul role voudrait dire reecrire ces
+ * politiques, et une erreur a cet endroit ouvre les donnees d'un enfant a
+ * quelqu'un d'autre.
+ *
+ * `FAMILY` ne vit donc que le temps du choix. Il n'est jamais ecrit nulle
+ * part : cette fonction le traduit avant que le parcours ne commence.
+ */
+export function roleReel(reponses: Answers): Role {
+  const choisi = reponses.role
+  if (choisi !== 'FAMILY') return choisi as Role
+  return reponses.is_parent === 'yes' ? 'PARENT' : 'STUDENT'
 }
