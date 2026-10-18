@@ -2419,6 +2419,140 @@ const coursSchema = z.object({
  * qui publie son cours et ne voit rien apparaitre croit que la publication a
  * echoue — et republie. On genere donc pour ce seul cours, immediatement.
  */
+const instantSchema = z.object({
+  subjectId: z.string().min(1).max(64),
+  levelId: z.string().min(1).max(64),
+  title: z.string().trim().min(3).max(120).optional(),
+  description: z.string().trim().max(2000).optional(),
+  price: z.number().int().min(1000).max(1000000),
+  seats: z.number().int().min(1).max(15).default(15),
+  // Quatre-vingt-dix minutes par defaut, comme une seance planifiee.
+  durationMinutes: z.number().int().min(15).max(240).default(90),
+})
+
+/**
+ * Ouvrir un direct maintenant.
+ *
+ * --- Pourquoi une route a part -------------------------------------------
+ *
+ * `POST /live/courses` cree un cours **recurrent** : il exige des creneaux
+ * du catalogue (mardi 18 h, samedi 10 h), et le generateur en tire les
+ * seances des semaines suivantes. C'est le cas normal, et il le reste.
+ *
+ * Mais un professeur qui vient de saisir sa matiere et son prix veut
+ * souvent commencer tout de suite. Lui faire choisir un creneau recurrent
+ * pour un cours unique l'obligerait a declarer une habitude qu'il n'a pas,
+ * et l'application annoncerait ensuite « le cours du mardi 18 h » pour une
+ * seance ouverte un jeudi a 15 h 20.
+ *
+ * La seance creee ici n'a donc pas de creneau — `slot_id` est `null` depuis
+ * la migration 0035 — et elle commence a l'instant.
+ *
+ * --- Ce que cette route ne fait pas --------------------------------------
+ *
+ * Elle n'ouvre pas la salle. `POST /live/sessions/:id/open` existe, tient
+ * la fenetre d'ouverture, l'enregistrement et le jeton LiveKit : le client
+ * l'appelle juste apres. Deux chemins pour ouvrir une salle finiraient par
+ * diverger, et c'est la salle qui en patirait.
+ */
+app.post('/live/instant', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const corps = instantSchema.safeParse(await c.req.json().catch(() => ({})))
+  if (!corps.success) {
+    return c.json(
+      {
+        error: 'Demande incomplete.',
+        detail: corps.error.issues.map(
+          (i) => `${i.path.join('.')}: ${i.message}`,
+        ),
+      },
+      400,
+    )
+  }
+  const entree = corps.data
+  const service = asService()
+
+  const [{ data: matiere }, { data: niveau }] = await Promise.all([
+    service
+      .from('subjects')
+      .select('id, name')
+      .eq('id', entree.subjectId)
+      .maybeSingle(),
+    service
+      .from('levels')
+      .select('id, name')
+      .eq('id', entree.levelId)
+      .maybeSingle(),
+  ])
+  if (!matiere) return c.json({ error: 'Matiere inconnue.' }, 400)
+  if (!niveau) return c.json({ error: 'Classe inconnue.' }, 400)
+
+  const titre =
+    entree.title?.trim()
+    || `${matiere.name as string} — ${niveau.name as string}`
+
+  const { data: cours, error: souciCours } = await service
+    .from('live_courses')
+    .insert({
+      teacher_id: teacherId,
+      subject_id: entree.subjectId,
+      level_id: entree.levelId,
+      title: titre,
+      description: entree.description ?? null,
+      price: entree.price,
+      seats: entree.seats,
+      slot_ids: [],
+      status: 'PUBLISHED',
+    })
+    .select('id')
+    .single()
+
+  if (souciCours || !cours) {
+    console.error('[direct] creation du cours impossible', souciCours)
+    return c.json({ error: 'Creation impossible.' }, 500)
+  }
+
+  /*
+   * La seance commence une minute avant l'instant present.
+   *
+   * `open` refuse d'ouvrir une salle plus de quinze minutes avant le debut,
+   * et refuse aussi une seance terminee. Poser le debut exactement a
+   * `now()` marcherait, mais la moindre derive d'horloge entre le Worker et
+   * la base rendrait la salle « pas encore ouverte » au premier essai.
+   */
+  const debut = new Date(Date.now() - 60_000)
+
+  const { data: seance, error: souciSeance } = await service
+    .from('live_sessions')
+    .insert({
+      live_course_id: cours.id,
+      slot_id: null,
+      starts_at: debut.toISOString(),
+      duration_minutes: entree.durationMinutes,
+      status: 'PLANNED',
+    })
+    .select('id, starts_at, duration_minutes')
+    .single()
+
+  if (souciSeance || !seance) {
+    console.error('[direct] creation de la seance impossible', souciSeance)
+    return c.json({ error: 'Creation impossible.' }, 500)
+  }
+
+  return c.json({
+    courseId: cours.id as string,
+    sessionId: seance.id as string,
+    title: titre,
+    startsAt: seance.starts_at as string,
+    durationMinutes: seance.duration_minutes as number,
+  })
+})
+
 app.post('/live/courses', async (c) => {
   const userId = c.get('userId')
   if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)

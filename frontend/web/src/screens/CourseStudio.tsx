@@ -1,12 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
-import {
-  prof,
-  serveurDisponible,
-  studio,
-  type MonCoursVideo,
-} from '../api/server'
+import { direct, prof, serveurDisponible, studio, type MonCoursVideo } from '../api/server'
 import { PageHead, Steps, Tile, gnf } from '../components/kit'
 import {
   AppBar,
@@ -152,6 +147,7 @@ export function MesCours() {
 
 export function NouveauCours() {
   const navigate = useNavigate()
+  const [etape, setEtape] = useState<'fiche' | 'choix'>('fiche')
   const matieres = useAsync(() => api.subjects(), [])
   const niveaux = useAsync(() => api.levels(), [])
 
@@ -181,7 +177,17 @@ export function NouveauCours() {
   const propres = chapitres.map((c) => c.trim()).filter((c) => c !== '')
   const complet = titre.trim().length >= 3 && subjectId && choisis.length > 0 && propres.length > 0
 
-  const creer = async (event: React.FormEvent) => {
+  const montant = () => (prix ? Number(prix.replace(/\s/g, '')) : 0)
+
+  /*
+   * La fiche remplie ouvre le choix, elle ne cree rien.
+   *
+   * Un cours en direct et un cours enregistre sont deux objets differents
+   * — `live_courses` d'un cote, `video_courses` de l'autre. Creer l'un puis
+   * changer d'avis laisserait un brouillon mort dans le catalogue du
+   * professeur. Le bouton choisi cree le bon objet, et lui seul.
+   */
+  const choisir = (event: React.FormEvent) => {
     event.preventDefault()
     if (!complet) {
       setErreur(
@@ -189,7 +195,42 @@ export function NouveauCours() {
       )
       return
     }
+    setErreur(undefined)
+    setEtape('choix')
+  }
 
+  /** Ouvrir la salle tout de suite. */
+  const demarrerLeDirect = async () => {
+    setEnvoi(true)
+    setErreur(undefined)
+    try {
+      const seance = await direct.immediat({
+        subjectId,
+        levelId: choisis[0],
+        title: titre.trim(),
+        description: description.trim() || undefined,
+        price: montant(),
+      })
+      /*
+       * La salle s'ouvre par la route qui tient deja la fenetre
+       * d'ouverture, l'enregistrement et le jeton LiveKit. On ne la
+       * reecrit pas ici : deux chemins vers une meme salle finissent par
+       * diverger, et c'est la salle qui en patit.
+       */
+      await api.openRoom(seance.sessionId)
+      navigate(`/direct/${seance.sessionId}/salle`, { replace: true })
+    } catch (cause) {
+      setErreur(
+        cause instanceof Error
+          ? cause.message
+          : 'Le direct n’a pas pu s’ouvrir.',
+      )
+      setEnvoi(false)
+    }
+  }
+
+  /** Deposer un cours deja enregistre. */
+  const deposerUneRediffusion = async () => {
     setEnvoi(true)
     setErreur(undefined)
     try {
@@ -198,7 +239,7 @@ export function NouveauCours() {
         description: description.trim() || undefined,
         subjectId,
         levelIds: choisis,
-        price: prix ? Number(prix.replace(/\s/g, '')) : 0,
+        price: montant(),
         chapters: propres.map((nom) => ({ title: nom })),
       })
       // Droit sur l'écran de dépôt : un cours sans vidéo n'est pas un cours,
@@ -207,16 +248,71 @@ export function NouveauCours() {
       navigate(`/cours/${cree.id}/contenu`, { replace: true })
     } catch (cause) {
       setErreur(cause instanceof Error ? cause.message : 'Création impossible.')
-    } finally {
       setEnvoi(false)
     }
+  }
+
+  if (etape === 'choix') {
+    return (
+      <>
+        <AppBar title="Comment donnez-vous ce cours ?" onBack />
+        <div className="screen screen--narrow stack stack--loose">
+          <Steps labels={['La fiche', 'Le format', 'En ligne']} current={1} />
+
+          <p className="muted measure">
+            <strong>{titre.trim()}</strong>
+            {montant() > 0 ? ` · ${montant().toLocaleString('fr-FR')} GNF` : null}
+          </p>
+
+          <Card>
+            <div className="stack stack--tight">
+              <strong>Démarrer le direct maintenant</strong>
+              <p className="muted small">
+                La salle s’ouvre tout de suite. Vous invitez vos élèves, et
+                ceux qui ont installé l’application sont prévenus.
+              </p>
+              <Button block onClick={demarrerLeDirect} disabled={envoi}>
+                {envoi ? 'Ouverture…' : 'Ouvrir la salle'}
+              </Button>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="stack stack--tight">
+              <strong>Déposer une rediffusion</strong>
+              <p className="muted small">
+                Vous avez déjà filmé le cours. Il se vend autant de fois
+                qu’il se regarde, sans que vous le redonniez.
+              </p>
+              <Button
+                block
+                variant="quiet"
+                onClick={deposerUneRediffusion}
+                disabled={envoi}
+              >
+                {envoi ? 'Création…' : 'Déposer les vidéos'}
+              </Button>
+            </div>
+          </Card>
+
+          {erreur ? <Banner tone="warning">{erreur}</Banner> : null}
+
+          <Button variant="quiet" block onClick={() => setEtape('fiche')}>
+            Revenir à la fiche
+          </Button>
+        </div>
+      </>
+    )
   }
 
   return (
     <>
       <AppBar title="Créer un cours" onBack />
-      <form className="screen screen--narrow stack stack--loose" onSubmit={creer}>
-        <Steps labels={['La fiche', 'Les vidéos', 'En vente']} current={0} />
+      <form
+        className="screen screen--narrow stack stack--loose"
+        onSubmit={choisir}
+      >
+        <Steps labels={['La fiche', 'Le format', 'En ligne']} current={0} />
 
         <Field
           label="Le titre"
@@ -329,15 +425,13 @@ export function NouveauCours() {
 
         {erreur ? <Banner tone="warning">{erreur}</Banner> : null}
 
-        <Button type="submit" block disabled={envoi || !complet}>
-          {envoi ? 'Création…' : 'Créer et déposer les vidéos'}
+        <Button type="submit" block disabled={!complet}>
+          Continuer
         </Button>
 
         <p className="faint micro measure">
-          Le cours est créé en brouillon : il n’apparaît au catalogue qu’une
-          fois publié, et la publication exige au moins une vidéo prête. Un
-          cours en vente sans rien à voir serait une promesse qu’on ne tient
-          pas.
+          Vous choisirez ensuite entre ouvrir le direct tout de suite, ou
+          déposer un cours déjà filmé.
         </p>
       </form>
     </>

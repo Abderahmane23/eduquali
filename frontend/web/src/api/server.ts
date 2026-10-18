@@ -444,6 +444,32 @@ export interface ChapitreCree {
   position: number
 }
 
+export const direct = {
+  /**
+   * Ouvre un cours en direct qui commence maintenant.
+   *
+   * Rend la seance creee ; la salle s'ouvre ensuite par `api.openRoom`,
+   * qui tient la fenetre d'ouverture, l'enregistrement et le jeton. Deux
+   * chemins pour ouvrir une salle finiraient par diverger.
+   */
+  immediat: (input: {
+    subjectId: string
+    levelId: string
+    title?: string
+    description?: string
+    price: number
+    seats?: number
+    durationMinutes?: number
+  }) =>
+    appel<{
+      courseId: string
+      sessionId: string
+      title: string
+      startsAt: string
+      durationMinutes: number
+    }>('/live/instant', { method: 'POST', body: input }),
+}
+
 export const studio = {
   creer: (input: {
     title: string
