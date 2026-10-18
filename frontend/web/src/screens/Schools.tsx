@@ -208,10 +208,7 @@ export function SchoolDetail() {
             </div>
           </Card>
 
-          <AppGate
-            action="demander une inscription"
-            because="La demande se suit dans l’application : l’établissement répond, et vous recevez sa réponse sur votre téléphone sans avoir à revenir voir."
-          />
+          <AppGate action="demander une inscription" />
 
           {/* Les offres de cet etablissement sont publiques : y mener depuis
               sa fiche evite de repasser par la liste complete. */}

@@ -54,10 +54,7 @@ export function Tests() {
         </p>
 
         {!passable ? (
-          <AppGate
-            action="passer un test"
-            because="La correction se fait sur le serveur, depuis l’application : une note qu’on peut calculer soi-même ne certifierait rien."
-          />
+          <AppGate action="passer un test" />
         ) : null}
 
         {state.loading ? (

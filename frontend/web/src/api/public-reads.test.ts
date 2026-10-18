@@ -126,10 +126,23 @@ describe('la frontière entre regarder et agir', () => {
     expect(offres).toContain('AppGate')
     expect(offres).toContain('session?.teacherId ? (')
 
-    // Le bouton n'est jamais masqué, il est remplacé : une action absente se
-    // lit comme « ce professeur ne prend personne ».
+    /*
+     * Le bouton n'est jamais masqué, il est remplacé : une action absente
+     * se lit comme « ce professeur ne prend personne ».
+     *
+     * Cette épreuve exigeait aussi `because` — la phrase qui disait
+     * pourquoi le geste vit dans l'application. Elle a été retirée le
+     * 18/10 : la porte portait trois niveaux de texte pour une action
+     * qu'on pousse, et on la lisait moins vite qu'on ne la franchissait.
+     *
+     * Ce que l'épreuve garde est la règle, pas sa formulation : la porte
+     * nomme le geste empêché, et offre toujours une entrée. Si un jour
+     * elle n'offrait plus rien, elle redeviendrait le cul-de-sac que ce
+     * contrôle existe pour empêcher.
+     */
     const gate = readFileSync('src/components/AppGate.tsx', 'utf-8')
-    expect(gate).toContain('because')
+    expect(gate).toContain('action')
     expect(gate).toContain('/inscription')
+    expect(gate).toContain('/connexion')
   })
 })

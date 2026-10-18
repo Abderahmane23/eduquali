@@ -20,7 +20,6 @@ import {
 } from '../components/ui'
 import { money } from '../lib/format'
 import {
-  WEEK_ORDER,
   groupByDay,
   loadSlots,
   longDayLabel,
@@ -87,7 +86,6 @@ export function LiveGrid() {
             pour retrouver son cours, pas pour en chercher un autre. */}
         <MesSeances grille={grille} />
 
-        {grille ? <SlotLegend grille={grille} /> : null}
 
         <Select
           value={subjectId}
@@ -285,32 +283,6 @@ function MaSeanceCard({
  * Ils sont les mêmes chaque semaine : les montrer en tête permet de retenir
  * l'horaire plutôt que de le relire sur chaque carte.
  */
-function SlotLegend({ grille }: { grille: SlotGrid }) {
-  const parJour = WEEK_ORDER.map((jour) => ({
-    jour,
-    label: grille.weekdayLabels[jour] ?? jour,
-    creneaux: grille.slots.filter((s) => s.days.includes(jour)),
-  })).filter((g) => g.creneaux.length > 0)
-
-  return (
-    <Card>
-      <div className="stack stack--tight">
-        <strong className="small">Les mêmes heures chaque semaine</strong>
-        {parJour.map(({ jour, label, creneaux }) => (
-          <div className="row row--between small" key={jour}>
-            <span className="muted">{label}</span>
-            <span>{creneaux.map((c) => c.label).join(' · ')}</span>
-          </div>
-        ))}
-        <span className="faint micro">
-          Chaque séance dure {grille.sessionMinutes} minutes.
-        </span>
-      </div>
-    </Card>
-  )
-}
-
-/** Une séance : quand, avec qui, combien, et ce qu'il reste de places. */
 function SessionCard({ seance }: { seance: LiveSession }) {
   const { session } = useSession()
   const [ouvert, setOuvert] = useState(false)
@@ -351,10 +323,7 @@ function SessionCard({ seance }: { seance: LiveSession }) {
         </div>
 
         {complet ? null : session?.parentId == null ? (
-          <AppGate
-            action="réserver une place"
-            because="La séance se suit dans l’application, qui prévient votre enfant avant le début et garde le replay s’il arrive en retard."
-          />
+          <AppGate action="réserver une place" />
         ) : ouvert ? (
           <EnrolForm seance={seance} />
         ) : (

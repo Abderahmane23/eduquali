@@ -17,16 +17,9 @@ import { useSession } from '../app/session'
  */
 export function AppGate({
   action,
-  because,
 }: {
   /** Le geste empeche, a l'infinitif : « contacter ce professeur ». */
   action: string
-  /**
-   * Pourquoi il vit dans l'application, en une phrase. Dit ce que le
-   * telephone apporte — pas « parce qu'il faut un compte », qui ne donne
-   * aucune raison de le creer.
-   */
-  because: string
 }) {
   const { session } = useSession()
 
@@ -37,14 +30,18 @@ export function AppGate({
           ? `Pour ${action}, ouvrez l’application`
           : `Pour ${action}, créez votre compte`}
       </strong>
-      <p className="muted small">{because}</p>
+      {/*
+        Une ligne, et c'est tout.
 
-      {session ? (
-        <p className="faint micro">
-          Votre compte EduQuali fonctionne sur les deux : connectez-vous dans
-          l’application avec le même numéro.
-        </p>
-      ) : (
+        La porte portait trois niveaux de texte : le geste empeche, une
+        phrase disant pourquoi il vit dans l'application, et un rappel que
+        le compte marche des deux cotes. Trois explications pour une porte
+        qu'on pousse — on la lit moins vite qu'on ne la franchit.
+
+        Un visiteur garde ses deux boutons : ce ne sont pas des phrases,
+        ce sont les deux seules choses a faire ici.
+      */}
+      {session ? null : (
         <div className="row" style={{ gap: 'var(--espace-2)' }}>
           <Link className="btn btn--primary" to="/inscription">
             Créer un compte

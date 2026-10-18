@@ -268,10 +268,7 @@ export function TeacherDetail() {
             </div>
           </Card>
 
-          <AppGate
-            action="contacter ce professeur"
-            because="L’échange se fait dans la messagerie de l’application, qui garde le fil même sans réseau et prévient le professeur sur son téléphone."
-          />
+          <AppGate action="contacter ce professeur" />
         </aside>
 
         <div className="detail__main stack stack--loose">

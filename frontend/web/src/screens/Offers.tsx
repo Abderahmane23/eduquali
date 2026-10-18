@@ -219,10 +219,7 @@ export function OfferDetail() {
           // Sans fiche enseignant, `apply` sortait sans rien faire : le
           // bouton s'enfoncait et il ne se passait rien. C'etait vrai pour un
           // visiteur comme pour un compte parent ou etablissement.
-          <AppGate
-            action="postuler"
-            because="Une candidature part avec votre CV et vos diplômes, qui se déposent depuis l’application."
-          />
+          <AppGate action="postuler" />
         )}
 
         {applied ? (

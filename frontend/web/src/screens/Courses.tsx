@@ -395,10 +395,7 @@ function BuyCourse({ course }: { course: VideoCourse }) {
 
   if (!peutAcheter) {
     return (
-      <AppGate
-        action="suivre ce cours"
-        because="Les vidéos se téléchargent dans l’application et se regardent ensuite sans réseau — et sans recommencer à payer des données à chaque révision."
-      />
+      <AppGate action="suivre ce cours" />
     )
   }
 
