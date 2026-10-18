@@ -242,7 +242,7 @@ void main() {
      */
     await _poser(
       tester,
-      taille: const Size(390, 900),
+      taille: const Size(390, 760),
       overrides: [
         ...socle(),
         currentSessionProvider.overrideWithValue(eleve()),
@@ -260,12 +260,19 @@ void main() {
     );
 
     await tester.tap(find.text('Reserver'));
+    /*
+     * `pumpAndSettle` ici, et nulle part ailleurs.
+     *
+     * Une feuille modale est une route : elle se monte en plusieurs passes,
+     * et huit passes comptees n'y suffisaient pas — la capture sortait sur
+     * l'ecran de dessous, un bouton seul au milieu du vide. Les animations
+     * etant coupees, la transition est immediate et `pumpAndSettle` ne peut
+     * pas tourner sans fin comme il l'a fait sur les listes.
+     */
     await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 600)),
+      () => Future<void>.delayed(const Duration(milliseconds: 400)),
     );
-    for (var passe = 0; passe < 8; passe++) {
-      await tester.pump(const Duration(milliseconds: 300));
-    }
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
 
     await _enregistrer(tester, 'reserver.png');
   });
@@ -325,7 +332,7 @@ class _ConversationJouee extends AssistantController {
           'paralleles.\n\n'
           'Thales dit alors que les trois rapports AB/AC, AD/AE et BD/CE sont '
           'egaux. Autrement dit : si une figure est l’agrandissement d’une '
-          'autre, **tout** est agrandi dans la meme proportion.\n\n'
+          'autre, tout est agrandi dans la meme proportion.\n\n'
           'Un exemple du programme de 10e : AB = 3 cm, AC = 7,5 cm, '
           'AD = 4 cm. Combien vaut AE ?',
         ),
@@ -421,8 +428,22 @@ class _FauxPointsApi extends PointsApi {
 List<LiveSessionSummary> _seances() {
   final base = DateTime.utc(2026, 10, 17, 17);
   const cours = [
-    ('Mathématiques', '10e année', 'M. Diallo', 25000, 3, 'Équations du premier degré'),
-    ('Physique', '11e année', 'Mme Bah', 30000, 7, 'Les forces et le mouvement'),
+    (
+      'Mathématiques',
+      '10e année',
+      'M. Diallo',
+      25000,
+      3,
+      'Équations du premier degré',
+    ),
+    (
+      'Physique',
+      '11e année',
+      'Mme Bah',
+      30000,
+      7,
+      'Les forces et le mouvement',
+    ),
     ('Français', '10e année', 'M. Camara', 20000, 0, 'Le commentaire composé'),
     ('Histoire', '12e année', 'Mme Sylla', 25000, 11, 'La Guinée coloniale'),
   ];
@@ -487,9 +508,7 @@ Future<void> _chargerPolices() async {
         throw StateError('Police introuvable : $chemin');
       }
       chargeur.addFont(
-        Future<ByteData>.value(
-          ByteData.view(fichier.readAsBytesSync().buffer),
-        ),
+        Future<ByteData>.value(ByteData.view(fichier.readAsBytesSync().buffer)),
       );
     }
     await chargeur.load();
@@ -523,13 +542,37 @@ Future<void> _poser(
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
 
+  /*
+   * La frontiere de repeinte enferme l'application entiere, et non le seul
+   * ecran.
+   *
+   * Une feuille modale — la reservation — n'est pas posee dans la page :
+   * c'est une route, montee dans la couche superposee du navigateur,
+   * au-dessus de `home`. Une frontiere placee autour de l'ecran la laissait
+   * donc dehors : la capture rendait l'ecran du dessous, un bouton seul au
+   * milieu du vide, et le fichier sortait identique a l'essai precedent —
+   * de quoi croire que le geste n'avait pas eu lieu.
+   *
+   * Au-dessus de `MaterialApp`, tout est pris : feuilles, fenetres de
+   * dialogue, bandeaux.
+   */
   await tester.pumpWidget(
-    ProviderScope(
-      overrides: overrides,
-      child: MaterialApp(
-        theme: AppTheme.light,
-        locale: const Locale('fr', 'FR'),
-        /*
+    RepaintBoundary(
+      key: _cadre,
+      child: ProviderScope(
+        overrides: overrides,
+        child: MaterialApp(
+          // Le ruban rouge « DEBUG » du coin superieur droit.
+          //
+          // Il restait hors de la frontiere de repeinte tant qu'elle
+          // entourait le seul ecran ; elle entoure maintenant l'application
+          // entiere, et il est entre dans l'image. Un ruban de deboguage sur
+          // une diapositive d'investisseurs est exactement le detail qui se
+          // remarque.
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          locale: const Locale('fr', 'FR'),
+          /*
          * Les animations sont coupees, et c'est ce qui rend la capture
          * possible.
          *
@@ -543,11 +586,11 @@ Future<void> _poser(
          * rectangle fixe. On ne desactive donc rien de special pour le test,
          * on emprunte le chemin prevu pour qui demande moins de mouvement.
          */
-        builder: (context, enfant) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(disableAnimations: true),
-          child: enfant!,
-        ),
-        /*
+          builder: (context, enfant) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            child: enfant!,
+          ),
+          /*
          * L'ecran est pose sur un `Material`, et sans lui rien ne se lit.
          *
          * Plusieurs ecrans rendent une liste nue : `StudentDashboard` est un
@@ -569,9 +612,10 @@ Future<void> _poser(
          * `runAsync` ne change rien. C'est le contenant qui manquait, pas le
          * contenu.
          */
-        home: Material(
-          color: AppTheme.light.scaffoldBackgroundColor,
-          child: RepaintBoundary(key: _cadre, child: ecran),
+          home: Material(
+            color: AppTheme.light.scaffoldBackgroundColor,
+            child: ecran,
+          ),
         ),
       ),
     ),
@@ -638,9 +682,7 @@ Future<void> _enregistrer(WidgetTester tester, String nom) async {
 
   final dossier = Directory('test/captures');
   if (!dossier.existsSync()) dossier.createSync(recursive: true);
-  File('${dossier.path}/$nom').writeAsBytesSync(
-    octets!.buffer.asUint8List(),
-  );
+  File('${dossier.path}/$nom').writeAsBytesSync(octets!.buffer.asUint8List());
 
   /*
    * L'ecran est demonte avant la fin de l'epreuve.
