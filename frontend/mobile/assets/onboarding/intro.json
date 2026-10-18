@@ -13,7 +13,7 @@
           "id": "role_select",
           "type": "role_select",
           "title": "Vous êtes…",
-          "body": "Une question, puis on ouvre votre compte. La présentation viendra après.",
+          "body": "Une question, puis on ouvre votre compte.",
           "fieldId": "role",
           "required": true,
           "options": [
