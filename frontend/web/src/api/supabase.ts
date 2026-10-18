@@ -1584,6 +1584,32 @@ export class SupabaseApi implements VeriprofApi {
         : 0
     }
 
+    /*
+     * Les ventes, en une requete pour toute la liste.
+     *
+     * Elles viennent de la vue `video_courses_ventes` et non de
+     * `course_purchases` : cette table est fermee par RLS, chacun ne voyant
+     * que ses propres achats. Un visiteur qui compterait lui-meme obtiendrait
+     * zero partout, et le classement « les plus suivis » serait
+     * silencieusement vide.
+     */
+    const ventes = await this.rows(() =>
+      this.db
+        .from('video_courses_ventes')
+        .select('course_id, ventes')
+        .in(
+          'course_id',
+          rows.map((r) => text(r, 'id')),
+        ),
+    )
+    const venduFois = new Map<string, number>()
+    for (const v of ventes) {
+      venduFois.set(
+        text(v, 'course_id'),
+        typeof v.ventes === 'number' ? v.ventes : 0,
+      )
+    }
+
     const niveaux = await this.levels()
     return rows.map((row) => {
       const id = text(row, 'id')
@@ -1616,6 +1642,7 @@ export class SupabaseApi implements VeriprofApi {
         chapterCount: agrege.chapitres,
         videoCount: agrege.videos,
         totalSeconds: agrege.duree,
+        sales: venduFois.get(id) ?? 0,
       }
     })
   }

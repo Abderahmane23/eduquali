@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
-import type { MySession } from '../api/types'
+import type { LiveSession, MySession, VideoCourse } from '../api/types'
 import { useSession } from '../app/session'
 import {
   BigButton,
@@ -120,6 +120,16 @@ export function AccueilFamille() {
     [session?.userId],
   )
 
+  /*
+   * Les directs du jour et le catalogue, lus separement de mes seances.
+   *
+   * Ils ne dependent pas du compte : un echec de l'un ne doit pas vider
+   * l'accueil. `useAsync` isole chaque lecture, et chaque section decide
+   * seule de ce qu'elle montre quand la sienne manque.
+   */
+  const directs = useAsync(() => api.liveSessions({ days: 1 }), [])
+  const catalogue = useAsync(() => api.videoCourses(), [])
+
   const maintenant = Date.now()
   const seances = useMemo(
     () =>
@@ -131,6 +141,38 @@ export function AccueilFamille() {
         ),
     [etat.data],
   )
+
+  /*
+   * « En direct maintenant » : la seance a commence et n'est pas finie.
+   *
+   * On garde aussi celles qui commencent dans l'heure — un carrousel vide
+   * la plupart du temps ne serait regarde par personne, et « dans 12 min »
+   * est exactement l'information qui fait rester.
+   */
+  const enDirect = useMemo(() => {
+    const liste = directs.data ?? []
+    return liste
+      .filter((seance) => {
+        const debut = new Date(seance.startsAt).getTime()
+        const fin = debut + seance.durationMinutes * 60_000
+        return maintenant < fin && maintenant > debut - 60 * 60_000
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+      )
+      .slice(0, 8)
+  }, [directs.data, maintenant])
+
+  const populaires = useMemo(() => {
+    const liste = [...(catalogue.data ?? [])]
+    liste.sort((a, b) => b.sales - a.sales)
+    return liste.slice(0, 8)
+  }, [catalogue.data])
+
+  // Un classement de zeros n'est pas un classement : tant que personne n'a
+  // achete, la section annonce ce qu'elle est vraiment.
+  const classementReel = populaires.some((cours) => cours.sales > 0)
 
   if (etat.loading) {
     return (
@@ -203,6 +245,38 @@ export function AccueilFamille() {
       {etat.error ? <Banner tone="warning">{etat.error}</Banner> : null}
 
       {/*
+        Ce qui se passe maintenant, en premier : c'est perissable. Un direct
+        commence dans huit minutes, ou il est passe.
+      */}
+      {enDirect.length > 0 ? (
+        <section className="stack stack--tight">
+          <h2 className="section-title">En direct</h2>
+          <div className="scroller">
+            {enDirect.map((seance) => (
+              <CarteDirect
+                key={seance.id}
+                seance={seance}
+                maintenant={maintenant}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {populaires.length > 0 ? (
+        <section className="stack stack--tight">
+          <h2 className="section-title">
+            {classementReel ? 'Les cours les plus suivis' : 'Cours à découvrir'}
+          </h2>
+          <div className="scroller">
+            {populaires.map((cours) => (
+              <CarteCours key={cours.id} cours={cours} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/*
         Deux colonnes à partir d'un écran large, une seule sur téléphone.
 
         À gauche ce qu'on lit — la séance qui vient, celle qui vient d'avoir
@@ -272,6 +346,62 @@ export function AccueilFamille() {
         </aside>
       </div>
     </div>
+  )
+}
+
+/**
+ * Un professeur qui donne cours en ce moment.
+ *
+ * La carte dit l'etat avant le titre : « en direct » ou « dans 12 min » est
+ * ce qui decide si on clique, et le sujet vient apres.
+ */
+function CarteDirect({
+  seance,
+  maintenant,
+}: {
+  seance: LiveSession
+  maintenant: number
+}) {
+  const debut = new Date(seance.startsAt).getTime()
+  const commence = maintenant >= debut
+  const minutes = Math.max(0, Math.round((debut - maintenant) / 60_000))
+
+  return (
+    <Link className="card card-link" to={`/direct/${seance.id}`}>
+      <div className="stack stack--tight">
+        <div className="row row--between">
+          <Chip tone={commence ? 'accent' : undefined}>
+            {commence ? 'En direct' : `Dans ${minutes} min`}
+          </Chip>
+          {seance.seatsLeft > 0 ? (
+            <span className="faint micro">{seance.seatsLeft} places</span>
+          ) : (
+            <span className="faint micro">Complet</span>
+          )}
+        </div>
+        <strong>{seance.title ?? seance.subject.name}</strong>
+        <span className="muted small">{seance.teacherName}</span>
+        <span className="faint micro">
+          {seance.subject.name} · {seance.level.name}
+        </span>
+      </div>
+    </Link>
+  )
+}
+
+/** Un cours enregistre, dans le carrousel de l'accueil. */
+function CarteCours({ cours }: { cours: VideoCourse }) {
+  return (
+    <Link className="card card-link" to={`/cours/${cours.id}`}>
+      <div className="stack stack--tight">
+        <strong>{cours.title}</strong>
+        <span className="muted small">{cours.teacherName}</span>
+        <span className="faint micro">
+          {cours.chapterCount} chapitres · {cours.videoCount} vidéos
+          {cours.sales > 0 ? ` · ${cours.sales} achats` : null}
+        </span>
+      </div>
+    </Link>
   )
 }
 

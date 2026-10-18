@@ -657,6 +657,9 @@ export class MockApi implements VeriprofApi {
             (total, v) => total + (v.durationSeconds ?? 0),
             0,
           ),
+          // Le catalogue simule n'a pas d'acheteurs : zero vente, et le
+          // classement par ventes garde alors l'ordre du fichier.
+          sales: 0,
         }
       })
   }

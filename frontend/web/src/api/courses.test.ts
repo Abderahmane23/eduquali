@@ -107,16 +107,34 @@ describe('le sommaire public', () => {
     expect(bloc).toContain("eq('status', 'PUBLISHED')")
   })
 
-  it('compte le sommaire en deux requêtes, pas une par cours', () => {
-    // Une vitrine de vingt cours ferait vingt-et-un allers-retours sur une
-    // connexion guinéenne.
+  it('lit la vitrine en un nombre fixe de requêtes, pas une par cours', () => {
+    /*
+     * Une vitrine de vingt cours ferait vingt-et-un allers-retours sur une
+     * connexion guinéenne.
+     *
+     * Ce qui est gardé est **l'indépendance au nombre de cours**, pas un
+     * chiffre. Trois `in(...)` aujourd'hui : les chapitres de tous les
+     * cours, les éléments de tous les chapitres, et les ventes de tous les
+     * cours — cette dernière ajoutée le 18/10 pour classer « les cours les
+     * plus suivis » sur un chiffre réel plutôt que sur un ordre inventé.
+     *
+     * Le nombre peut encore bouger si une colonne s'ajoute. Ce qui ne doit
+     * pas bouger, c'est qu'aucune de ces lectures ne soit dans une boucle :
+     * c'est exactement le défaut qui a rendu l'annuaire des professeurs
+     * muet pendant soixante secondes, le 17/10.
+     */
     const bloc = supabase.slice(
       supabase.indexOf('async videoCourses'),
       supabase.indexOf('async videoCourse('),
     )
-    // Deux `in(...)` : les chapitres de tous les cours, puis les elements de
-    // tous les chapitres. Une boucle en ferait un par cours.
-    expect(bloc.match(/\.in\(/g) ?? []).toHaveLength(2)
+
+    const lectures = (bloc.match(/\.in\(/g) ?? []).length
+    expect(lectures).toBeGreaterThanOrEqual(2)
+    expect(lectures).toBeLessThanOrEqual(4)
+
+    // Et aucune `await` de lecture à l'intérieur d'une boucle.
+    expect(bloc).not.toMatch(/for \([^)]*\)\s*\{[^}]*await this\.rows/s)
+
     expect(bloc).toContain("'course_id'")
     expect(bloc).toContain("'chapter_id'")
   })

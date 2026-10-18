@@ -415,6 +415,16 @@ export interface VideoCourse {
   videoCount: number
   /** Duree totale en secondes, quand les durees sont connues. */
   totalSeconds: number
+  /**
+   * Combien de familles l'ont achete.
+   *
+   * Vient de la vue `video_courses_ventes`, qui compte des lignes que
+   * l'appelant ne peut pas lire : `course_purchases` est fermee par RLS.
+   * Sans ce chiffre, « les cours les plus suivis » aurait ete un ordre
+   * invente — et un classement faux est pire qu'une liste non classee,
+   * parce qu'il est cru.
+   */
+  sales: number
 }
 
 /** Un element du sommaire : une video, un document, un lien. */
