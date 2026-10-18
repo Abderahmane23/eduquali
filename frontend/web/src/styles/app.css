@@ -1753,8 +1753,21 @@ h2,
   gap: var(--espace-3);
 }
 
+/*
+ * Les deux pastilles grandissent, mais jamais en dessous de leur libelle.
+ *
+ * `flex: 1` part d'une base nulle : sur un ecran large, ou la rangee est
+ * etroite et posee en bas a droite, chaque pastille se reduisait sous la
+ * largeur de son texte. « Creer mon compte » passait alors a la ligne et
+ * sortait du bord arrondi — le mot debordait du bouton qui le porte.
+ *
+ * Vu en pilotant le vrai site a 1440 points. Aucun controle ne l'avait
+ * signale : la pastille restait dans la fenetre, c'est le texte qui sortait
+ * de la pastille. Un debordement de page et un debordement d'element ne se
+ * mesurent pas au meme endroit.
+ */
 .pill-row > * {
-  flex: 1;
+  flex: 1 1 auto;
 }
 
 .pill-solid,
@@ -1763,6 +1776,8 @@ h2,
   align-items: center;
   justify-content: center;
   min-height: 52px;
+  padding-inline: var(--espace-4);
+  white-space: nowrap;
   border-radius: var(--rayon-pastille);
   font-size: var(--t-corps);
   font-weight: 700;

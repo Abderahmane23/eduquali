@@ -13,13 +13,7 @@ import {
   Progress,
   Skeleton,
 } from '../components/ui'
-import {
-  applicationStatusLabel,
-  availabilityLabel,
-  experienceLabel,
-  institutionTypeLabel,
-  relative,
-} from '../lib/format'
+import { applicationStatusLabel, availabilityLabel, duree, experienceLabel, institutionTypeLabel, relative } from '../lib/format'
 import { useAsync } from '../lib/useAsync'
 
 /** Profil public de l'enseignant (§15). */
@@ -164,7 +158,7 @@ function TempsDeCours() {
       <Card accent>
         <div className="stack stack--tight">
           <div>
-            <strong className="chiffre">{dureeLongue(totalMinutes)}</strong>
+            <strong className="chiffre">{duree(totalMinutes)}</strong>
             <div className="muted small">
               de cours en direct, sur {sessions} séance{sessions > 1 ? 's' : ''}
             </div>
@@ -177,7 +171,7 @@ function TempsDeCours() {
               {perChild.map((ligne) => (
                 <li className="row row--between" key={ligne.childName}>
                   <span>{ligne.childName}</span>
-                  <span className="muted">{dureeLongue(ligne.minutes)}</span>
+                  <span className="muted">{duree(ligne.minutes)}</span>
                 </li>
               ))}
             </ul>
@@ -187,7 +181,7 @@ function TempsDeCours() {
             <div className="row" style={{ gap: 'var(--espace-1)', flexWrap: 'wrap' }}>
               {perSubject.map((ligne) => (
                 <Chip key={ligne.subjectName}>
-                  {ligne.subjectName} · {dureeLongue(ligne.minutes)}
+                  {ligne.subjectName} · {duree(ligne.minutes)}
                 </Chip>
               ))}
             </div>
@@ -199,12 +193,6 @@ function TempsDeCours() {
 }
 
 /** « 45 min », « 3 h 30 ». */
-function dureeLongue(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`
-  const heures = Math.floor(minutes / 60)
-  const reste = minutes % 60
-  return reste === 0 ? `${heures} h` : `${heures} h ${String(reste).padStart(2, '0')}`
-}
 
 function TeacherProfileView() {
   const { session } = useSession()

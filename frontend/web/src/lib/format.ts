@@ -54,6 +54,38 @@ export function clock(totalSeconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
 }
 
+/**
+ * Une duree : « 48 min », « 1 h », « 1 h 02 ».
+ *
+ * --- Pourquoi elle est ici, et pas dans l'ecran qui l'affiche -----------
+ *
+ * Trois ecrans ecrivaient leur propre version, et l'une d'elles oubliait le
+ * zero : un cours d'une heure et deux minutes s'affichait « 1 h 2 ».
+ * Constate en pilotant le site a 1440 points — la carte du catalogue
+ * annoncait « 3 chapitres · 6 videos · 1 h 2 ». Sa propre documentation
+ * promettait pourtant « 1 h 12 ».
+ *
+ * En francais, les minutes s'ecrivent sur deux chiffres apres l'heure :
+ * « 1 h 02 ». Sans le zero, le lecteur hesite entre deux minutes et vingt.
+ *
+ * Le meme defaut avait deja ete corrige dans l'application mobile. Il avait
+ * survecu ici parce que chaque ecran portait sa copie — d'ou cette
+ * fonction, et une seule.
+ */
+export function duree(minutes: number): string {
+  const total = Math.max(0, Math.round(minutes))
+  if (total < 60) return `${total} min`
+  const heures = Math.floor(total / 60)
+  const reste = total % 60
+  return reste === 0
+    ? `${heures} h`
+    : `${heures} h ${String(reste).padStart(2, '0')}`
+}
+
+/** La meme duree, donnee en secondes. */
+export const dureeSecondes = (secondes: number): string =>
+  duree(Math.round(secondes / 60))
+
 export const initials = (first: string, last: string): string =>
   `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || '?'
 

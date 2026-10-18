@@ -892,17 +892,27 @@ class KitEmpty extends StatelessWidget {
                 color: AppColors.primarySurface,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
+              // Le libelle est `Flexible` : sans cela, la rangee prend sa
+              // largeur naturelle et deborde des que le texte est long.
+              // Constate en rendant l'accueil pour la presentation — 64
+              // pixels a droite, soit la barre rayee jaune et noir sur un
+              // telephone de 390 points. Une action d'etat vide porte
+              // souvent une phrase (« Trouver un professeur a domicile »)
+              // et non un mot.
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.add, size: 18, color: AppColors.primary),
                   const SizedBox(width: AppSpacing.xs + 2),
-                  Text(
-                    actionLabel!,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                  Flexible(
+                    child: Text(
+                      actionLabel!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ],

@@ -24,7 +24,19 @@ import 'package:veriprof/data/remote/sync_api.dart';
 import 'package:veriprof/data/sync/sync_engine.dart';
 import 'package:veriprof/domain/entities/live_models.dart';
 import 'package:veriprof/presentation/providers/core_providers.dart';
+import 'package:veriprof/core/constants/app_enums.dart';
+import 'package:veriprof/data/repositories/auth_repository.dart';
+import 'package:veriprof/data/repositories/tutoring_repository.dart';
+import 'package:veriprof/domain/usecases/tutoring_rules.dart';
+import 'package:veriprof/presentation/providers/session_providers.dart';
+import 'package:veriprof/presentation/screens/assistant/assistant_controller.dart';
+import 'package:veriprof/presentation/screens/assistant/assistant_messages.dart';
+import 'package:veriprof/presentation/screens/assistant/assistant_screen.dart';
+import 'package:veriprof/presentation/screens/catalog/catalog_page.dart';
+import 'package:veriprof/presentation/screens/catalog/course_player_page.dart';
 import 'package:veriprof/presentation/screens/contests/shop_page.dart';
+import 'package:veriprof/presentation/screens/dashboards/student_dashboard.dart';
+import 'package:veriprof/presentation/screens/tutoring/book_tutoring_sheet.dart';
 import 'package:veriprof/presentation/screens/live/live_grid_page.dart';
 import 'package:veriprof/presentation/screens/live/presence_proof_page.dart';
 import 'package:veriprof/presentation/theme/app_theme.dart';
@@ -148,6 +160,189 @@ void main() {
 
     await _enregistrer(tester, 'boutique.png');
   });
+
+  /*
+   * Les cinq ecrans demandes pour la presentation.
+   *
+   * Une session d'eleve est posee pour chacun : sans elle, ces ecrans
+   * s'affichent dans leur etat « personne n'est connecte » — une invitation
+   * a ouvrir un compte, ce qui ne montre rien du produit.
+   */
+  AuthSession eleve() => AuthSession(
+    userId: 'u_captures',
+    role: UserRole.student,
+    phone: '620000101',
+    firstName: 'Aissatou',
+    lastName: 'Barry',
+    plan: 'MASTER',
+    planRenewsAt: DateTime(2027, 1, 31),
+  );
+
+  testWidgets('l’accueil', (tester) async {
+    await _poser(
+      tester,
+      taille: const Size(390, 1100),
+      overrides: [
+        ...socle(),
+        currentSessionProvider.overrideWithValue(eleve()),
+      ],
+      ecran: const StudentDashboard(),
+    );
+
+    await _enregistrer(tester, 'accueil.png');
+  });
+
+  testWidgets('le catalogue des cours', (tester) async {
+    await _poser(
+      tester,
+      taille: const Size(390, 1100),
+      overrides: [
+        ...socle(),
+        currentSessionProvider.overrideWithValue(eleve()),
+      ],
+      ecran: const CatalogPage(),
+    );
+
+    await _enregistrer(tester, 'catalogue.png');
+  });
+
+  testWidgets('un cours, chapitres ouverts', (tester) async {
+    await _poser(
+      tester,
+      taille: const Size(390, 1200),
+      overrides: [
+        ...socle(),
+        currentSessionProvider.overrideWithValue(eleve()),
+      ],
+      ecran: const CoursePlayerPage(courseId: 'vc_math_fonctions'),
+    );
+
+    /*
+     * Les chapitres sont des `ExpansionTile` : seul celui qui porte la video
+     * courante s'ouvre de lui-meme. La demande est « chapitres ouverts » —
+     * c'est le sommaire qui dit ce qu'on achete, et replie il ne dit rien.
+     */
+    for (var tour = 0; tour < 6; tour++) {
+      final replies = find.byType(ExpansionTile);
+      if (replies.evaluate().length <= tour) break;
+      await tester.tap(replies.at(tour), warnIfMissed: false);
+      for (var passe = 0; passe < 3; passe++) {
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+    }
+
+    await _enregistrer(tester, 'cours.png');
+  });
+
+  testWidgets('la reservation d’un cours a domicile', (tester) async {
+    /*
+     * La reservation est une feuille modale : elle n'existe qu'ouverte
+     * au-dessus d'un ecran. On pose donc un bouton qui l'ouvre, et on
+     * capture une fois qu'elle est montee.
+     */
+    await _poser(
+      tester,
+      taille: const Size(390, 900),
+      overrides: [
+        ...socle(),
+        currentSessionProvider.overrideWithValue(eleve()),
+      ],
+      ecran: Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: ElevatedButton(
+              onPressed: () => showBookTutoringSheet(context, _offreDemo()),
+              child: const Text('Reserver'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Reserver'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 600)),
+    );
+    for (var passe = 0; passe < 8; passe++) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    await _enregistrer(tester, 'reserver.png');
+  });
+
+  testWidgets('l’assistant, en conversation', (tester) async {
+    await _poser(
+      tester,
+      taille: const Size(390, 1000),
+      overrides: [
+        ...socle(),
+        currentSessionProvider.overrideWithValue(eleve()),
+        assistantProvider.overrideWith((ref) => _ConversationJouee()),
+      ],
+      ecran: const AssistantScreen(),
+    );
+
+    await _enregistrer(tester, 'assistant.png');
+  });
+}
+
+/// Une offre de cours a domicile, pour la capture de la reservation.
+TutoringOffer _offreDemo() => const TutoringOffer(
+  id: 'to_demo',
+  teacherId: 't_diallo',
+  teacherName: 'Mamadou Diallo',
+  subjectId: 'sub_math',
+  subjectName: 'Mathematiques',
+  levelNames: ['10e annee'],
+  mode: TutoringMode.atStudent,
+  active: true,
+  hourlyRate: 50000,
+  city: 'Conakry',
+  districts: ['Matam', 'Ratoma'],
+  availabilityNote: 'Mardi et jeudi, a partir de 17 h',
+  description:
+      'Remise a niveau en mathematiques, du calcul litteral a la geometrie.',
+);
+
+/// L'assistant, avec une conversation deja tenue.
+///
+/// La capture doit montrer **l'assistant en train de servir**, pas son ecran
+/// vide. Un ecran d'accueil ne dit pas ce que l'outil fait ; un echange le
+/// dit en trois lignes. Les reponses sont ecrites ici et n'appellent aucun
+/// modele : une capture ne doit dependre ni du reseau, ni d'une cle, ni de
+/// ce qu'un modele aura envie de repondre ce jour-la.
+class _ConversationJouee extends AssistantController {
+  _ConversationJouee() : super(null) {
+    state = const AssistantState(
+      messages: [
+        UserMessage(
+          'Je n’ai pas compris le theoreme de Thales, le prof est alle vite',
+        ),
+        AssistantText(
+          'On le prend par le dessin, c’est plus simple.\n\n'
+          'Trace deux droites qui se croisent en A. Pose B et C sur la '
+          'premiere, D et E sur la seconde, de sorte que (BD) et (CE) soient '
+          'paralleles.\n\n'
+          'Thales dit alors que les trois rapports AB/AC, AD/AE et BD/CE sont '
+          'egaux. Autrement dit : si une figure est l’agrandissement d’une '
+          'autre, **tout** est agrandi dans la meme proportion.\n\n'
+          'Un exemple du programme de 10e : AB = 3 cm, AC = 7,5 cm, '
+          'AD = 4 cm. Combien vaut AE ?',
+        ),
+        UserMessage('10 cm ?'),
+        AssistantText(
+          'Exact — et la methode est la bonne.\n\n'
+          'AB/AC = 3/7,5 = 0,4. Donc AD/AE = 0,4, et AE = 4 / 0,4 = 10 cm.\n\n'
+          'Le piege habituel est d’inverser le rapport et d’ecrire '
+          'AE = 4 x 0,4 = 1,6 cm — un segment plus court que celui qu’on '
+          'agrandit. Quand le resultat sort plus petit, c’est le signe que le '
+          'rapport est a l’envers.\n\n'
+          'Votre professeur fait un direct sur ce chapitre jeudi a 17 h. '
+          'Voulez-vous que je vous y inscrive ?',
+        ),
+      ],
+    );
+  }
 }
 
 /// Un `PointsApi` qui ne parle à personne.
@@ -334,13 +529,86 @@ Future<void> _poser(
       child: MaterialApp(
         theme: AppTheme.light,
         locale: const Locale('fr', 'FR'),
-        home: RepaintBoundary(key: _cadre, child: ecran),
+        /*
+         * Les animations sont coupees, et c'est ce qui rend la capture
+         * possible.
+         *
+         * `SkeletonBox` pulse sans fin tant qu'une lecture n'est pas posee.
+         * `pumpAndSettle` attend que plus rien ne bouge : devant une
+         * pulsation perpetuelle il tournait douze minutes avant d'abandonner,
+         * et la capture ne sortait pas.
+         *
+         * `disableAnimations` est le drapeau que l'application ecoute deja,
+         * par `prefersLessMotion` : le squelette s'arrete alors sur un
+         * rectangle fixe. On ne desactive donc rien de special pour le test,
+         * on emprunte le chemin prevu pour qui demande moins de mouvement.
+         */
+        builder: (context, enfant) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: true),
+          child: enfant!,
+        ),
+        /*
+         * L'ecran est pose sur un `Material`, et sans lui rien ne se lit.
+         *
+         * Plusieurs ecrans rendent une liste nue : `StudentDashboard` est un
+         * `RefreshIndicator` sur un `ListView`, sans `Scaffold`. Dans
+         * l'application ils vivent dans une coquille qui apporte le
+         * `Material` ; poses directement en `home`, ils n'en ont aucun.
+         *
+         * Or c'est le `Material` qui installe le `DefaultTextStyle` du
+         * theme. Sans lui, `DefaultTextStyle.fallback()` s'applique : aucune
+         * famille de police, et le moteur de test dessine **un rectangle par
+         * glyphe**. La capture sortait couverte de pavés gris, avec juste
+         * assez de texte lisible — le titre de l'en-tete, le libelle d'un
+         * bouton, qui portent leur propre style — pour avoir l'air d'un
+         * ecran en cours de chargement.
+         *
+         * Trois pistes ont ete ecartees avant celle-ci, et chacune par une
+         * mesure : les polices se chargent bien (les cinq graisses de Lexend
+         * rendent des lettres), Poppins n'est plus reference nulle part, et
+         * `runAsync` ne change rien. C'est le contenant qui manquait, pas le
+         * contenu.
+         */
+        home: Material(
+          color: AppTheme.light.scaffoldBackgroundColor,
+          child: RepaintBoundary(key: _cadre, child: ecran),
+        ),
       ),
     ),
   );
-  // Deux passes : la première monte l'écran, la seconde laisse les lectures
-  // asynchrones se poser.
-  await tester.pumpAndSettle();
+  /*
+   * Des passes comptees, et non `pumpAndSettle`.
+   *
+   * `pumpAndSettle` attend que plus rien ne bouge — sans borne utile. Trois
+   * des cinq ecrans l'ont fait tourner dix minutes avant d'abandonner, sans
+   * produire d'image ni nommer ce qui bougeait encore. Une capture qui peut
+   * ne jamais sortir n'est pas un outil.
+   *
+   * Huit passes de 300 ms laissent les lectures de la base se poser et les
+   * ouvertures de chapitre s'achever. Ce qui n'a pas fini a ce moment-la se
+   * voit sur l'image — ce qui est le but : une capture doit montrer l'ecran
+   * tel qu'il arrive, pas tel qu'on l'espere.
+   */
+  /*
+   * `runAsync` d'abord, les passes ensuite — et l'ordre n'est pas un detail.
+   *
+   * `pump` avance l'horloge **du test**. Il ne laisse pas la base de donnees
+   * repondre : Drift travaille sur un vrai isolat, et une requete reelle
+   * demande du temps reel. Sans ce `runAsync`, les lectures restaient en
+   * vol et les ecrans se capturaient sur leurs squelettes de chargement —
+   * des rectangles gris, a la place de tout le contenu.
+   *
+   * Et comme les squelettes ne clignotaient plus (les animations sont
+   * coupees), l'image avait l'air d'un ecran fini. C'est la forme que
+   * prennent les pannes de ce projet : rien ne proteste, et le resultat est
+   * vide.
+   */
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 900)),
+  );
+  for (var passe = 0; passe < 8; passe++) {
+    await tester.pump(const Duration(milliseconds: 300));
+  }
 }
 
 /// La frontiere de repeinte qui enferme l'ecran capture.

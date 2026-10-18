@@ -18,7 +18,7 @@ import {
   Skeleton,
   TextInput,
 } from '../components/ui'
-import { money } from '../lib/format'
+import { dureeSecondes, money } from '../lib/format'
 import { useAsync } from '../lib/useAsync'
 import type {
   CourseChapterPreview,
@@ -101,11 +101,17 @@ export function Courses() {
                     style={{ gap: 'var(--espace-2)', flexWrap: 'wrap' }}
                   >
                     {course.subject ? <Chip>{course.subject.name}</Chip> : null}
-                    {course.levels.length > 0 ? (
-                      <Chip>
-                        {course.levels.map((l) => l.name).join(' · ')}
-                      </Chip>
-                    ) : null}
+                    {/*
+                      Une pastille par classe, et non les trois dans une.
+                      Une pastille ne se coupe pas (c'est ce qui garde
+                      « 75 000 GNF » sur une ligne), si bien que
+                      « 11eme annee · 12eme annee · Terminale » depassait le
+                      bord de la carte de deux points et se faisait rogner.
+                      La rangee, elle, sait deja passer a la ligne.
+                    */}
+                    {course.levels.map((l) => (
+                      <Chip key={l.id}>{l.name}</Chip>
+                    ))}
                   </div>
                   {/* Le volume dit ce qu'on achete mieux que le prix seul :
                       « 75 000 GNF » ne se compare a rien, « 3 chapitres,
@@ -114,7 +120,7 @@ export function Courses() {
                     <Icon name="play" size={12} />
                     {volume(course.chapterCount, course.videoCount)}
                     {course.totalSeconds > 0
-                      ? ` · ${duree(course.totalSeconds)}`
+                      ? ` · ${dureeSecondes(course.totalSeconds)}`
                       : ''}
                   </div>
                 </div>
@@ -266,7 +272,7 @@ function Chapitre({ chapitre }: { chapitre: CourseChapterPreview }) {
               <span>{item.title}</span>
             </span>
             {item.durationSeconds ? (
-              <span className="faint micro">{duree(item.durationSeconds)}</span>
+              <span className="faint micro">{dureeSecondes(item.durationSeconds)}</span>
             ) : null}
           </div>
         ))}
@@ -281,14 +287,6 @@ const volume = (chapitres: number, videos: number): string =>
     `${videos} vidéo${videos > 1 ? 's' : ''}`,
   ].join(' · ')
 
-/** « 1 h 12 » ou « 12 min » — jamais « 72 min », qu'on doit convertir. */
-function duree(secondes: number): string {
-  const minutes = Math.round(secondes / 60)
-  if (minutes < 60) return `${minutes} min`
-  const heures = Math.floor(minutes / 60)
-  const reste = minutes % 60
-  return reste === 0 ? `${heures} h` : `${heures} h ${reste}`
-}
 
 /**
  * Acheter un cours.
