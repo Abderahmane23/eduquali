@@ -13,17 +13,17 @@ Jeu de diapositives investisseurs — `EduQuali - Presentation.pdf`.
 - [x] Cinq captures de plus dans le harnais Flutter (`test/captures_test.dart`) :
       accueil, catalogue, cours chapitres ouverts, réservation, assistant en
       conversation.
-- [ ] **Les trois captures qui échouent encore** : accueil, catalogue, cours.
-- [ ] Planche « réserver · direct · présence ».
-- [ ] Planche « cours · accueil ».
+- [x] **Les trois captures qui échouent encore** : accueil, catalogue, cours.
+- [x] Planche « réserver · direct · présence ».
+- [x] Planche « cours · accueil ».
 - [ ] Capture de la page principale sur la diapositive de couverture.
-- [ ] Remplacer « OÙ NOUS EN SOMMES / Le produit existe. » par deux
+- [x] Remplacer « OÙ NOUS EN SOMMES / Le produit existe. » par deux
       diapositives : le chatbot en conversation, et un cours chapitres ouverts.
-- [ ] « LA PROJECTION / Trois ans. » : deux graphiques —
+- [x] « LA PROJECTION / Trois ans. » : deux graphiques —
       adoption (élèves 100 → 200 → 2 500 ; professeurs 50 → 100 → 1 000 aux
       mêmes points) et revenu par phase (1, 2, 3).
-- [ ] Supprimer « Ce qui peut mal tourner ».
-- [ ] « QUESTIONS FRÉQUENTES / Ce qu'on nous demande. » — questions réécrites
+- [x] Supprimer « Ce qui peut mal tourner ».
+- [x] « QUESTIONS FRÉQUENTES / Ce qu'on nous demande. » — questions réécrites
       sur les **intentions cachées** : le parent veut l'assurance que son
       enfant réussira, le professeur veut gagner plus, l'élève veut apprendre
       sans souffrir et avec ses amis. Chaque réponse doit servir les deux
@@ -54,10 +54,10 @@ vrai thème.
 
 ## 3. L'assistant
 
-- [ ] Retirer **tout** le texte et les boutons superflus : « Devoirs / Autre »
+- [x] Retirer **tout** le texte et les boutons superflus : « Devoirs / Autre »
       en haut, et « autres questions 1/100 aujourd'hui ».
-- [ ] La fenêtre de conversation prend **toute la hauteur** de l'écran.
-- [ ] Contenu très lisible ; réduire la taille du texte des messages si besoin.
+- [x] La fenêtre de conversation prend **toute la hauteur** de l'écran.
+- [x] Contenu très lisible ; réduire la taille du texte des messages si besoin.
 
 ---
 
