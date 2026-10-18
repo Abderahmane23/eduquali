@@ -1,5 +1,6 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { droits, serveurDisponible } from '../api/server'
 import { useSession } from '../app/session'
 import {
   AppBar,
@@ -239,6 +240,7 @@ function TeacherProfileView() {
     <>
       <AppBar title="Mon profil" />
       <div className="screen stack stack--loose">
+        <RappelDossier badges={me.badges} />
         <div className="row">
           <Avatar first={me.firstName} last={me.lastName} src={me.photoUrl} />
           <div>
@@ -321,6 +323,76 @@ function TeacherProfileView() {
 }
 
 /** Suivi des candidatures (§18). */
+/**
+ * « Il vous manque votre piece d'identite. »
+ *
+ * Une carte, et non une fenetre modale : une modale se ferme d'un geste, et
+ * au troisieme passage on apprend ou est la croix sans plus rien lire.
+ * Celle-ci reste tant que le dossier est incomplet, et n'empeche pas de
+ * faire autre chose.
+ */
+function RappelDossier({
+  badges,
+}: {
+  badges: { identity: boolean; diploma: boolean }
+}) {
+  /*
+   * L'etat de l'essai vient du serveur, et son absence ne fait pas taire le
+   * rappel.
+   *
+   * `/entitlements` lit des colonnes posees par la migration 0034. Tant
+   * qu'elle n'est pas appliquee, l'appel echoue — et un dossier incomplet
+   * reste un dossier incomplet. On affiche alors la forme douce.
+   */
+  const etat = useAsync(
+    () => (serveurDisponible ? droits.lire() : Promise.resolve(undefined)),
+    [],
+  )
+
+  const manque: string[] = []
+  if (!badges.identity) manque.push('votre pièce d’identité')
+  if (!badges.diploma) manque.push('votre diplôme')
+  if (manque.length === 0) return null
+
+  const enEssai = etat.data?.essai.enCours ?? true
+  const restants = etat.data?.essai.joursRestants
+
+  return (
+    <Card>
+      <div className="stack stack--tight">
+        <strong>
+          {enEssai
+            ? 'Terminez votre inscription'
+            : 'Votre fiche ne remonte pas encore'}
+        </strong>
+        <p className="muted small">
+          {enEssai ? (
+            <>
+              Il manque {manque.join(' et ')}. Une fiche vérifiée passe
+              devant les autres dans les recherches
+              {typeof restants === 'number' && restants > 0
+                ? `, et votre essai se termine dans ${restants} jour${
+                    restants > 1 ? 's' : ''
+                  }`
+                : null}
+              .
+            </>
+          ) : (
+            <>
+              Il manque {manque.join(' et ')}. Tant qu’elles ne sont pas
+              déposées, votre fiche reste derrière celles qui le sont — c’est
+              la raison la plus fréquente d’un profil que personne n’appelle.
+            </>
+          )}
+        </p>
+        <Link className="btn btn--primary btn--block" to="/profil/dossier">
+          Déposer mes pièces
+        </Link>
+      </div>
+    </Card>
+  )
+}
+
 export function Applications() {
   const { session } = useSession()
   const navigate = useNavigate()

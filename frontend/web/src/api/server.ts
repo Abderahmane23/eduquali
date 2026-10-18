@@ -444,6 +444,27 @@ export interface ChapitreCree {
   position: number
 }
 
+/**
+ * Ce que le compte a le droit de faire, selon le serveur.
+ *
+ * C'est lui l'autorite : les quotas sont ce qui est vendu, et les laisser
+ * decider au telephone revient a les laisser decider a qui peut modifier le
+ * telephone. L'ecran affiche ce que cette route dit ; il ne le calcule pas.
+ */
+export const droits = {
+  lire: () =>
+    appel<{
+      formule: { code: string; nom: string; prixGnf: number }
+      essai: { enCours: boolean; joursRestants: number }
+      questionsEnDirect: boolean
+      exercicesCorriges: boolean
+      droits: Record<
+        string,
+        { permis: boolean; restant: number | null; max: number | null }
+      >
+    }>('/entitlements'),
+}
+
 export const direct = {
   /**
    * Ouvre un cours en direct qui commence maintenant.
@@ -543,6 +564,30 @@ export const studio = {
     appel<{ id: string; status: string }>(
       `/courses/${encodeURIComponent(id)}`,
       { method: 'PATCH', body: { status } },
+    ),
+
+  /** Corriger la fiche : le titre, la description, le prix. */
+  modifier: (
+    id: string,
+    champs: { title?: string; description?: string; price?: number },
+  ) =>
+    appel<{ id: string; status: string }>(
+      `/courses/${encodeURIComponent(id)}`,
+      { method: 'PATCH', body: champs },
+    ),
+
+  /**
+   * Supprimer un cours.
+   *
+   * Le serveur refuse si quelqu'un l'a achete : la famille a paye pour le
+   * revoir autant de fois qu'elle veut, et le supprimer le lui reprendrait.
+   * Il rend alors un 409 qui nomme le nombre d'achats et propose de
+   * masquer — l'ecran relaie ce message tel quel.
+   */
+  supprimer: (id: string) =>
+    appel<{ deleted: string; title: string }>(
+      `/courses/${encodeURIComponent(id)}`,
+      { method: 'DELETE' },
     ),
 }
 

@@ -131,6 +131,7 @@ export function MesCours() {
                   <Link className="btn btn--quiet" to={`/cours/${cours.id}/contenu`}>
                     Ouvrir
                   </Link>
+                  <ActionsCours cours={cours} onChange={mes.reload} />
                 </span>
               </div>
             )
@@ -138,6 +139,122 @@ export function MesCours() {
         </section>
       )}
     </div>
+  )
+}
+
+/**
+ * Corriger le titre d'un cours, ou le retirer.
+ *
+ * Les deux gestes manquaient : on pouvait creer, deposer, publier — jamais
+ * revenir. Un titre fautif restait a l'ecran de tous ceux qui parcourent le
+ * catalogue, et un cours rate ne se retirait pas.
+ */
+function ActionsCours({
+  cours,
+  onChange,
+}: {
+  cours: MonCoursVideo
+  onChange: () => void
+}) {
+  const [mode, setMode] = useState<'repos' | 'titre' | 'confirme'>('repos')
+  const [titre, setTitre] = useState(cours.title)
+  const [occupe, setOccupe] = useState(false)
+  const [souci, setSouci] = useState<string>()
+
+  const renommer = async () => {
+    const propre = titre.trim()
+    if (propre.length < 3 || propre === cours.title) {
+      setMode('repos')
+      return
+    }
+    setOccupe(true)
+    setSouci(undefined)
+    try {
+      await studio.modifier(cours.id, { title: propre })
+      setMode('repos')
+      onChange()
+    } catch (cause) {
+      setSouci(
+        cause instanceof Error ? cause.message : 'Modification impossible.',
+      )
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  const supprimer = async () => {
+    setOccupe(true)
+    setSouci(undefined)
+    try {
+      await studio.supprimer(cours.id)
+      onChange()
+    } catch (cause) {
+      /*
+       * Le refus du serveur, mot pour mot.
+       *
+       * Il nomme le nombre d'achats et propose de masquer. Le remplacer par
+       * « suppression impossible » laisserait chercher pourquoi, et la
+       * reponse — « des familles ont paye » — est precisement celle qui fait
+       * accepter le refus.
+       */
+      setSouci(
+        cause instanceof Error ? cause.message : 'Suppression impossible.',
+      )
+      setMode('repos')
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  if (mode === 'titre') {
+    return (
+      <span className="stack stack--tight">
+        <TextInput
+          value={titre}
+          onChange={(e) => setTitre(e.target.value)}
+          aria-label="Titre du cours"
+          maxLength={120}
+        />
+        <span className="row" style={{ gap: 'var(--espace-2)' }}>
+          <Button onClick={renommer} disabled={occupe}>
+            {occupe ? 'Enregistrement…' : 'Enregistrer'}
+          </Button>
+          <Button
+            variant="quiet"
+            onClick={() => {
+              setTitre(cours.title)
+              setMode('repos')
+            }}
+          >
+            Annuler
+          </Button>
+        </span>
+        {souci ? <Banner tone="warning">{souci}</Banner> : null}
+      </span>
+    )
+  }
+
+  return (
+    <span className="stack stack--tight">
+      <span className="row" style={{ gap: 'var(--espace-2)' }}>
+        <Button variant="quiet" onClick={() => setMode('titre')}>
+          Renommer
+        </Button>
+        {/*
+          La confirmation se fait sur place, en changeant le libelle.
+          Une fenetre modale se ferme d'un geste reflexe — exactement le
+          geste qu'on veut empecher avant un acte irreversible.
+        */}
+        <Button
+          variant="quiet"
+          disabled={occupe}
+          onClick={() => (mode === 'confirme' ? supprimer() : setMode('confirme'))}
+        >
+          {mode === 'confirme' ? 'Confirmer la suppression' : 'Supprimer'}
+        </Button>
+      </span>
+      {souci ? <Banner tone="warning">{souci}</Banner> : null}
+    </span>
   )
 }
 

@@ -7874,6 +7874,83 @@ app.post('/courses/items/:id/uploaded', async (c) => {
  * sans une seule video prete est une promesse qu'on ne tient pas, et un
  * acheteur decouvre l'ecran vide apres avoir paye.
  */
+/**
+ * Supprimer un cours — et ce qui s'y oppose.
+ *
+ * --- Un cours achete ne se supprime pas ----------------------------------
+ *
+ * Une famille qui a paye 75 000 GNF pour un cours doit pouvoir le revoir
+ * autant de fois qu'elle veut : c'est la promesse qui l'a fait payer. Le
+ * supprimer la lui reprendrait, et aucun remboursement n'est prevu — ni
+ * d'ailleurs souhaitable, puisque le cours a bien ete suivi.
+ *
+ * La route refuse donc, et propose la sortie : masquer. Un cours masque
+ * quitte le catalogue — personne ne peut plus l'acheter — et reste visible
+ * pour ceux qui l'ont deja.
+ *
+ * Refuser sans dire quoi faire serait un cul-de-sac. Le message nomme donc
+ * le nombre d'achats et le geste de remplacement.
+ */
+app.delete('/courses/:id', async (c) => {
+  const userId = c.get('userId')
+  if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
+
+  const teacherId = await teacherIdOf(userId)
+  if (!teacherId) return c.json({ error: 'Reserve au professeur.' }, 403)
+
+  const service = asService()
+  const coursId = c.req.param('id')
+
+  const { data: cours } = await service
+    .from('video_courses')
+    .select('id, title')
+    .eq('id', coursId)
+    .eq('teacher_id', teacherId)
+    .maybeSingle()
+  if (!cours) return c.json({ error: 'Cours introuvable.' }, 404)
+
+  const { count } = await service
+    .from('course_purchases')
+    .select('id', { count: 'exact', head: true })
+    .eq('course_id', coursId)
+
+  const achats = Number(count ?? 0)
+  if (achats > 0) {
+    return c.json(
+      {
+        error:
+          `Ce cours a ete achete ${achats} fois. Le supprimer reprendrait `
+          + 'a ces familles ce qu’elles ont paye. Masquez-le : il quitte '
+          + 'le catalogue, et reste visible pour elles.',
+        purchases: achats,
+        suggestion: 'HIDDEN',
+      },
+      409,
+    )
+  }
+
+  /*
+   * Les chapitres et les elements partent avec le cours.
+   *
+   * `course_chapters` est en `on delete cascade` depuis la migration 0006 ;
+   * on supprime donc le cours seul et la base fait le reste. Supprimer les
+   * enfants a la main risquerait de laisser un cours sans sommaire si
+   * l'appel echouait entre les deux.
+   */
+  const { error } = await service
+    .from('video_courses')
+    .delete()
+    .eq('id', coursId)
+    .eq('teacher_id', teacherId)
+
+  if (error) {
+    console.error('[cours] suppression impossible', error)
+    return c.json({ error: 'Suppression impossible.' }, 500)
+  }
+
+  return c.json({ deleted: coursId, title: cours.title as string })
+})
+
 app.patch('/courses/:id', async (c) => {
   const userId = c.get('userId')
   if (!userId) return c.json({ error: 'Connectez-vous.' }, 401)
@@ -7885,6 +7962,11 @@ app.patch('/courses/:id', async (c) => {
     .object({
       status: z.enum(['PUBLISHED', 'HIDDEN', 'DRAFT']).optional(),
       price: z.number().int().min(0).max(PRIX_COURS_MAX).optional(),
+      // Le titre et la description se corrigent : une faute de frappe dans
+      // un titre reste a l'ecran de tous ceux qui parcourent le catalogue,
+      // et obliger a refaire le cours pour la corriger serait absurde.
+      title: z.string().trim().min(3).max(120).optional(),
+      description: z.string().trim().max(2000).optional(),
     })
     .safeParse(await c.req.json().catch(() => ({})))
   if (!corps.success) return c.json({ error: 'Demande illisible.' }, 400)
