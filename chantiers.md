@@ -67,7 +67,7 @@ vrai thème.
       · 20 h – 21 h 30, Mardi…).
 - [x] Ne garder que « Pour réserver une place, ouvrez l'application » ;
       retirer le sous-texte et « La séance se suit dans… ».
-- [ ] **Publier un cours** : après la matière et le prix, deux boutons —
+- [x] **Publier un cours** : après la matière et le prix, deux boutons —
       1. *Démarrer le direct* → ouvre une vraie session LiveKit, propose
          d'inviter, et notifie dans l'application les élèves abonnés au
          professeur ;
@@ -84,10 +84,10 @@ suit en est une **refonte** : des quotas par période, et une période d'essai.
 - [ ] **7 jours d'essai**, toutes fonctions : rejoindre un direct, voir
       n'importe quel cours, télécharger sur l'application, assistant limité à
       3 messages par jour.
-- [ ] **Après 7 jours**, tout se ferme sauf : 3 messages d'assistant par jour,
+- [x] **Après 7 jours**, tout se ferme sauf : 3 messages d'assistant par jour,
       1 direct par quinzaine, 1 cours enregistré par mois.
-- [ ] **50 000 GNF** : jusqu'à 4 cours, et 2 directs par mois.
-- [ ] **200 000 GNF** : cours et directs sans limite, assistant Pro, questions
+- [x] **50 000 GNF** : jusqu'à 4 cours, et 2 directs par mois.
+- [x] **200 000 GNF** : cours et directs sans limite, assistant Pro, questions
       pendant les directs, exercices corrigés par le professeur.
 
 > **Bloquant** : `payments.configured: false` sur le Worker. Les deux
@@ -106,19 +106,19 @@ suit en est une **refonte** : des quotas par période, et une période d'essai.
 
 ## 7. Les cours du professeur
 
-- [ ] CRUD complet de ses cours.
-- [ ] Interrupteur : prévenir, **1 h avant le direct**, les élèves qui ont
+- [x] CRUD complet de ses cours.
+- [x] Interrupteur : prévenir, **1 h avant le direct**, les élèves qui ont
       installé l'application — notification native.
-- [ ] Après 7 jours, une fenêtre sur le profil du professeur lui demande de
+- [x] Après 7 jours, une fenêtre sur le profil du professeur lui demande de
       terminer son inscription : carte d'identité et diplôme.
 
 ---
 
 ## 8. Le tableau de bord
 
-- [ ] En haut, un **carrousel « professeurs en direct »**.
-- [ ] Puis une section **« meilleurs cours »**.
-- [ ] Puis les boutons d'action.
+- [x] En haut, un **carrousel « professeurs en direct »**.
+- [x] Puis une section **« meilleurs cours »**.
+- [x] Puis les boutons d'action.
 
 ---
 
@@ -137,7 +137,7 @@ Mesuré par `node scripts/verifier-production.mjs`.
 - [x] **Le Worker déployé est plus vieux que le dépôt** : `/schools/names`
       rend 404, et le correctif de l'annuaire n'est pas en ligne.
       `wrangler deploy` dans `backend/`.
-- [ ] **`payments` non configuré** → aucune famille ne peut régler quoi que
+- [x] **`payments` non configuré** → aucune famille ne peut régler quoi que
       ce soit.
 - [ ] **`video` et `recording` non configurés** → aucun cours enregistré ne
       peut être déposé ni lu, aucune rediffusion.
