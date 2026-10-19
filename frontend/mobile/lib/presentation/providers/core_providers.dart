@@ -6,6 +6,9 @@ import '../../core/constants/app_enums.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/network_status_service.dart';
 import '../../core/security/identity_checks.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import '../../core/notifications/rappel_seance.dart';
 import '../../core/security/secure_store.dart';
 import '../../core/storage/document_pipeline.dart';
 import '../../data/local/database/app_database.dart';
@@ -47,6 +50,15 @@ final databaseProvider = Provider<AppDatabase>(
 );
 
 final secureStoreProvider = Provider<SecureStore>((ref) => SecureStore());
+
+/// Le rappel d'une séance, une heure avant.
+///
+/// Un seul pour toute l'application : le plugin tient une table de rappels
+/// programmés, et deux instances se marcheraient dessus — la seconde
+/// réinitialiserait ce que la première a posé.
+final rappelSeanceProvider = Provider<RappelSeance>(
+  (ref) => RappelSeance(FlutterLocalNotificationsPlugin()),
+);
 
 final networkServiceProvider = Provider<NetworkStatusService>(
   (ref) =>

@@ -60,6 +60,46 @@ void main() {
       expect(programme, isFalse);
     });
   });
+  group('L’accord avec les séances', () {
+    /*
+     * Sans binding de plateforme, `preparer()` echoue et rien n'est
+     * programme : `accorder` doit alors rendre zero sans lever. C'est le
+     * comportement voulu sur un telephone sans services Google, ou quand
+     * quelqu'un a refuse les notifications — l'application continue.
+     */
+    test('ne lève pas quand les rappels sont indisponibles', () async {
+      final rappel = RappelSeance(FlutterLocalNotificationsPlugin());
+      final poses = await rappel.accorder([
+        (
+          sessionId: 's-1',
+          titre: 'Les fonctions affines',
+          debut: DateTime.utc(2026, 11, 2, 18),
+          active: true,
+        ),
+      ], maintenant: DateTime.utc(2026, 11, 1));
+      expect(poses, 0);
+    });
+
+    test('une séance annulée ne pose rien', () async {
+      // Etre prevenu d'un cours qui n'aura pas lieu fait perdre un
+      // deplacement — c'est pire que pas de rappel du tout.
+      final rappel = RappelSeance(FlutterLocalNotificationsPlugin());
+      final poses = await rappel.accorder([
+        (
+          sessionId: 's-2',
+          titre: 'Annulée',
+          debut: DateTime.utc(2026, 11, 2, 18),
+          active: false,
+        ),
+      ], maintenant: DateTime.utc(2026, 11, 1));
+      expect(poses, 0);
+    });
+
+    test('une liste vide est un cas normal, pas une erreur', () async {
+      final rappel = RappelSeance(FlutterLocalNotificationsPlugin());
+      expect(await rappel.accorder(const []), 0);
+    });
+  });
 }
 
 /*

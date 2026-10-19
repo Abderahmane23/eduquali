@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -81,6 +83,20 @@ class _LiveGridPageState extends ConsumerState<LiveGridPage> {
         _miennes = miennes;
         _chargement = false;
       });
+
+      /*
+       * Les rappels se mettent d'accord avec les seances, ici.
+       *
+       * Une place se reserve aussi depuis le site : accrocher le rappel au
+       * geste d'inscription ne couvrirait que la moitie des cas, et pas la
+       * plus courante. En reconciliant a chaque chargement, on rattrape une
+       * reservation faite ailleurs, une reinstallation, un telephone change.
+       *
+       * Sans `await` : poser des rappels ne doit pas retarder l'affichage
+       * de la grille. Et sans `catch` bruyant — un telephone qui refuse les
+       * notifications doit continuer de montrer les cours.
+       */
+      unawaited(_accorderLesRappels(miennes));
     } on LiveApiException catch (erreur) {
       if (!mounted) return;
       setState(() {
@@ -95,6 +111,31 @@ class _LiveGridPageState extends ConsumerState<LiveGridPage> {
         _horsLigne = true;
         _chargement = false;
       });
+    }
+  }
+
+  /// Programme un rappel pour chaque seance a venir, retire ceux des
+  /// seances annulees.
+  Future<void> _accorderLesRappels(List<MySession> miennes) async {
+    try {
+      await ref
+          .read(rappelSeanceProvider)
+          .accorder(
+            miennes.map(
+              (seance) => (
+                sessionId: seance.sessionId,
+                titre: seance.title ?? seance.subject?.name ?? 'Cours en direct',
+                debut: seance.startsAt,
+                // Une place annulee, ou une seance annulee : dans les deux
+                // cas le rappel doit partir.
+                active:
+                    seance.enrolmentStatus != 'CANCELLED' &&
+                    seance.status != 'CANCELLED',
+              ),
+            ),
+          );
+    } catch (erreur) {
+      debugPrint('Rappels non accordes : $erreur');
     }
   }
 

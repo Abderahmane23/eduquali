@@ -165,6 +165,49 @@ class RappelSeance {
     }
   }
 
+  /// Met les rappels en accord avec les séances de l'élève.
+  ///
+  /// --- Pourquoi réconcilier, plutôt que programmer à l'inscription -------
+  ///
+  /// Une place se réserve aussi depuis le site. Accrocher le rappel au geste
+  /// d'inscription ne couvrirait donc que la moitié des cas, et la moitié
+  /// qui n'est pas la plus courante.
+  ///
+  /// Cette méthode prend la liste telle que le serveur la rend et la fait
+  /// correspondre : elle programme ce qui vient, elle retire ce qui est
+  /// annulé. Appelée à chaque fois que l'écran charge ses séances, elle
+  /// rattrape une réservation faite ailleurs, une réinstallation, un
+  /// téléphone changé.
+  ///
+  /// Elle est sans effet répété : l'identifiant d'un rappel est déduit de la
+  /// séance, donc reprogrammer remplace au lieu d'empiler.
+  ///
+  /// Rend le nombre de rappels posés — pour le journal, et pour les épreuves.
+  Future<int> accorder(
+    Iterable<({String sessionId, String titre, DateTime debut, bool active})>
+    seances, {
+    DateTime? maintenant,
+  }) async {
+    var poses = 0;
+    for (final seance in seances) {
+      if (!seance.active) {
+        // Une séance annulée garde son rappel tant qu'on ne le retire pas :
+        // être prévenu d'un cours qui n'aura pas lieu fait perdre un
+        // déplacement.
+        await annuler(seance.sessionId);
+        continue;
+      }
+      final pose = await programmer(
+        sessionId: seance.sessionId,
+        titre: seance.titre,
+        debut: seance.debut,
+        maintenant: maintenant,
+      );
+      if (pose) poses++;
+    }
+    return poses;
+  }
+
   /// Retire le rappel d'une séance — annulation, désinscription.
   Future<void> annuler(String sessionId) async {
     if (!_pret) return;
