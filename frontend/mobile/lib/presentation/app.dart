@@ -28,19 +28,46 @@ class EduqualiApp extends ConsumerWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       /*
-       * Les deux themes de la charte EduQuali.
+       * Le theme clair, et lui seul.
        *
-       * Cahier par defaut, Tableau au choix de l'utilisateur — et le reglage
-       * du telephone **est** ce choix tant qu'il n'y a pas de selecteur dans
-       * l'application. C'est ce que les gens attendent d'un telephone, et
-       * c'est aussi ce que fait le site.
+       * --- Ce qui etait ecrit ici, et pourquoi c'etait faux --------------
        *
-       * Les deux sont construits par la meme fonction, a partir de deux
-       * palettes : ajouter un composant au theme le dote des deux d'un coup,
-       * et il n'y a pas d'endroit ou l'oublier.
+       * « Cahier par defaut, Tableau au choix de l'utilisateur — et le
+       * reglage du telephone est ce choix. » L'intention etait bonne. Le
+       * resultat ne l'etait pas : `theme` et `darkTheme` etaient fournis
+       * **sans `themeMode`**, dont la valeur par defaut est
+       * `ThemeMode.system`. Un telephone regle en sombre obtenait donc
+       * `AppTheme.dark`, sans que rien ne le signale.
+       *
+       * Et la palette Tableau porte un vrai defaut de contraste. Rendue
+       * cote a cote avec la claire (`tool/captures/theme_probe_test.dart`),
+       * elle montre un champ de saisie ou le texte tape — « Aissatou » —
+       * est a peine distinct du fond : on ecrit sans voir ce qu'on ecrit.
+       * Le titre de l'ecran est dans le meme cas.
+       *
+       * Signale le 21/10 en trois fois — « les champs ont un fond noir »,
+       * « le texte dedans est invisible », « le fond des pages est noir ».
+       * Trois signalements, une seule cause.
+       *
+       * Aucune capture ne l'avait montre : toutes passent `AppTheme.light`
+       * explicitement. Le defaut ne vivait que sur un vrai telephone, regle
+       * en sombre.
+       *
+       * --- Pourquoi forcer plutot que corriger ---------------------------
+       *
+       * La charte EduQuali est une charte de papier : encre sur papier,
+       * surligneur, marges. Le sombre en est une transposition, et elle
+       * demande son propre travail de contraste — celui-la n'a pas ete
+       * fait. Tant qu'il ne l'est pas, le proposer revient a offrir un
+       * ecran ou l'on ne peut pas lire ce qu'on tape.
+       *
+       * `AppTheme.dark` reste : la charte l'eprouve (`charte_test.dart`),
+       * et le travail n'est pas perdu. Il n'est simplement plus atteignable
+       * depuis l'application. Le rebrancher demande d'abord de reprendre le
+       * contraste de la palette Tableau — champ de saisie en premier.
        */
       theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.light,
       routerConfig: router,
       locale: const Locale('fr'),
       supportedLocales: const [Locale('fr'), Locale('en')],

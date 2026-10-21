@@ -110,7 +110,7 @@ compatibility_flags = ["nodejs_compat"]
 # en-tete CORS (verifie le 05/10). Le bloc `[env.production]` porte bien
 # ce domaine, mais il n'a jamais ete deploye — et le deployer basculerait
 # Djomy en argent reel, ce qui est une autre decision.
-ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,https://eduquali.pages.dev"
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,https://eduquali.com,https://www.eduquali.com,https://eduquali.pages.dev"
 AI_MONTHLY_BUDGET_USD = "50"
 # Declare, jamais devine : chercher « sandbox » dans l'URL serait la bonne
 # facon de se tromper le jour ou l'hote de test ne porte pas ce mot.
@@ -148,15 +148,21 @@ crons = ["0 2 * * *"]
 [env.production.vars]
 # ⚠ A CORRIGER AVANT LE PREMIER DEPLOIEMENT EN PRODUCTION.
 #
-# Cette valeur est une supposition : `.env.example` parle d'`acalia.vercel.app` et
-# d'`acalia.gn`, ce fichier d'`eduquali.pages.dev`. Les deux ne peuvent pas etre
-# vrais, et une origine fausse donne le symptome le plus desagreable qui soit —
-# le site se charge, puis chaque appel echoue dans la console du navigateur sans
-# message a l'ecran.
+# Le domaine reel depuis le 21/10 : `eduquali.com`, pose sur Cloudflare.
 #
-# Y mettre le ou les domaines reels du site, separes par des virgules. Rien a
-# ajouter pour l'application mobile : voir l'explication en tete de fichier.
-ALLOWED_ORIGINS = "https://eduquali.pages.dev"
+# `www` y figure aussi. Les deux repondent, et un navigateur envoie l'origine
+# telle qu'elle est dans la barre d'adresse : n'en autoriser qu'une ferait
+# echouer la moitie des visiteurs selon le lien sur lequel ils ont clique.
+#
+# `eduquali.pages.dev` reste autorise, et c'est voulu : il sert de repli tant
+# que le domaine se propage, et c'est l'adresse que les outils de
+# verification connaissent. Le retirer trop tot donne le symptome le plus
+# desagreable qui soit — le site se charge, puis chaque appel echoue dans la
+# console du navigateur sans message a l'ecran.
+#
+# Rien a ajouter pour l'application mobile : voir l'explication en tete de
+# fichier.
+ALLOWED_ORIGINS = "https://eduquali.com,https://www.eduquali.com,https://eduquali.pages.dev"
 AI_MONTHLY_BUDGET_USD = "50"
 # Ici l'argent est reel.
 DJOMY_ENVIRONMENT = "production"

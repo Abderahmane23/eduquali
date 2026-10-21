@@ -29,6 +29,24 @@ rien ne s'essaie.
 - [ ] **Vérification** : sur l'appareil, taper dans un champ et le relire ;
       ouvrir « Publier un cours » et voir des créneaux.
 
+### Le domaine réel — `eduquali.com`, posé sur Cloudflare le 21/10
+
+- [x] **Le Worker accepte `eduquali.com` et `www.eduquali.com`**, puis est
+      redéployé. Sans cela le site se charge et **tous** les appels échouent
+      dans la console, sans un mot à l'écran.
+      `eduquali.pages.dev` reste autorisé comme repli le temps que le
+      domaine se propage.
+- [x] **`scripts/verifier-production.mjs` regarde `eduquali.com`.** Il
+      interrogeait le domaine de Pages, qui répondra encore longtemps : un
+      feu vert pour une adresse que plus personne n'ouvre.
+- [x] **Les métadonnées de partage.** *(Vérifié : `index.html` n'écrit aucune
+      adresse en dur — `og:image` vaut `/og.png`, relatif, donc il suit le
+      domaine qui le sert. Rien à changer. Reste la présentation, où
+      l'adresse apparaît en toutes lettres.)*
+- [ ] **Vérification** : ouvrir `https://eduquali.com`, se connecter, et
+      voir une liste se remplir — c'est l'appel d'API qui prouve le CORS,
+      pas le chargement de la page.
+
 ## Lot 2 — S'inscrire jusqu'au bout
 
 *Un seul passage par la source partagée, puis la synchronisation, puis les

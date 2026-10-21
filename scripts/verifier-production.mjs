@@ -31,7 +31,16 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..')
-const SITE = 'https://eduquali.pages.dev'
+/*
+ * Le domaine reel, et non celui de Pages.
+ *
+ * `eduquali.pages.dev` repond toujours — c'est le domaine technique du
+ * projet, et il repondra encore longtemps. Verifier celui-la pendant que
+ * les visiteurs arrivent sur `eduquali.com` donnerait un feu vert pour une
+ * adresse que plus personne n'ouvre : exactement le genre de controle qui
+ * rassure a tort.
+ */
+const SITE = 'https://eduquali.com'
 const API = 'https://eduquali-api.abder4it.workers.dev/api/v1'
 
 /*
