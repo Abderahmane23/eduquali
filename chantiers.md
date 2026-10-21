@@ -205,6 +205,26 @@ portent un **?** et sont rassemblées en fin de section.
 - [ ] **La bande-annonce automatique** à partir de la première vidéo
       déposée. *(Voir la question 1 : on ne sait pas où couper.)*
 
+## D bis. L'écran d'un cours vidéo
+
+- [ ] **L'en-tête annonce le cours, pas le fichier.** Aujourd'hui le nom du
+      fichier déposé s'affiche. Il faut : le **titre du cours**, puis sa
+      **durée** — puis la description, puis les ressources.
+- [ ] **Les ressources se consultent, elles ne se téléchargent pas.**
+      *(Voir la question 4 : ce qu'on peut garantir, et ce qu'on ne peut
+      pas.)*
+
+## D ter. Les messages quittent l'écran du cours
+
+- [ ] **Un message écrit depuis un cours part dans l'onglet Messages**, dans
+      la conversation avec ce professeur ou cet élève — et **disparaît du bas
+      de l'écran du cours**.
+
+> Deux endroits où lire la même conversation, c'est un endroit de trop : on
+> répond dans l'un, l'autre garde une trace morte, et personne ne sait lequel
+> fait foi. Le cours garde le geste — écrire — et la conversation vit dans
+> Messages.
+
 ## E. Le catalogue
 
 - [ ] **Deux listes déroulantes** : la classe et la matière.
@@ -254,6 +274,21 @@ portent un **?** et sont rassemblées en fin de section.
    Une commission se prélève sur chaque vente, un paiement unique se règle
    une fois : ce ne sont pas deux formulations d'une même règle, et l'écran
    ne peut pas annoncer les deux.
+
+4. **« Consultable mais pas téléchargeable » : jusqu'où ?** On peut
+   retirer le bouton de téléchargement, servir le document par une adresse
+   signée qui expire en quelques minutes, et ouvrir une visionneuse sans
+   impression ni enregistrement. Cela arrête la copie **facile**, qui est la
+   plus fréquente.
+
+   Ce qu'on ne peut pas promettre : un document affiché est un document
+   rendu, donc photographiable, et récupérable par qui sait lire le trafic
+   de son propre téléphone. Aucune application au monde n'y échappe.
+
+   Dites-moi si c'est l'effet recherché — décourager — ou si la ressource
+   est sensible au point de ne pas devoir être affichée du tout, auquel cas
+   la réponse est ailleurs : on n'en montre qu'un extrait, ou on ne la met
+   pas en ligne.
 
 3. **Le super-administrateur voit-il les comptes, ou seulement les
    nombres ?** « Le lien élèves professeur établissements » peut se lire
