@@ -143,3 +143,120 @@ Mesuré par `node scripts/verifier-production.mjs`.
       peut être déposé ni lu, aucune rediffusion.
 - [ ] Les migrations `0032` et `0033` ne sont pas appliquées —
       `node scripts/migrations.mjs --baseline=0031` puis `--appliquer`.
+
+---
+
+# Chantier mobile — lot du 21/10
+
+Priorité annoncée : **l'application**. Vingt-trois demandes, regroupées par
+ce qu'elles touchent plutôt que par l'ordre où elles sont arrivées.
+
+Trois d'entre elles attendent une précision avant d'être écrites : elles
+portent un **?** et sont rassemblées en fin de section.
+
+## A. Le thème — bloquant, et probablement une seule cause
+
+- [ ] **Les champs de saisie ont un fond noir et un texte noir dessus** : on
+      tape sans voir ce qu'on écrit. Signalé sur la première page de l'APK.
+- [ ] **Le même défaut sur tous les écrans et tous les champs.**
+- [ ] **Le fond des pages est noir** là où il doit être blanc, texte noir.
+
+> Ces trois lignes décrivent très probablement **un seul défaut** : un thème
+> sombre appliqué là où la charte demande le papier. À chercher d'abord dans
+> `AppTheme`, pas écran par écran — corriger trente écrans un à un laisserait
+> le trente-et-unième.
+
+## B. Le parcours d'inscription
+
+- [ ] **Primaire : les classes de 1ère à 6ème année ne s'affichent pas**
+      pendant la création de compte.
+- [ ] **Lycée : après le choix de la classe**, un écran de sélection de la
+      série — sciences sociales, sciences mathématiques, sciences
+      expérimentales. Vu par l'élève, le parent et le professeur. Le
+      professeur peut en choisir **jusqu'à trois**.
+- [ ] **« Quels jours donnez-vous des cours ? »** : afficher directement
+      tous les jours de la semaine, avec des champs libres pour les heures
+      et une option « 8 h – 18 h ». **Supprimer la seconde page** « quels
+      jours, exactement ? ».
+- [ ] **Établissements : un intervalle de prix par heure**, au lieu d'un
+      prix unique.
+- [ ] **« Je suis en direct lundi, mardi… »** et le nombre de séances par
+      semaine.
+
+## C. Les mots
+
+- [ ] « Cours à domicile » → **« Cours à domicile et vidéo »**.
+- [ ] « Embauche » → **« Recruter »**.
+- [ ] Dans les établissements, « Ajouter un professeur » → **« Recruter un
+      professeur »**.
+
+## D. Les cours du professeur
+
+- [ ] **La création demande : le nom, les chapitres, les classes.**
+- [ ] **Retirer « lien de l'exercice »** une fois le cours ajouté.
+- [ ] **Seuls les professeurs vérifiés lancent un cours vidéo.** Un clic sur
+      « Lancer un cours » sans dossier complet ouvre la fenêtre de dépôt des
+      pièces.
+- [ ] **Le direct, puis la rediffusion privée.** Le cours est visible de
+      tous au lancement (15 min au plus), suivable seulement par les
+      inscrits. Il est ensuite enregistré en privé, réservé aux inscrits.
+- [ ] **Un contrat clair, accepté ou refusé**, quand le professeur rend une
+      vidéo publique. *(Voir la question 2 : le prix n'est pas tranché.)*
+- [ ] **La bande-annonce automatique** à partir de la première vidéo
+      déposée. *(Voir la question 1 : on ne sait pas où couper.)*
+
+## E. Le catalogue
+
+- [ ] **Deux listes déroulantes** : la classe et la matière.
+- [ ] **Dix résultats par page**, et une pagination en bas.
+
+## F. Les établissements, et le chat
+
+- [ ] **Un établissement ajoute un de ses professeurs** — un bouton, une
+      page. Le professeur reçoit ses identifiants **par courriel**.
+- [ ] **Ce professeur invite ses élèves** par SMS (gabarit, non branché) ou
+      par courriel.
+- [ ] **Un groupe de discussion se crée tout seul** entre le professeur et
+      les élèves qu'il a ajoutés.
+
+## G. Un compte super-administrateur
+
+- [ ] **Les totaux par catégorie** : élèves, professeurs, établissements.
+- [ ] **Les liens** vers les groupes et les vidéos qui s'y rattachent.
+
+## H. À éprouver sur l'appareil
+
+- [ ] Un **cours vidéo** de bout en bout.
+- [ ] La **lecture d'un cours enregistré**.
+- [ ] Les **groupes de discussion**.
+
+## I. Deux pannes à élucider
+
+- [ ] **« Publier un cours » annonce que le serveur n'est pas en ligne.**
+      Le Worker répond pourtant (`/health` : `status: ok`). À reproduire sur
+      l'appareil : l'APK livré est peut-être construit sans l'adresse de
+      l'API, auquel cas il parle au backend simulé.
+- [ ] **Les créneaux sont annoncés « en cours de lecture »** et n'arrivent
+      jamais.
+
+## Les trois questions
+
+1. **La bande-annonce : couper où ?** La demande dit « coupe 15 secondes en
+   début au lieu et à la fin ». Les deux lectures donnent deux produits
+   différents — les quinze premières secondes, ou les quinze dernières. Et
+   « au lieu » laisse penser qu'une troisième idée s'est perdue en route.
+
+2. **Rendre une vidéo publique coûte quoi ?** Deux prix sont donnés pour le
+   même geste :
+   - « 30 % de commission » dans le contrat à accepter ;
+   - « paiement unique de 100 000 GNF » plus loin.
+
+   Une commission se prélève sur chaque vente, un paiement unique se règle
+   une fois : ce ne sont pas deux formulations d'une même règle, et l'écran
+   ne peut pas annoncer les deux.
+
+3. **Le super-administrateur voit-il les comptes, ou seulement les
+   nombres ?** « Le lien élèves professeur établissements » peut se lire
+   « le nombre de liens entre eux » ou « un lien vers la liste ». La seconde
+   lecture ouvre des données personnelles d'enfants à un écran de plus, ce
+   qui demande d'être voulu explicitement.
