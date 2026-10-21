@@ -214,6 +214,22 @@ portent un **?** et sont rassemblées en fin de section.
       *(Voir la question 4 : ce qu'on peut garantir, et ce qu'on ne peut
       pas.)*
 
+## D quater. L'accueil du professeur, réordonné
+
+Constaté dans `teacher_dashboard.dart` : le bandeau du haut porte
+aujourd'hui **cours donnés, élèves actifs, vues du profil, revenu du mois**,
+et « Offres pour vous » arrive juste en dessous.
+
+- [ ] **Retirer le bandeau de statistiques du haut.**
+- [ ] **Mettre les chiffres des cours à sa place** — ventes de vidéos,
+      cours donnés : ce que le professeur produit, et non ce qu'on pense de
+      lui.
+- [ ] **Descendre « Offres pour vous » en bas de page.**
+
+> Les vues du profil et le revenu du mois ouvraient la journée sur un
+> jugement. Les chiffres des cours ouvrent sur le travail — et les offres
+> d'emploi, qui regardent ailleurs, attendent la fin de la page.
+
 ## D ter. Les messages quittent l'écran du cours
 
 - [ ] **Un message écrit depuis un cours part dans l'onglet Messages**, dans
