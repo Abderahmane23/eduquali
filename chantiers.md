@@ -47,6 +47,22 @@ rien ne s'essaie.
       voir une liste se remplir — c'est l'appel d'API qui prouve le CORS,
       pas le chargement de la page.
 
+### Djomy en bac à sable — fait le 21/10
+
+- [x] **Les identifiants sont posés et vérifiés.** `POST /v1/auth` rend 200
+      et un jeton. `/health` annonce
+      `payments: {configured: true, environment: "sandbox"}`.
+- [x] **L'adresse du bac à sable** : `https://sandbox-api.djomy.africa`.
+      Elle n'est dans aucune documentation fournie — trouvée en sondant
+      `/v1/auth` sur les hôtes du domaine. `api.djomy.africa` est la
+      production, et refuse ces clés.
+- [x] **`DJOMY_ENVIRONMENT` passe à `sandbox`** dans l'environnement
+      déployé. Il disait « production » : des clés de test mariées à un
+      environnement déclaré production est la pire combinaison — le code se
+      croit capable d'encaisser, et rien n'arrive jamais sur un compte.
+- [ ] **À rebasculer sur `production`** le jour où les clés de production
+      sont posées. Pas avant, pas après.
+
 ## Lot 2 — S'inscrire jusqu'au bout
 
 *Un seul passage par la source partagée, puis la synchronisation, puis les

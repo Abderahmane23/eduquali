@@ -164,5 +164,18 @@ crons = ["0 2 * * *"]
 # fichier.
 ALLOWED_ORIGINS = "https://eduquali.com,https://www.eduquali.com,https://eduquali.pages.dev"
 AI_MONTHLY_BUDGET_USD = "50"
-# Ici l'argent est reel.
-DJOMY_ENVIRONMENT = "production"
+
+# --- Djomy : BAC A SABLE, et c'est deliberе (21/10) ----------------------
+#
+# Cette valeur disait « production ». Elle dit « sandbox » parce que les
+# seules cles posees sont des cles de bac a sable, et qu'un mariage entre
+# des cles de test et un environnement declare « production » est la pire
+# des combinaisons : le code se croit en mesure d'encaisser, les appels
+# partent, et rien n'arrive jamais sur un compte.
+#
+# Le champ est obligatoire et sans valeur par defaut, precisement pour que
+# ce choix soit ecrit quelque part plutot que suppose.
+#
+# **A basculer sur « production » le jour ou les cles de production sont
+# posees** — et pas avant, ni apres.
+DJOMY_ENVIRONMENT = "sandbox"
